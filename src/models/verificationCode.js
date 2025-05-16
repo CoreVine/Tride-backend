@@ -4,23 +4,22 @@ class VerificationCode extends Model {
   static init(sequelize) {
     return super.init({
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT.UNSIGNED,
         primaryKey: true,
         autoIncrement: true,
         allowNull: false
       },
       email: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(255),
         allowNull: false
       },
       code: {
-        type: DataTypes.STRING(6),
+        type: DataTypes.STRING(50),
         allowNull: false
       },
       type: {
-        type: DataTypes.ENUM('password_reset', 'email_verification', 'account_activation'),
-        allowNull: false,
-        defaultValue: 'password_reset'
+        type: DataTypes.STRING(50),
+        allowNull: false
       },
       verified: {
         type: DataTypes.BOOLEAN,
@@ -28,7 +27,7 @@ class VerificationCode extends Model {
         defaultValue: false
       },
       reset_token: {
-        type: DataTypes.STRING(64),
+        type: DataTypes.STRING(255),
         allowNull: true,
         unique: true
       },
@@ -47,25 +46,37 @@ class VerificationCode extends Model {
         allowNull: false
       },
       account_type: {
-        type: DataTypes.ENUM('user'), // Simplified to only user type
-        allowNull: false,
-        defaultValue: 'user'
+        type: DataTypes.ENUM('driver', 'parent'),
+        allowNull: false
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: DataTypes.NOW
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: DataTypes.NOW
       }
     }, {
       sequelize,
+      modelName: 'VerificationCode',
       tableName: 'verification_codes',
       timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
       indexes: [
         {
-          name: 'verification_code_email_type_idx',
+          name: 'tride_verification_code_email_type_idx',
           fields: ['email', 'type']
         },
         {
-          name: 'verification_code_reset_token_idx',
+          name: 'tride_verification_code_reset_token_idx',
           fields: ['reset_token']
         },
         {
-          name: 'verification_code_expires_at_idx',
+          name: 'tride_verification_code_expires_at_idx',
           fields: ['expires_at']
         }
       ]
