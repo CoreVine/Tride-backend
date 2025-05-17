@@ -120,7 +120,7 @@ const profileController = {
       };
       
       // Update parent profile with document URLs
-      await ParentRepository.update(updateData, parent.id);
+      await ParentRepository.update(parent.id, updateData);
       
       // Fetch updated profile
       const updatedParent = await ParentRepository.findById(parent.id);
@@ -381,7 +381,7 @@ const profileController = {
       }
       
       // Update parent profile
-      await ParentRepository.update(updateData, parent.id);
+      await ParentRepository.update(parent.id, updateData);
       
       // Delete the old profile picture if a new one was uploaded
       if (req.file && oldProfilePicUrl) {
@@ -460,7 +460,7 @@ const profileController = {
       }
       
       // Update driver profile
-      await DriverRepository.update(updateData, driver.id);
+      await DriverRepository.update(driver.id, updateData);
       
       // Delete the old profile picture if a new one was uploaded
       if (req.file && oldProfilePicUrl) {
