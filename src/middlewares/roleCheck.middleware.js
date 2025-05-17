@@ -1,4 +1,4 @@
-const UserRepository = require('../data-access/users');
+const AccountRepository = require('../data-access/accounts');
 const { ForbiddenError } = require('../utils/errors/types/Api.error');
 
 /**
@@ -19,19 +19,19 @@ const createRoleCheckMiddleware = (requiredRoles, userRoleField = 'role') => {
       }
 
       // Fetch user with their role information
-      const user = await UserRepository.findById(req.userId);
+      const account = await AccountRepository.findById(req.userId);
       
-      if (!user) {
-        throw new ForbiddenError('User not found');
+      if (!account) {
+        throw new ForbiddenError('Account not found');
       }
       
       // Check if user has any of the required roles
-      if (!roles.includes(user[userRoleField])) {
+      if (!roles.includes(account[userRoleField])) {
         throw new ForbiddenError(`Access denied. Required role: ${roles.join(' or ')}`);
       }
       
-      // Add user info to request for later use
-      req.user = user;
+      // Add account info to request for later use
+      req.account = account;
       next();
     } catch (error) {
       next(error);

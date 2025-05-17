@@ -1,12 +1,20 @@
 {
   "info": {
-    "name": "Express Sequelize API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "12345678"
+    "name": "Tride API",
+    "description": "API collection for Tride Gateway API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
   "item": [
     {
-      "name": "Authentication",
+      "name": "Auth",
+      "description": "Authentication endpoints",
       "item": [
         {
           "name": "Register",
@@ -20,7 +28,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"user@example.com\",\n    \"username\": \"testuser\",\n    \"name\": \"Test User\",\n    \"password\": \"password123\"\n}"
+              "raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\",\n    \"account_type\": \"parent\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/register",
@@ -28,27 +36,37 @@
               "path": ["auth", "register"]
             },
             "description": "Register a new user account"
-          }
-        },
-        {
-          "name": "Login",
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "const jsonResponse = pm.response.json();",
-                  "if (jsonResponse && jsonResponse.data && jsonResponse.data.token) {",
-                  "    pm.globals.set('token', jsonResponse.data.token);",
+                  "const response = pm.response.json();",
+                  "if (response.success) {",
+                  "    if (response.data.token) {",
+                  "        pm.environment.set('token', response.data.token);",
+                  "    }",
+                  "    if (response.data.refreshToken) {",
+                  "        pm.environment.set('refresh_token', response.data.refreshToken);",
+                  "    }",
+                  "    if (response.data.account) {",
+                  "        pm.environment.set('user_email', response.data.account.email);",
+                  "    }",
                   "}",
-                  "if (jsonResponse && jsonResponse.data && jsonResponse.data.refreshToken) {",
-                  "    pm.globals.set('refresh_token', jsonResponse.data.refreshToken);",
-                  "}"
-                ],
-                "type": "text/javascript"
+                  "pm.test(\"Registration successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Login",
           "request": {
             "method": "POST",
             "header": [
@@ -59,32 +77,77 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"password123\"\n}"
+              "raw": "{\n    \"email\": \"{{user_email}}\",\n    \"password\": \"password123\",\n    \"account_type\": \"parent\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
               "host": ["{{base_url}}"],
               "path": ["auth", "login"]
             },
-            "description": "Login with existing credentials"
-          }
-        },
-        {
-          "name": "Refresh Token",
+            "description": "Login to an existing account"
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "const jsonResponse = pm.response.json();",
-                  "if (jsonResponse && jsonResponse.data && jsonResponse.data.token) {",
-                  "    pm.globals.set('token', jsonResponse.data.token);",
-                  "}"
-                ],
-                "type": "text/javascript"
+                  "const response = pm.response.json();",
+                  "if (response.success) {",
+                  "    if (response.data.token) {",
+                  "        pm.environment.set('token', response.data.token);",
+                  "    }",
+                  "    if (response.data.refreshToken) {",
+                  "        pm.environment.set('refresh_token', response.data.refreshToken);",
+                  "    }",
+                  "}",
+                  "pm.test(\"Login successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Get current user profile information"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"Profile retrieved successfully\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data.account).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
           "request": {
             "method": "POST",
             "header": [
@@ -102,8 +165,28 @@
               "host": ["{{base_url}}"],
               "path": ["auth", "refresh"]
             },
-            "description": "Exchange a refresh token for a new access token"
-          }
+            "description": "Get a new token using refresh token"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.token) {",
+                  "    pm.environment.set('token', response.data.token);",
+                  "}",
+                  "pm.test(\"Token refreshed successfully\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data.token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Logout",
@@ -120,32 +203,140 @@
               "host": ["{{base_url}}"],
               "path": ["auth", "logout"]
             },
-            "description": "Logout and invalidate current session"
-          }
+            "description": "Logout and invalidate tokens"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success) {",
+                  "    pm.environment.unset('token');",
+                  "    pm.environment.unset('refresh_token');",
+                  "}",
+                  "pm.test(\"Logout successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Get Current User",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/me",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "me"]
+          "name": "Social Authentication",
+          "description": "Social authentication endpoints for Google and Facebook",
+          "item": [
+            {
+              "name": "Google Authentication",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"idToken\": \"YOUR_GOOGLE_ID_TOKEN\",\n    \"account_type\": \"parent\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/auth/google",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "auth", "google"]
+                },
+                "description": "Authenticate with Google ID token"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "if (response.success) {",
+                      "    if (response.data.token) {",
+                      "        pm.environment.set('token', response.data.token);",
+                      "    }",
+                      "    if (response.data.refreshToken) {",
+                      "        pm.environment.set('refresh_token', response.data.refreshToken);",
+                      "    }",
+                      "    if (response.data.account) {",
+                      "        pm.environment.set('user_email', response.data.account.email);",
+                      "    }",
+                      "}",
+                      "pm.test(\"Google authentication successful\", function() {",
+                      "    pm.response.to.have.status(200);",
+                      "    pm.expect(response.success).to.be.true;",
+                      "    pm.expect(response.data.account).to.be.an('object');",
+                      "});"
+                    ]
+                  }
+                }
+              ]
             },
-            "description": "Get details of currently logged-in user"
-          }
+            {
+              "name": "Facebook Authentication",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"accessToken\": \"YOUR_FACEBOOK_ACCESS_TOKEN\",\n    \"account_type\": \"parent\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/auth/facebook",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "auth", "facebook"]
+                },
+                "description": "Authenticate with Facebook access token"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "if (response.success) {",
+                      "    if (response.data.token) {",
+                      "        pm.environment.set('token', response.data.token);",
+                      "    }",
+                      "    if (response.data.refreshToken) {",
+                      "        pm.environment.set('refresh_token', response.data.refreshToken);",
+                      "    }",
+                      "    if (response.data.account) {",
+                      "        pm.environment.set('user_email', response.data.account.email);",
+                      "    }",
+                      "}",
+                      "pm.test(\"Facebook authentication successful\", function() {",
+                      "    pm.response.to.have.status(200);",
+                      "    pm.expect(response.success).to.be.true;",
+                      "    pm.expect(response.data.account).to.be.an('object');",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
         }
-      ],
-      "description": "Authentication-related endpoints"
+      ]
     },
     {
       "name": "Email Verification",
+      "description": "Email verification endpoints",
       "item": [
         {
           "name": "Verify Email",
@@ -159,18 +350,33 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
+              "raw": "{\n    \"email\": \"{{user_email}}\",\n    \"code\": \"123456\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/email/verify",
               "host": ["{{base_url}}"],
               "path": ["auth", "email", "verify"]
             },
-            "description": "Verify email using verification code"
-          }
+            "description": "Verify email with verification code"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"Email verification processed\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Resend Email Verification Code",
+          "name": "Resend Verification Code",
           "request": {
             "method": "POST",
             "header": [
@@ -181,21 +387,37 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"user@example.com\"\n}"
+              "raw": "{\n    \"email\": \"{{user_email}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/email/verify/resend",
               "host": ["{{base_url}}"],
               "path": ["auth", "email", "verify", "resend"]
             },
-            "description": "Request a new email verification code"
-          }
+            "description": "Resend email verification code"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"Verification code resent\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
-      ],
-      "description": "Email verification-related endpoints"
+      ]
     },
     {
       "name": "Password Reset",
+      "description": "Password reset endpoints",
       "item": [
         {
           "name": "Request Password Reset",
@@ -209,15 +431,31 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"user@example.com\"\n}"
+              "raw": "{\n    \"email\": \"{{user_email}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/password/request",
               "host": ["{{base_url}}"],
               "path": ["auth", "password", "request"]
             },
-            "description": "Request a password reset verification code"
-          }
+            "description": "Request a password reset code"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"Password reset requested\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Resend Password Reset Code",
@@ -231,32 +469,34 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"user@example.com\"\n}"
+              "raw": "{\n    \"email\": \"{{user_email}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/password/resend",
               "host": ["{{base_url}}"],
               "path": ["auth", "password", "resend"]
             },
-            "description": "Resend a password reset verification code"
-          }
-        },
-        {
-          "name": "Verify Password Reset Code",
+            "description": "Resend password reset code"
+          },
+          "response": [],
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "const jsonResponse = pm.response.json();",
-                  "if (jsonResponse && jsonResponse.data && jsonResponse.data.resetToken) {",
-                  "    pm.globals.set('reset_token', jsonResponse.data.resetToken);",
-                  "}"
-                ],
-                "type": "text/javascript"
+                  "const response = pm.response.json();",
+                  "pm.test(\"Password reset code resent\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
               }
             }
-          ],
+          ]
+        },
+        {
+          "name": "Verify Password Reset Code",
           "request": {
             "method": "POST",
             "header": [
@@ -267,15 +507,34 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
+              "raw": "{\n    \"email\": \"{{user_email}}\",\n    \"code\": \"123456\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/password/verify",
               "host": ["{{base_url}}"],
               "path": ["auth", "password", "verify"]
             },
-            "description": "Verify password reset code and get reset token"
-          }
+            "description": "Verify password reset code"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data.resetToken) {",
+                  "    pm.environment.set('reset_token', response.data.resetToken);",
+                  "}",
+                  "pm.test(\"Password reset code verified\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Reset Password",
@@ -289,18 +548,536 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"newpassword123\",\n    \"resetToken\": \"{{reset_token}}\"\n}"
+              "raw": "{\n    \"email\": \"{{user_email}}\",\n    \"password\": \"newPassword123\",\n    \"resetToken\": \"{{reset_token}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/password/reset",
               "host": ["{{base_url}}"],
               "path": ["auth", "password", "reset"]
             },
-            "description": "Reset password using verification token"
-          }
+            "description": "Reset password with token"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success) {",
+                  "    pm.environment.unset('reset_token');",
+                  "}",
+                  "pm.test(\"Password reset successful\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
-      ],
-      "description": "Password reset-related endpoints"
+      ]
+    },
+    {
+      "name": "Profile",
+      "description": "Profile management endpoints",
+      "item": [
+        {
+          "name": "Parent Profile",
+          "item": [
+            {
+              "name": "Create Parent Profile",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "name",
+                      "value": "Parent Name",
+                      "type": "text"
+                    },
+                    {
+                      "key": "phone",
+                      "value": "+1234567890",
+                      "type": "text"
+                    },
+                    {
+                      "key": "gender",
+                      "value": "female",
+                      "type": "text"
+                    },
+                    {
+                      "key": "city_id",
+                      "value": "1",
+                      "type": "text"
+                    },
+                    {
+                      "key": "google_place_id",
+                      "value": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+                      "type": "text"
+                    },
+                    {
+                      "key": "lat",
+                      "value": "37.7749",
+                      "type": "text"
+                    },
+                    {
+                      "key": "lng",
+                      "value": "-122.4194",
+                      "type": "text"
+                    },
+                    {
+                      "key": "formatted_address",
+                      "value": "123 Main St, City, Country",
+                      "type": "text"
+                    },
+                    {
+                      "key": "profile_pic",
+                      "type": "file",
+                      "src": "/path/to/profile_picture.jpg",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/profile/parent",
+                  "host": ["{{base_url}}"],
+                  "path": ["profile", "parent"]
+                },
+                "description": "Create a parent profile with profile picture"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "if (response.success && response.data.token) {",
+                      "    pm.environment.set('token', response.data.token);",
+                      "}",
+                      "if (response.success && response.data.refreshToken) {",
+                      "    pm.environment.set('refresh_token', response.data.refreshToken);",
+                      "}",
+                      "pm.test(\"Parent profile created\", function() {",
+                      "    pm.response.to.have.status(200);",
+                      "    pm.expect(response.success).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Update Parent Profile",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "name",
+                      "value": "Updated Parent Name",
+                      "type": "text"
+                    },
+                    {
+                      "key": "phone",
+                      "value": "+1234567890",
+                      "type": "text"
+                    },
+                    {
+                      "key": "gender",
+                      "value": "female",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "city_id",
+                      "value": "1",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "profile_pic",
+                      "type": "file",
+                      "src": "/path/to/updated_profile.jpg",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/profile/parent",
+                  "host": ["{{base_url}}"],
+                  "path": ["profile", "parent"]
+                },
+                "description": "Update a parent profile"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Parent profile updated\", function() {",
+                      "    pm.response.to.have.status(200);",
+                      "    pm.expect(response.success).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Upload Parent ID Documents",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "front_side_nic",
+                      "type": "file",
+                      "src": "/path/to/id_front.jpg"
+                    },
+                    {
+                      "key": "back_side_nic",
+                      "type": "file",
+                      "src": "/path/to/id_back.jpg"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/profile/parent/papers",
+                  "host": ["{{base_url}}"],
+                  "path": ["profile", "parent", "papers"]
+                },
+                "description": "Upload parent ID documents"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Parent ID documents uploaded\", function() {",
+                      "    pm.response.to.have.status(200);",
+                      "    pm.expect(response.success).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Driver Profile",
+          "item": [
+            {
+              "name": "Create Driver Profile",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "name",
+                      "value": "Driver Name",
+                      "type": "text"
+                    },
+                    {
+                      "key": "phone",
+                      "value": "+1234567890",
+                      "type": "text"
+                    },
+                    {
+                      "key": "license_number",
+                      "value": "DL12345678",
+                      "type": "text"
+                    },
+                    {
+                      "key": "gender",
+                      "value": "male",
+                      "type": "text"
+                    },
+                    {
+                      "key": "city_id",
+                      "value": "1",
+                      "type": "text"
+                    },
+                    {
+                      "key": "lat",
+                      "value": "37.7749",
+                      "type": "text"
+                    },
+                    {
+                      "key": "lng",
+                      "value": "-122.4194",
+                      "type": "text"
+                    },
+                    {
+                      "key": "formatted_address",
+                      "value": "123 Main St, City, Country",
+                      "type": "text"
+                    },
+                    {
+                      "key": "profile_pic",
+                      "type": "file",
+                      "src": "/path/to/driver_profile.jpg"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/profile/driver",
+                  "host": ["{{base_url}}"],
+                  "path": ["profile", "driver"]
+                },
+                "description": "Create a driver profile with required profile picture"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "if (response.success && response.data.token) {",
+                      "    pm.environment.set('token', response.data.token);",
+                      "}",
+                      "if (response.success && response.data.refreshToken) {",
+                      "    pm.environment.set('refresh_token', response.data.refreshToken);",
+                      "}",
+                      "pm.test(\"Driver profile created\", function() {",
+                      "    pm.response.to.have.status(200);",
+                      "    pm.expect(response.success).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Update Driver Profile",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "name",
+                      "value": "Updated Driver Name",
+                      "type": "text"
+                    },
+                    {
+                      "key": "phone",
+                      "value": "+9876543210",
+                      "type": "text"
+                    },
+                    {
+                      "key": "license_number",
+                      "value": "DL87654321",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "profile_pic",
+                      "type": "file",
+                      "src": "/path/to/updated_driver_profile.jpg",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/profile/driver",
+                  "host": ["{{base_url}}"],
+                  "path": ["profile", "driver"]
+                },
+                "description": "Update a driver profile"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "pm.test(\"Driver profile updated\", function() {",
+                      "    pm.response.to.have.status(200);",
+                      "    pm.expect(response.success).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Upload Driver Papers",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "front_side_national",
+                      "type": "file",
+                      "src": "/path/to/national_id_front.jpg"
+                    },
+                    {
+                      "key": "back_side_national",
+                      "type": "file",
+                      "src": "/path/to/national_id_back.jpg"
+                    },
+                    {
+                      "key": "driver_license",
+                      "type": "file",
+                      "src": "/path/to/driver_license.jpg"
+                    },
+                    {
+                      "key": "car_license",
+                      "type": "file",
+                      "src": "/path/to/car_license.jpg"
+                    },
+                    {
+                      "key": "car_model",
+                      "value": "Toyota Camry",
+                      "type": "text"
+                    },
+                    {
+                      "key": "car_model_year",
+                      "value": "2020",
+                      "type": "text"
+                    },
+                    {
+                      "key": "driver_license_exp_date",
+                      "value": "2025-12-31",
+                      "type": "text"
+                    },
+                    {
+                      "key": "car_license_exp_date",
+                      "value": "2024-06-30",
+                      "type": "text"
+                    },
+                    {
+                      "key": "face_auth_complete",
+                      "value": "true",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/profile/driver/papers",
+                  "host": ["{{base_url}}"],
+                  "path": ["profile", "driver", "papers"]
+                },
+                "description": "Upload driver papers and documents"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "if (response.success && response.data.token) {",
+                      "    pm.environment.set('token', response.data.token);",
+                      "}",
+                      "if (response.success && response.data.refreshToken) {",
+                      "    pm.environment.set('refresh_token', response.data.refreshToken);",
+                      "}",
+                      "pm.test(\"Driver papers uploaded\", function() {",
+                      "    pm.response.to.have.status(200);",
+                      "    pm.expect(response.success).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Get Profile Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile/status",
+              "host": ["{{base_url}}"],
+              "path": ["profile", "status"]
+            },
+            "description": "Get profile status and approval information"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.test(\"Profile status retrieved\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data.accountType).to.be.a('string');",
+                  "    pm.expect(response.data.isVerified).to.be.a('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "event": [
@@ -309,7 +1086,9 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          ""
+          "// Global pre-request script",
+          "const currentTime = new Date().toISOString();",
+          "pm.variables.set('currentTimestamp', currentTime);"
         ]
       }
     },
@@ -318,31 +1097,16 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          ""
+          "// Global test script",
+          "pm.test(\"Response time is acceptable\", function() {",
+          "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+          "});",
+          "",
+          "pm.test(\"Status code is in success range\", function() {",
+          "    pm.expect(pm.response.code).to.be.within(200, 304);",
+          "});"
         ]
       }
-    }
-  ],
-  "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:3000/api",
-      "type": "string"
-    },
-    {
-      "key": "token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "refresh_token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "reset_token",
-      "value": "",
-      "type": "string"
     }
   ]
 }

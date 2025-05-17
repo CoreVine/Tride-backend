@@ -1,4 +1,4 @@
-const UserRepository = require('../data-access/users');
+const AccountRepository = require('../data-access/accounts');
 const VerificationCodeRepository = require('../data-access/verificationCodes');
 const emailService = require('../services/email.service');
 const loggingService = require('../services/logging.service');
@@ -36,15 +36,15 @@ const emailVerificationController = {
       await VerificationCodeRepository.cleanupTokens(email);
       
       // Check if user exists
-      const userData = await UserRepository.findOneByEmail(email);
+      const accountData = await AccountRepository.findOneByEmail(email);
       
-      if (!userData) {
+      if (!accountData) {
         logger.warn(`Email verification requested for non-existent account: ${email}`);
-        throw new NotFoundError('User not found');
+        throw new NotFoundError('Account not found');
       }
       
       // Check if email is already verified
-      if (userData.email_verified) {
+      if (accountData.is_verified) {
         logger.info(`Email verification requested for already verified email: ${email}`);
         return res.success('Your email is already verified');
       }
@@ -69,7 +69,7 @@ const emailVerificationController = {
       
       // Send email with verification code
       await emailService.sendAccountVerificationCode(email, {
-        name: userData.name || userData.username,
+        name: accountData.name || email.split('@')[0],
         verificationCode: code,
         expiryMinutes: process.env.EMAIL_VERIFICATION_EXP_MINS || 30
       });
@@ -124,13 +124,13 @@ const emailVerificationController = {
       }
       
       // Update user's email_verified status
-      const user = await UserRepository.findOneByEmail(email);
+      const account = await AccountRepository.findOneByEmail(email);
       
-      if (!user) {
-        throw new NotFoundError('User not found');
+      if (!account) {
+        throw new NotFoundError('Account not found');
       }
       
-      await UserRepository.update(user.user_id, { email_verified: true });
+      await AccountRepository.update(account.id, { is_verified: true });
       
       // Delete the verification code as it's no longer needed
       await VerificationCodeRepository.deleteByEmailAndType(email, 'email_verification');

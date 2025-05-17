@@ -1,4 +1,4 @@
-const UserRepository = require('../data-access/users');
+const AccountRepository = require('../data-access/accounts');
 const { ForbiddenError } = require('../utils/errors/types/Api.error');
 
 /**
@@ -16,13 +16,13 @@ const verifiedEmailRequired = async (req, res, next) => {
       throw new ForbiddenError('Authentication required');
     }
     
-    const user = await UserRepository.findById(req.userId);
+    const account = await AccountRepository.findById(req.userId);
     
-    if (!user) {
-      throw new ForbiddenError('User not found');
+    if (!account) {
+      throw new ForbiddenError('Account not found');
     }
     
-    if (!user.email_verified) {
+    if (!account.is_verified) {
       throw new ForbiddenError('Email verification required to access this resource');
     }
     

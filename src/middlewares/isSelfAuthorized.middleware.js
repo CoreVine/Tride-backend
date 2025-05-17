@@ -1,4 +1,4 @@
-const UserRepository = require('../data-access/users');
+const AccountRepository = require('../data-access/accounts');
 const { ForbiddenError } = require('../utils/errors/types/Api.error');
 
 /**
@@ -20,15 +20,15 @@ const isSelfAuthorizedMiddleware = (options = {}) => {
         throw new ForbiddenError(`Resource ID parameter '${idParam}' is missing or invalid`);
       }
       
-      // Get the user making the request
-      const user = await UserRepository.findByIdExcludeProps(req.userId, ['password_hash']);
+      // Get the account making the request
+      const account = await AccountRepository.findByIdExcludeProps(req.userId, ['password']);
       
-      if (!user) {
-        throw new ForbiddenError('User not found');
+      if (!account) {
+        throw new ForbiddenError('Account not found');
       }
       
-      // Check if user is the owner of the resource (assuming user_id matches resource ID)
-      if (user.user_id === requestedResourceId) {
+      // Check if user is the owner of the resource (assuming id matches resource ID)
+      if (account.id === requestedResourceId) {
         // User is authorized to operate on their own resource
         req.isSelfAuthorized = true;
         return next();

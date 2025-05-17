@@ -59,6 +59,11 @@ class DriverPapers extends Model {
       approval_date: {
         type: DataTypes.DATEONLY,
         allowNull: true
+      },
+      face_auth_complete: {
+        type: DataTypes.TINYINT(1),
+        allowNull: false,
+        defaultValue: 0
       }
     }, {
       sequelize,
@@ -77,3 +82,4 @@ class DriverPapers extends Model {
 }
 
 module.exports = DriverPapers;
+

@@ -1,4 +1,4 @@
-const VerificationCodeModel = require('../../models/verificationCode');
+const VerificationCodeModel = require('../../models/VerificationCode');
 const BaseRepository = require('../base.repository');
 const { Op } = require("sequelize");
 const crypto = require('crypto');

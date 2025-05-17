@@ -6,7 +6,11 @@ const os = require('os');
 const { v4: uuidv4 } = require('uuid');
 const loggingService = require("../services/logging.service");
 const logger = loggingService.getLogger();
+// Import cloudinary configuration
+const cloudinaryConfig = require('./cloudinary.config');
 
+// Initialize Cloudinary with config from environment
+cloudinaryConfig.initCloudinary();
 
 // Create a custom middleware to check for file upload
 const requireFileUpload = (fieldName) => (req, res, next) => {
@@ -120,6 +124,11 @@ const deleteUploadedFile = async (filePath) => {
       await awsService.deleteFile(fileUUID, extension, bucketPath);
       console.log(`File deleted from S3: ${filename}`);
     }
+    // Cloudinary
+    else if (filePath.includes('cloudinary.com/') || filePath.includes('res.cloudinary.com/')) {
+      // Use the cloudinary config's delete function
+      await cloudinaryConfig.deleteFromCloudinary(filePath);
+    }
   } catch (error) {
     console.error(`Error deleting file: ${error.message}`);
   }
@@ -128,12 +137,13 @@ const deleteUploadedFile = async (filePath) => {
 /**
  * Create multer configuration
  * @param {Object} options - Configuration options
- * @param {string} options.storageType - Storage type ('disk' or 's3')
- * @param {string} options.uploadPath - Upload path for disk storage or bucket path for S3
+ * @param {string} options.storageType - Storage type ('disk', 's3', or 'cloudinary')
+ * @param {string} options.uploadPath - Upload path for disk storage, bucket path for S3, or folder for Cloudinary
  * @param {string|function} options.fileFilter - Predefined filter name or custom filter function
  * @param {number} options.fileSize - Maximum file size in bytes
  * @param {Object} options.limits - Additional limits for multer
  * @param {string} options.fileNamePrefix - Prefix for uploaded files
+ * @param {Object} options.cloudinaryOptions - Additional options for Cloudinary
  */
 function createUploader(options = {}) {
   const {
@@ -142,7 +152,8 @@ function createUploader(options = {}) {
     fileFilter = 'all',
     fileSize = 5 * 1024 * 1024, // 5MB default
     limits = {},
-    fileNamePrefix = ''
+    fileNamePrefix = '',
+    cloudinaryOptions = {}
   } = options;
 
   // Resolve file filter
@@ -303,6 +314,88 @@ function createUploader(options = {}) {
     };
   }
   
+  // Cloudinary Storage Configuration
+  else if (storageType === 'cloudinary') {
+    // Configure Cloudinary storage using the cloudinary config
+    const storage = cloudinaryConfig.createCloudinaryStorage({
+      resourceType: cloudinaryOptions.resourceType || cloudinaryConfig.RESOURCE_TYPES.AUTO,
+      accountType: cloudinaryOptions.accountType || cloudinaryConfig.ACCOUNT_TYPES.SYSTEM,
+      purpose: cloudinaryOptions.purpose || cloudinaryConfig.PURPOSE_TYPES.MISC,
+      userId: cloudinaryOptions.userId,
+      uploadPath: uploadPath,
+      transformation: cloudinaryOptions.transformation,
+      transformationPreset: cloudinaryOptions.transformationPreset,
+      fileNamePrefix: fileNamePrefix,
+      allowedFormats: cloudinaryOptions.allowedFormats || [],
+      tags: cloudinaryOptions.tags || []
+    });
+
+    // Get folder path for logging and metadata
+    const folder = cloudinaryConfig.getFolderPath({
+      accountType: cloudinaryOptions.accountType || cloudinaryConfig.ACCOUNT_TYPES.SYSTEM,
+      purpose: cloudinaryOptions.purpose || cloudinaryConfig.PURPOSE_TYPES.MISC,
+      userId: cloudinaryOptions.userId,
+      customPath: uploadPath
+    });
+
+    const resourceType = cloudinaryOptions.resourceType || cloudinaryConfig.RESOURCE_TYPES.AUTO;
+
+    const multerInstance = multer({
+      storage,
+      fileFilter: resolvedFilter,
+      limits: uploadLimits
+    });
+
+    // Add some post-processing to enhance file object with additional info
+    const enhanceCloudinaryResponse = (req, res, next) => {
+      try {
+        // For single file uploads
+        if (req.file) {
+          // Process the file with cloudinary metadata
+          cloudinaryConfig.processUploadedFile(req.file, { resourceType, folder });
+          logger.info(`[CLOUDINARY] File uploaded: ${req.file.originalname} -> ${req.file.path}`);
+        }
+        
+        // For multiple file uploads
+        if (req.files) {
+          // Array of files
+          if (Array.isArray(req.files)) {
+            req.files.forEach(file => {
+              cloudinaryConfig.processUploadedFile(file, { resourceType, folder });
+            });
+            
+            logger.info(`[CLOUDINARY] ${req.files.length} files uploaded to ${folder}`);
+          } 
+          // Fields of files
+          else {
+            Object.keys(req.files).forEach(field => {
+              req.files[field].forEach(file => {
+                cloudinaryConfig.processUploadedFile(file, { resourceType, folder });
+              });
+              
+              const totalFiles = Object.values(req.files).reduce((sum, files) => sum + files.length, 0);
+              logger.info(`[CLOUDINARY] ${totalFiles} files uploaded across ${Object.keys(req.files).length} fields to ${folder}`);
+            });
+          }
+        }
+        
+        next();
+      } catch (error) {
+        logger.error(`[CLOUDINARY] Error processing upload: ${error.message}`);
+        next(error);
+      }
+    };
+    
+    // Return wrapped methods with the same interface as the S3 uploader
+    return {
+      single: (fieldName) => [multerInstance.single(fieldName), enhanceCloudinaryResponse],
+      array: (fieldName, maxCount) => [multerInstance.array(fieldName, maxCount), enhanceCloudinaryResponse],
+      fields: (fields) => [multerInstance.fields(fields), enhanceCloudinaryResponse],
+      any: () => [multerInstance.any(), enhanceCloudinaryResponse],
+      none: () => multerInstance.none()
+    };
+  }
+  
   throw new Error(`Unsupported storage type: ${storageType}`);
 }
 
@@ -311,5 +404,9 @@ module.exports = {
   fileFilters,
   createFileFilter,
   deleteUploadedFile,
-  requireFileUpload
+  requireFileUpload,
+  // Export cloudinary resource types directly from cloudinary config
+  cloudinaryResourceTypes: cloudinaryConfig.RESOURCE_TYPES,
+  cloudinaryAccountTypes: cloudinaryConfig.ACCOUNT_TYPES,
+  cloudinaryPurposeTypes: cloudinaryConfig.PURPOSE_TYPES
 };

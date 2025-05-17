@@ -6,8 +6,7 @@ class VerificationCode extends Model {
       id: {
         type: DataTypes.BIGINT.UNSIGNED,
         primaryKey: true,
-        autoIncrement: true,
-        allowNull: false
+        autoIncrement: true
       },
       email: {
         type: DataTypes.STRING(255),

@@ -3,7 +3,7 @@
  */
 module.exports = {
   allowedOrigins: [
-    process.env.FRONTEND_URL || 'http://localhost:5173', // Default frontend URL
+    process.env.FRONTEND_URL, // Default frontend URL
     // Add more web origins as needed
   ],
   credentials: true, // Allow cookies to be sent with requests

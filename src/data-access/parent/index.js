@@ -1,0 +1,52 @@
+const ParentModel = require('../../models/Parent');
+const BaseRepository = require('../base.repository');
+const { DatabaseError } = require("sequelize");
+
+class ParentRepository extends BaseRepository {
+    constructor() {
+        super(ParentModel);
+    }
+
+    async findByAccountId(accountId) {
+        try {
+            return await this.model.findOne({
+                where: { account_id: accountId }
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
+
+    async findByIdWithChildren(parentId) {
+        try {
+            return await this.model.findByPk(parentId, {
+                include: [
+                    {
+                        association: 'children',
+                        attributes: { exclude: ['created_at', 'updated_at'] }
+                    }
+                ]
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
+
+    async findByAccountIdWithChildren(accountId) {
+        try {
+            return await this.model.findOne({
+                where: { account_id: accountId },
+                include: [
+                    {
+                        association: 'children',
+                        attributes: { exclude: ['created_at', 'updated_at'] }
+                    }
+                ]
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
+}
+
+module.exports = new ParentRepository();

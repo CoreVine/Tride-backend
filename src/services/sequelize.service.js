@@ -1,6 +1,6 @@
-import { Sequelize } from "sequelize";
-import databaseConfig from "../config/database";
-import fs from "fs";
+const { Sequelize } = require("sequelize");
+const databaseConfig = require("../config/database");
+const fs = require("fs");
 
 // The model files are loaded here
 const modelFiles = fs
@@ -62,4 +62,5 @@ const sequelizeService = {
   },
 };
 
-export default sequelizeService;
+module.exports = sequelizeService;
+

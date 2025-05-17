@@ -1,4 +1,4 @@
-const UserRepository = require('../data-access/users');
+const AccountRepository = require('../data-access/accounts');
 const VerificationCodeRepository = require('../data-access/verificationCodes');
 const emailService = require('../services/email.service');
 const loggingService = require('../services/logging.service');
@@ -39,16 +39,22 @@ const passwordResetController = {
       await VerificationCodeRepository.cleanupTokens(email);
       
       // Check if user exists
-      const userData = await UserRepository.findOneByEmail(email);
+      const accountData = await AccountRepository.findOneByEmail(email);
       
       // SECURITY: Always return success response even if user not found
       // This prevents user enumeration attacks
-      if (!userData) {
+      if (!accountData) {
         logger.info(`Password reset requested for non-existent account: ${email}`);
         return res.success('If your email is registered, you will receive a password reset code', {
           email,
           expiresAt: getCodeExpiration()
         });
+      }
+
+      // Check if account was created with email (not social auth)
+      if (accountData.auth_method !== 'email') {
+        logger.warn('Password reset attempted for social auth account', { email, auth_method: accountData.auth_method });
+        return res.error('Password reset is only available for accounts created with email login. Please log in using your social provider.', 400);
       }
 
       // Delete any existing verification codes for this email
@@ -63,7 +69,7 @@ const passwordResetController = {
         email,
         code,
         expires_at: expiresAt,
-        account_type: 'user',
+        account_type: accountData.account_type,
         type: 'password_reset',
         verified: false,
         attempt_count: 0
@@ -71,7 +77,7 @@ const passwordResetController = {
       
       // Send email with verification code
       await emailService.sendPasswordResetCode(email, {
-        name: userData.name,
+        name: accountData.name || email.split('@')[0],
         verificationCode: code,
         expiryMinutes: process.env.RESET_PW_VERIFICATION_EXP_MINS || 5
       });
@@ -133,6 +139,19 @@ const passwordResetController = {
         logger.warn(`Expired verification code used for ${email}`);
         throw new VerificationCodeExpiredError();
       }
+
+      // Check if account exists
+      const account = await AccountRepository.findOneByEmail(email);
+      
+      if (!account) {
+        throw new NotFoundError('Account not found');
+      }
+      
+      // Check if account was created with email (not social auth)
+      if (account.auth_method !== 'email') {
+        logger.warn('Password verification attempted for social auth account', { email, auth_method: account.auth_method });
+        throw new BadRequestError('Password reset is only available for accounts created with email login');
+      }
       
       // Mark code as verified
       await VerificationCodeRepository.markAsVerified(verificationCode.id);
@@ -178,12 +197,18 @@ const passwordResetController = {
       // Update user password
       const password_hash = await bcrypt.hash(password, 12);
       
-      const user = await UserRepository.findOneByEmail(email);
-      if (!user) {
-        throw new NotFoundError('User not found');
+      const account = await AccountRepository.findOneByEmail(email);
+      if (!account) {
+        throw new NotFoundError('Account not found');
       }
       
-      await UserRepository.update(user.user_id, { password_hash });
+      // Check if account was created with email (not social auth)
+      if (account.auth_method !== 'email') {
+        logger.warn('Password reset attempted for social auth account', { email, auth_method: account.auth_method });
+        throw new BadRequestError('Password reset is only available for accounts created with email login');
+      }
+
+      await AccountRepository.update(account.id, { password: password_hash });
       
       // Mark token as used and immediately delete it
       await VerificationCodeRepository.markUsedAndDelete(verifiedCode.id);
