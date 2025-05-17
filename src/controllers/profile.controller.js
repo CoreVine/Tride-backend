@@ -465,7 +465,7 @@ const profileController = {
       // Delete the old profile picture if a new one was uploaded
       if (req.file && oldProfilePicUrl) {
         try {
-          await deleteUploadedFile(oldProfilePicUrl);
+          deleteUploadedFile(oldProfilePicUrl);
           logger.debug(`Deleted old driver profile picture: ${oldProfilePicUrl}`);
         } catch (deleteError) {
           logger.warn(`Failed to delete old profile picture: ${deleteError.message}`, { url: oldProfilePicUrl });
