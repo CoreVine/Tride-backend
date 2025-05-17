@@ -7,7 +7,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:3000",
+      "value": "http://localhost:3000/api",
       "type": "string"
     }
   ],
@@ -245,7 +245,7 @@
                   "raw": "{\n    \"idToken\": \"YOUR_GOOGLE_ID_TOKEN\",\n    \"account_type\": \"parent\"\n}"
                 },
                 "url": {
-                  "raw": "{{base_url}}/api/auth/google",
+                  "raw": "{{base_url}}/auth/google",
                   "host": ["{{base_url}}"],
                   "path": ["api", "auth", "google"]
                 },
@@ -295,7 +295,7 @@
                   "raw": "{\n    \"accessToken\": \"YOUR_FACEBOOK_ACCESS_TOKEN\",\n    \"account_type\": \"parent\"\n}"
                 },
                 "url": {
-                  "raw": "{{base_url}}/api/auth/facebook",
+                  "raw": "{{base_url}}/auth/facebook",
                   "host": ["{{base_url}}"],
                   "path": ["api", "auth", "facebook"]
                 },
