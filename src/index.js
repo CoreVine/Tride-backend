@@ -3,9 +3,15 @@ const sequelizeService = require("./services/sequelize.service");
 const awsService = require("./services/aws.service");
 const emailService = require("./services/email.service");
 const redisService = require("./services/redis.service");
-require('dotenv').config();
+require("dotenv").config();
 
-const services = [expressService, awsService, sequelizeService, emailService, redisService];
+const services = [
+  expressService,
+  awsService,
+  sequelizeService,
+  emailService,
+  redisService,
+];
 
 (async () => {
   try {

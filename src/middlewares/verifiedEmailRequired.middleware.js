@@ -1,5 +1,5 @@
-const AccountRepository = require('../data-access/accounts');
-const { ForbiddenError } = require('../utils/errors/types/Api.error');
+const AccountRepository = require("../data-access/accounts");
+const { ForbiddenError } = require("../utils/errors/types/Api.error");
 
 /**
  * Middleware to check if user's email is verified
@@ -8,24 +8,26 @@ const { ForbiddenError } = require('../utils/errors/types/Api.error');
 const verifiedEmailRequired = async (req, res, next) => {
   try {
     // Skip verification check if feature is disabled
-    if (process.env.EMAIL_VERIFICATION_REQUIRED !== 'true') {
+    if (process.env.EMAIL_VERIFICATION_REQUIRED !== "true") {
       return next();
     }
 
     if (!req.userId) {
-      throw new ForbiddenError('Authentication required');
+      throw new ForbiddenError("Authentication required");
     }
-    
+
     const account = await AccountRepository.findById(req.userId);
-    
+
     if (!account) {
-      throw new ForbiddenError('Account not found');
+      throw new ForbiddenError("Account not found");
     }
-    
+
     if (!account.is_verified) {
-      throw new ForbiddenError('Email verification required to access this resource');
+      throw new ForbiddenError(
+        "Email verification required to access this resource"
+      );
     }
-    
+
     // If email is verified, proceed to next middleware
     next();
   } catch (error) {
