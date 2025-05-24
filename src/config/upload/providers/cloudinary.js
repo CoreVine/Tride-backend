@@ -78,8 +78,6 @@ const enhanceFileWithCloudinaryMetadata = (file, options = {}) => {
  * @returns {Object} Configured multer wrapper with Cloudinary integration
  */
 const create = (options = {}) => {
-  console.log("----------------------------------");
-
   const {
     uploadPath = "",
     fileFilter,
@@ -166,7 +164,6 @@ const create = (options = {}) => {
 
   // Create enhancement middleware for Cloudinary
   const enhanceCloudinaryResponse = (req, res, next) => {
-    console.log("Enhancing Cloudinary response...");
     try {
       // Process single file
       if (req.file) {
@@ -219,11 +216,10 @@ const create = (options = {}) => {
 
   // Return wrapped methods with the same interface as other storage providers
   return {
-    single: (fieldName) => {
-      console.log(fieldName);
-
-      return [multerInstance.single(fieldName), enhanceCloudinaryResponse];
-    },
+    single: (fieldName) => [
+      multerInstance.single("profile_pic"),
+      enhanceCloudinaryResponse,
+    ],
     array: (fieldName, maxCount) => [
       multerInstance.array(fieldName, maxCount),
       enhanceCloudinaryResponse,

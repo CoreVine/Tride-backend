@@ -133,24 +133,10 @@ const profileRoutes = Router();
 // Parent profile routes
 profileRoutes.post(
   "/profile/parent",
-  // authMiddleware,
-  // verifiedEmailRequired,
-  // isParent,
-  parentProfileUploader.single("profile_pic"),
-  (req, res) => {
-    console.log(req.file);
-
-    if (req.file) {
-      return res.status(200).json({
-        message: "Profile picture upload",
-        file: req.file,
-      });
-    } else {
-      return res.status(400).json({
-        error: "Profile picture upload failed",
-      });
-    }
-  },
+  authMiddleware,
+  verifiedEmailRequired,
+  isParent,
+  ...parentProfileUploader.single("profile_pic"),
   validate(parentProfileSchema),
   profileController.createParentProfile
 );
@@ -160,8 +146,8 @@ profileRoutes.put(
   authMiddleware,
   verifiedEmailRequired,
   isParent,
-  validate(parentProfileUpdateSchema),
   ...parentProfileUploader.single("profile_pic"),
+  validate(parentProfileUpdateSchema),
   profileController.updateParentProfile
 );
 
@@ -213,6 +199,15 @@ profileRoutes.post(
   ]),
   validate(driverPapersSchema),
   profileController.uploadDriverPapers
+);
+profileRoutes.put(
+  "/profile/driver/approved/:papersId",
+  authMiddleware,
+  verifiedEmailRequired,
+  // This route is for admin to approve driver profiles
+  // so we need to ensure the user is a driver
+  isDriver,
+  profileController.uploadDriverApproved
 );
 
 // Get profile approval status (especially for drivers)
