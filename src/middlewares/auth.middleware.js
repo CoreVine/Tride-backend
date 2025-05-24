@@ -11,7 +11,6 @@ const authMiddleware = async (req, res, next) => {
   try {
     // Skip authentication if disabled in environment config
     if (process.env.SERVER_JWT === "false") return next();
-
     let token;
     try {
       token = JwtService.jwtGetToken(req);
@@ -27,7 +26,6 @@ const authMiddleware = async (req, res, next) => {
 
     try {
       const decoded = await JwtService.jwtVerify(token);
-
       req.userId = decoded.id;
 
       return next();

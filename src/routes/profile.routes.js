@@ -131,25 +131,31 @@ const driverPapersSchema = Yup.object().shape({
 const profileRoutes = Router();
 
 // Parent profile routes
-profileRoutes.post(
-  "/profile/parent",
-  authMiddleware,
-  verifiedEmailRequired,
-  isParent,
-  ...parentProfileUploader.single("profile_pic"),
-  validate(parentProfileSchema),
-  profileController.createParentProfile
-);
 
-profileRoutes.put(
-  "/profile/parent",
-  authMiddleware,
-  verifiedEmailRequired,
-  isParent,
-  ...parentProfileUploader.single("profile_pic"),
-  validate(parentProfileUpdateSchema),
-  profileController.updateParentProfile
-);
+profileRoutes
+  .route("/profile/parent")
+  .post(
+    authMiddleware,
+    verifiedEmailRequired,
+    isParent,
+    ...parentProfileUploader.single("profile_pic"),
+    validate(parentProfileSchema),
+    profileController.createParentProfile
+  )
+  .get(
+    authMiddleware,
+    verifiedEmailRequired,
+    isParent,
+    profileController.getParentProfile
+  )
+  .put(
+    authMiddleware,
+    verifiedEmailRequired,
+    isParent,
+    ...parentProfileUploader.single("profile_pic"),
+    validate(parentProfileUpdateSchema),
+    profileController.updateParentProfile
+  );
 
 // Upload parent ID documents
 profileRoutes.post(
@@ -164,26 +170,30 @@ profileRoutes.post(
   profileController.uploadParentIdDocuments
 );
 
-// Driver profile routes
-profileRoutes.post(
-  "/profile/driver",
-  authMiddleware,
-  verifiedEmailRequired,
-  isDriver,
-  ...driverProfileUploader.single("profile_pic"),
-  validate(driverProfileSchema),
-  profileController.createDriverProfile
-);
-
-profileRoutes.put(
-  "/profile/driver",
-  authMiddleware,
-  verifiedEmailRequired,
-  isDriver,
-  ...driverProfileUploader.single("profile_pic"),
-  validate(driverProfileUpdateSchema),
-  profileController.updateDriverProfile
-);
+profileRoutes
+  .route("/profile/driver")
+  .post(
+    authMiddleware,
+    verifiedEmailRequired,
+    isDriver,
+    ...driverProfileUploader.single("profile_pic"),
+    validate(driverProfileSchema),
+    profileController.createDriverProfile
+  )
+  .get(
+    authMiddleware,
+    verifiedEmailRequired,
+    isDriver,
+    profileController.getDriverProfile
+  )
+  .put(
+    authMiddleware,
+    verifiedEmailRequired,
+    isDriver,
+    ...driverProfileUploader.single("profile_pic"),
+    validate(driverProfileUpdateSchema),
+    profileController.updateDriverProfile
+  );
 
 // Step 2 for drivers: Upload papers - all document validation happens BEFORE upload
 profileRoutes.post(

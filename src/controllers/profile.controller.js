@@ -102,6 +102,58 @@ const profileController = {
       next(error);
     }
   },
+  getParentProfile: async (req, res, next) => {
+    try {
+      logger.info("Parent profile Retrived attempt", { accountId: req.userId });
+
+      // Verify account exists and is verified
+      const account = await AccountRepository.findById(req.userId);
+
+      if (!account) {
+        throw new NotFoundError("Account not found");
+      }
+
+      if (!account.is_verified) {
+        throw new ForbiddenError(
+          "Account email must be verified before Retrived a profile"
+        );
+      }
+
+      // Check if parent profile already exists BEFORE processing files
+      const parent = await ParentRepository.findByAccountId(req.userId);
+
+      if (!parent) {
+        throw new NotFoundError(
+          "Parent profile does not exist for this account"
+        );
+      }
+
+      logger.info("Parent profile retrived successfully", {
+        accountId: req.userId,
+        parentId: parent.id,
+      });
+
+      // Update JWT with new profile info
+      const newToken = JwtService.jwtSign(req.userId, {
+        accountType: "parent",
+        profileComplete: true,
+        accountTypeId: parent.id,
+      });
+
+      // Return success with parent profile
+      return res.success("Parent profile retrived successfully", {
+        parent,
+        token: newToken.token,
+        refreshToken: newToken.refreshToken,
+      });
+    } catch (error) {
+      logger.error("Parent profile retrived error", {
+        error: error.message,
+        stack: error.stack,
+      });
+      next(error);
+    }
+  },
 
   // Upload Parent ID Documents
   uploadParentIdDocuments: async (req, res, next) => {
@@ -646,7 +698,57 @@ const profileController = {
       next(error);
     }
   },
+  getDriverProfile: async (req, res, next) => {
+    try {
+      logger.info("Parent profile Retrived attempt", { accountId: req.userId });
 
+      // Verify account exists and is verified
+      const account = await AccountRepository.findById(req.userId);
+      if (!account) {
+        throw new NotFoundError("Account not found");
+      }
+
+      if (!account.is_verified) {
+        throw new ForbiddenError(
+          "Account email must be verified before Retrived a profile"
+        );
+      }
+
+      // Check if parent profile already exists BEFORE processing files
+      const driver = await DriverRepository.findByAccountId(req.userId);
+
+      if (!driver) {
+        throw new NotFoundError(
+          "driver profile does not exist for this account"
+        );
+      }
+
+      logger.info("driver profile retrived successfully", {
+        accountId: req.userId,
+        driverid: driver.id,
+      });
+
+      // Update JWT with new profile info
+      const newToken = JwtService.jwtSign(req.userId, {
+        accountType: "driver",
+        profileComplete: true,
+        accountTypeId: driver.id,
+      });
+
+      // Return success with parent profile
+      return res.success("driver profile retrived successfully", {
+        data: driver,
+        token: newToken.token,
+        refreshToken: newToken.refreshToken,
+      });
+    } catch (error) {
+      logger.error("driver profile retrived error", {
+        error: error.message,
+        stack: error.stack,
+      });
+      next(error);
+    }
+  },
   // Get profile status - especially useful for drivers to check approval
   getProfileStatus: async (req, res, next) => {
     try {
