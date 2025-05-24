@@ -1,10 +1,10 @@
 /**
  * Provider factory module for storage implementations
  */
-const diskStorage = require('./disk');
-const s3Storage = require('./s3');
-const cloudinaryStorage = require('./cloudinary');
-const loggingService = require('../../../services/logging.service');
+const diskStorage = require("./disk");
+const s3Storage = require("./s3");
+const cloudinaryStorage = require("./cloudinary");
+const loggingService = require("../../../services/logging.service");
 
 const logger = loggingService.getLogger();
 
@@ -15,24 +15,24 @@ const logger = loggingService.getLogger();
  */
 const createStorage = (options = {}) => {
   const { storageType, ...configOptions } = options;
-  
+
   logger.debug(`[UPLOAD] Creating storage provider of type: ${storageType}`);
-  
+
   switch (storageType) {
-    case 'disk':
+    case "disk":
       return diskStorage.create(configOptions);
-    
-    case 's3':
+
+    case "s3":
       return s3Storage.create(configOptions);
-    
-    case 'cloudinary':
+
+    case "cloudinary":
       return cloudinaryStorage.create(configOptions);
-    
+
     default:
       throw new Error(`Unsupported storage type: ${storageType}`);
   }
 };
 
 module.exports = {
-  createStorage
+  createStorage,
 };
