@@ -29,6 +29,7 @@
     "ioredis": "^5.3.2",
     "jsonwebtoken": "^9.0.0",
     "moment": "^2.29.3",
+    "mongoose": "^8.15.0",
     "morgan": "^1.10.0",
     "multer": "1.4.5-lts.2",
     "multer-storage-cloudinary": "^4.0.0",
@@ -36,6 +37,7 @@
     "nodemailer": "^6.10.0",
     "pg": "^8.10.0",
     "sequelize": "^6.28.2",
+    "socket.io": "^4.8.1",
     "uuid": "^9.0.0",
     "winston": "^3.17.0",
     "yup": "^1.0.0"

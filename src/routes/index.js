@@ -1,3 +1,4 @@
+// src/routes/index.js
 const { Router } = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -15,7 +16,6 @@ router.get('/', (req, res) => {
 });
 
 // Dynamically load all route files in this directory
-// This allows you to add new route files without modifying this index file
 fs.readdirSync(__dirname)
   .filter(file => {
     return file.indexOf('.') !== 0 && 
@@ -24,7 +24,8 @@ fs.readdirSync(__dirname)
   })
   .forEach(file => {
     const route = require(path.join(__dirname, file));
-    router.use(route);
+    // When 'route' is an Express Router instance, this is perfectly valid!
+    router.use(route); 
   });
 
 module.exports = router;

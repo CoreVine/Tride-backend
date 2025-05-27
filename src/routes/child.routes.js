@@ -38,7 +38,7 @@ const childSchemaUpdateSchema = Yup.object().shape({
   name: Yup.string(),
   gender: Yup.string(),
   grade: Yup.string(),
-});
+});  
 
 const childRoutes = Router();
 
