@@ -13,7 +13,7 @@ const cityController = {
 
       const cities = await CityRepository.findAll();
 
-      return res.success("Cities fetched successfully", { cities });
+      return res.success("Cities fetched successfully", cities);
     } catch (error) {
       logger.error("Error fetching cities", {
         error: error.message,
@@ -35,7 +35,7 @@ const cityController = {
         throw new NotFoundError(`City with ID ${id} not found`);
       }
 
-      return res.success("City fetched successfully", { city });
+      return res.success("City fetched successfully", city);
     } catch (error) {
       logger.error("Error fetching city", {
         error: error.message,
