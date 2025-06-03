@@ -1,371 +1,143 @@
-// services/socketio.service.js
-
-const http = require("http");
+// src/services/socketio.service.js
 const { Server } = require("socket.io");
-const loggingService = require("./logging.service");
-const logger = loggingService.getLogger();
+const logger = require("./logging.service").getLogger();
 
-// Import your necessary models and services
-const JwtService = require("./jwt.service");
-const AccountRepository = require("../data-access/accounts");
-const Parent = require("../models/Parent");
-const Driver = require("../models/Driver");
-const ChatRoom = require("../models/ChatRoom");
-const ChatMessage = require("../models/ChatMessage");
-const Notification = require("../models/Notification"); // New Notification model
+let io; // This will hold our Socket.IO server instance
+let attachedHttpServer; // To store the HTTP server instance we attach to
 
-let _io;
-let _httpServer;
-const userSocketMap = new Map(); // Track connected users and their sockets
+// A map to store userId -> Set<socket.id> for direct messaging/notifications
+const userSocketMap = new Map();
 
-// Notification types
-const NOTIFICATION_TYPES = {
-  MESSAGE: "new_message",
-  RIDE_UPDATE: "ride_update",
-  SYSTEM: "system_notification",
-};
-
-const init = async (expressApp) => {
-  if (_io) {
-    logger.warn("Socket.IO service already initialized.");
-    return _io;
+/**
+ * Initializes the Socket.IO server by attaching it to an existing HTTP server.
+ * @param {import('http').Server} httpServer The Node.js HTTP server instance to attach to.
+ */
+function init(httpServer) {
+  if (!httpServer || typeof httpServer.listen !== "function") {
+    logger.error(
+      "[Socket.IO] Invalid HTTP server instance provided. Cannot initialize Socket.IO."
+    );
+    throw new Error("Invalid HTTP server provided to Socket.IO service.");
   }
 
-  _httpServer = http.createServer(expressApp);
-
-  _io = new Server(_httpServer, {
+  io = new Server(httpServer, {
     cors: {
-      origin: [process.env.FRONTEND_URL || "*", "null"],
+      origin: process.env.CLIENT_URL || "*", // Adjust CORS as needed for your frontend
       methods: ["GET", "POST"],
     },
+    // Add other options like transports if necessary
   });
 
-  logger.info("Socket.IO initialized.");
+  attachedHttpServer = httpServer; // Store the provided http server
 
-  // --- Socket.IO Authentication Middleware ---
-  _io.use(async (socket, next) => {
-    console.log("Socket.IO Auth Middleware triggered", socket.handshake);
-    console.log("Socket.IO Auth Middleware Auth", socket.handshake.query.token);
-    let token;
-    try {
-      token = socket.handshake.query.token;
-      if (!token) {
-        logger.warn("Socket.IO Auth: No authentication token provided.");
-        return next(new Error("Authentication error: No token provided"));
+  io.on("connection", (socket) => {
+    logger.info(`[Socket.IO] User connected: ${socket.id}`);
+
+    // Extract userId from handshake (e.g., query params or auth payload)
+    const userId =
+      socket.handshake.query.userId || socket.handshake.auth.userId;
+
+    if (userId) {
+      // Store the userId on the socket for easy access later
+      socket.userId = userId;
+
+      // Add socket.id to the userSocketMap for this userId
+      if (!userSocketMap.has(userId)) {
+        userSocketMap.set(userId, new Set());
       }
-      token = token.startsWith("Bearer ") ? token.slice(7) : token;
-      const decoded = await JwtService.jwtVerify(token);
-      socket.userId = decoded.id;
-
-      const account = await AccountRepository.findById(socket.userId);
-      if (!account) {
-        logger.warn(
-          `Socket.IO Auth: Account not found for user ID: ${socket.userId}`
-        );
-        return next(new Error("Authentication error: Account not found"));
-      }
-      socket.accountType = account.account_type;
-
+      userSocketMap.get(userId).add(socket.id);
       logger.info(
-        `Socket.IO: User ${socket.userId} (${socket.accountType}) connected with socket ID: ${socket.id}`
+        `[Socket.IO] Socket ${
+          socket.id
+        } associated with user_${userId}. Total sockets for user: ${
+          userSocketMap.get(userId).size
+        }`
       );
-      next();
-    } catch (error) {
-      logger.error("Socket.IO Auth failed:", error.message);
-      next(new Error("Authentication error: Invalid token or account"));
+
+      // Also join a private room for this user for general user-specific notifications
+      socket.join(`user_${userId}`);
+      logger.info(`[Socket.IO] Socket ${socket.id} joined room user_${userId}`);
+    } else {
+      logger.warn(
+        `[Socket.IO] Connected socket ${socket.id} has no associated userId.`
+      );
     }
-  });
 
-  // --- Socket.IO Event Handlers ---
-  _io.on("connection", (socket) => {
-    logger.info(`Socket connected: ${socket.id}, User ID: ${socket.userId}`);
-
-    // Track the user's socket connection
-    userSocketMap.set(socket.userId, socket.id);
-
-    // Send pending notifications when user connects
-    sendPendingNotifications(socket.userId);
-
-    // Join a specific chat room for a ride group
-    socket.on("join_ride_group_chat", async (rideGroupId) => {
-      try {
-        if (!rideGroupId) {
-          throw new Error("rideGroupId is required to join a chat.");
-        }
-
-        let chatRoom = await ChatRoom.findOne({ ride_group_id: rideGroupId });
-        if (!chatRoom) {
-          chatRoom = new ChatRoom({ ride_group_id: rideGroupId });
-          await chatRoom.save();
-          logger.info(
-            `Created new chat room for ride group ${rideGroupId}: ${chatRoom._id}`
-          );
-        }
-
-        socket.chatRoomId = chatRoom._id.toString();
-        socket.rideGroupId = rideGroupId;
-
-        socket.join(socket.chatRoomId);
-        logger.info(
-          `User ${socket.userId} joined room: ${socket.chatRoomId} (Ride Group: ${rideGroupId})`
-        );
-
-        const messages = await ChatMessage.find({ chat_room_id: chatRoom._id })
-          .sort({ created_at: 1 })
-          .limit(50);
-
-        const messagesWithSenderNames = await Promise.all(
-          messages.map(async (msg) => {
-            let senderName = "Unknown User";
-            if (msg.sender_type === "parent") {
-              const parent = await Parent.findByPk(msg.sender_id, {
-                attributes: ["name"],
-              });
-              senderName = parent ? parent.name : "Parent";
-            } else if (msg.sender_type === "driver") {
-              const driver = await Driver.findByPk(msg.sender_id, {
-                attributes: ["name"],
-              });
-              senderName = driver ? driver.name : "Driver";
-            }
-            return {
-              id: msg._id,
-              senderId: msg.sender_id,
-              senderType: msg.sender_type,
-              senderName: senderName,
-              message: msg.message,
-              createdAt: msg.created_at,
-            };
-          })
-        );
-
-        socket.emit("chat_history", messagesWithSenderNames);
-      } catch (error) {
-        logger.error(
-          `Error joining chat room for ride group ${rideGroupId}:`,
-          error.message
-        );
-        socket.emit("chat_error", `Failed to join chat room: ${error.message}`);
-      }
+    socket.on("join_room", (roomId) => {
+      socket.join(roomId);
+      logger.info(
+        `[Socket.IO] Socket ${socket.id} joined chat room: ${roomId}`
+      );
     });
 
-    // Handle incoming messages
-    socket.on("send_message", async (data) => {
-      const { message } = data;
-      const { userId, accountType, chatRoomId, rideGroupId } = socket;
-
-      if (!chatRoomId || !userId || !message) {
-        return socket.emit(
-          "chat_error",
-          "Cannot send message: not in a room, or missing user/message."
-        );
-      }
-
-      try {
-        const newChatMessage = new ChatMessage({
-          chat_room_id: chatRoomId,
-          sender_id: userId,
-          sender_type: accountType,
-          message: message,
-        });
-        await newChatMessage.save();
-        logger.info(`User ${userId} sent message to room ${chatRoomId}`);
-
-        let senderName = "Unknown User";
-        if (accountType === "parent") {
-          const parent = await Parent.findByPk(userId, {
-            attributes: ["name"],
-          });
-          senderName = parent ? parent.name : "Parent";
-        } else if (accountType === "driver") {
-          const driver = await Driver.findByPk(userId, {
-            attributes: ["name"],
-          });
-          senderName = driver ? driver.name : "Driver";
-        }
-
-        const messageToBroadcast = {
-          id: newChatMessage._id,
-          senderId: userId,
-          senderType: accountType,
-          senderName: senderName,
-          message: newChatMessage.message,
-          createdAt: newChatMessage.created_at,
-        };
-
-        _io.to(chatRoomId).emit("receive_message", messageToBroadcast);
-
-        // Create notification for all other users in the chat room
-        await createNotificationForChatMessage(
-          userId,
-          chatRoomId,
-          rideGroupId,
-          messageToBroadcast
-        );
-      } catch (error) {
-        logger.error(
-          `Error sending message in room ${chatRoomId}:`,
-          error.message
-        );
-        socket.emit("chat_error", `Failed to send message: ${error.message}`);
-      }
-    });
-
-    // Notification event handlers
-    socket.on("mark_notification_as_read", async (notificationId) => {
-      try {
-        await Notification.findByIdAndUpdate(notificationId, { is_read: true });
-        logger.info(`Notification ${notificationId} marked as read`);
-      } catch (error) {
-        logger.error(`Error marking notification as read: ${error.message}`);
-      }
+    socket.on("leave_room", (roomId) => {
+      socket.leave(roomId);
+      logger.info(`[Socket.IO] Socket ${socket.id} left chat room: ${roomId}`);
     });
 
     socket.on("disconnect", () => {
-      logger.info(
-        `Socket disconnected: ${socket.id}, User ID: ${socket.userId}`
-      );
-      userSocketMap.delete(socket.userId);
+      logger.info(`[Socket.IO] User disconnected: ${socket.id}`);
+      // Remove socket.id from userSocketMap on disconnect
+      if (socket.userId && userSocketMap.has(socket.userId)) {
+        userSocketMap.get(socket.userId).delete(socket.id);
+        if (userSocketMap.get(socket.userId).size === 0) {
+          userSocketMap.delete(socket.userId); // Remove user entry if no active sockets
+        }
+        logger.info(
+          `[Socket.IO] Socket ${socket.id} removed from user_${
+            socket.userId
+          }. Remaining sockets for user: ${
+            userSocketMap.has(socket.userId)
+              ? userSocketMap.get(socket.userId).size
+              : 0
+          }`
+        );
+      }
     });
   });
 
-  return _io;
-};
+  logger.info("[Socket.IO] Server initialized and attached to HTTP server.");
+}
 
-// Notification-related functions
+function getIo() {
+  if (!io) {
+    logger.error(
+      "[Socket.IO] Socket.IO server not initialized. Call init() first."
+    );
+    throw new Error("Socket.IO server not initialized.");
+  }
+  return io;
+}
+
+function getHttpServer() {
+  if (!attachedHttpServer) {
+    logger.error(
+      "[Socket.IO] HTTP server not attached. Call init() first with an http.Server instance."
+    );
+    throw new Error("HTTP server not attached to Socket.IO.");
+  }
+  return attachedHttpServer;
+}
 
 /**
- * Create a notification for a new chat message
+ * Returns the userSocketMap for direct access to user's connected sockets.
+ * @returns {Map<string, Set<string>>} A map of userId to a Set of socket IDs.
  */
-const createNotificationForChatMessage = async (
-  senderId,
-  chatRoomId,
-  rideGroupId,
-  message
-) => {
-  try {
-    // Get all users in the chat room except the sender
-    const chatRoom = await ChatRoom.findById(chatRoomId);
-    if (!chatRoom) {
-      logger.error(`Chat room ${chatRoomId} not found`);
-      return;
-    }
+function getUserSocketMap() {
+  return userSocketMap;
+}
 
-    // In a real app, you would have a way to determine who should receive notifications
-    // For this example, we'll assume we need to notify all participants in the ride group
-
-    // Create notifications for each recipient
-    const notification = new Notification({
-      recipient_id: message.senderId, // In practice, this would be the other users
-      sender_id: senderId,
-      type: NOTIFICATION_TYPES.MESSAGE,
-      title: "New Message",
-      message: `You have a new message from ${message.senderName}`,
-      related_entity_type: "chat",
-      related_entity_id: chatRoomId,
-      is_read: false,
-      metadata: {
-        ride_group_id: rideGroupId,
-        chat_room_id: chatRoomId,
-        sender_name: message.senderName,
-      },
-    });
-
-    await notification.save();
-
-    // Send real-time notification if recipient is online
-    const recipientSocketId = userSocketMap.get(notification.recipient_id);
-    if (recipientSocketId) {
-      _io.to(recipientSocketId).emit("new_notification", notification);
-    }
-  } catch (error) {
-    logger.error(`Error creating chat message notification: ${error.message}`);
-  }
-};
-
-/**
- * Send pending notifications to a user when they connect
- */
-const sendPendingNotifications = async (userId) => {
-  try {
-    const notifications = await Notification.find({
-      recipient_id: userId,
-      is_read: false,
-    })
-      .sort({ created_at: -1 })
-      .limit(10); // Get 10 most recent unread notifications
-
-    const socketId = userSocketMap.get(userId);
-    if (socketId && notifications.length > 0) {
-      _io.to(socketId).emit("pending_notifications", notifications);
-      logger.info(
-        `Sent ${notifications.length} pending notifications to user ${userId}`
-      );
-    }
-  } catch (error) {
-    logger.error(`Error sending pending notifications: ${error.message}`);
-  }
-};
-
-/**
- * Create and send a notification to a specific user
- */
-const sendNotification = async ({
-  recipientId,
-  senderId,
-  type,
-  title,
-  message,
-  relatedEntityType,
-  relatedEntityId,
-  metadata,
-}) => {
-  try {
-    const notification = new Notification({
-      recipient_id: recipientId,
-      sender_id: senderId,
-      type: type,
-      title: title,
-      message: message,
-      related_entity_type: relatedEntityType,
-      related_entity_id: relatedEntityId,
-      is_read: false,
-      metadata: metadata,
-    });
-
-    await notification.save();
-
-    // Send real-time notification if recipient is online
-    const socketId = userSocketMap.get(recipientId);
-    if (socketId) {
-      _io.to(socketId).emit("new_notification", notification);
-    }
-
-    return notification;
-  } catch (error) {
-    logger.error(`Error creating notification: ${error.message}`);
-    throw error;
-  }
-};
-
-const getIo = () => {
-  if (!_io) {
-    throw new Error("Socket.IO not initialized. Call init() first.");
-  }
-  return _io;
-};
-
-const getHttpServer = () => {
-  if (!_httpServer) {
-    throw new Error("HTTP server not initialized. Call init() first.");
-  }
-  return _httpServer;
+const NOTIFICATION_TYPES = {
+  NEW_MESSAGE: "new_message",
+  MESSAGE_DELETED: "message_deleted", // Corrected duplicate key
+  SYSTEM_MESSAGE: "system_message",
+  NEW_NOTIFICATION: "new_notification",
 };
 
 module.exports = {
   init,
   getIo,
   getHttpServer,
-  sendNotification,
+  getUserSocketMap, // Export the new function
   NOTIFICATION_TYPES,
 };

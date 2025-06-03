@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Socket.IO Chat Test</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
 </head>
+
 <body>
     <h1>Socket.IO Chat Test</h1>
     <p>Open your browser's developer console (F12) to see chat messages and interact.</p>
@@ -13,7 +15,7 @@
     <script>
         // --- Configuration ---
         const BACKEND_URL = 'http://localhost:3000'; // Your backend server URL
-        const USER_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7ImlkIjozLCJhY2NvdW50VHlwZSI6InBhcmVudCIsInByb2ZpbGVDb21wbGV0ZSI6ZmFsc2UsImFjY291bnRUeXBlSWQ6bnVsbH0sImlhdCI6MTc0ODIyODE0Miwiand0aSI6ImMyZDA3ZDY5LWNhMDUtNDc3YS1hMWNkLWY1ZWNkZDNhOTI2OSJ9.zkc6HWBIhfR_79Ss5CCL14qHXnh3ZF8XOJInxtpWNXY'; // <--- PASTE YOUR JWT TOKEN HERE
+        const USER_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7ImlkIjo4LCJhY2NvdW50VHlwZSI6InBhcmVudCIsInByb2ZpbGVDb21wbGV0ZSI6dHJ1ZSwiYWNjb3VudFR5cGVJZCI6N30sImlhdCI6MTc0ODQ0MTQzMywianRpIjoiN2RjN2MxODEtYjdiNi00YThhLTg2YmEtNmJmYjRhZWI2NDE5In0.-VuJniuzfoE6oVibAUVZklSgU-I_WO1hpVsOAaqOAXM'; // <--- PASTE YOUR JWT TOKEN HERE
         const RIDE_GROUP_ID_TO_JOIN = 2; // <--- REPLACE WITH AN ACTUAL RIDE GROUP ID (e.g., 1, 2, 3...)
 
         // --- Connect to Socket.IO Server ---
@@ -79,4 +81,5 @@
         }
     </script>
 </body>
+
 </html>
