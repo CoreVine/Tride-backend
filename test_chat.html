@@ -4,81 +4,570 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Socket.IO Chat Test</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+    <title>Secure Chat Application</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        .notification-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ef4444;
+            position: absolute;
+            top: 2px;
+            right: 2px;
+        }
+
+        .message-container:hover .message-actions {
+            opacity: 1;
+        }
+
+        .typing-indicator:after {
+            content: '...';
+            animation: typing 1.5s infinite;
+        }
+
+        @keyframes typing {
+            0% {
+                content: '.';
+            }
+
+            33% {
+                content: '..';
+            }
+
+            66% {
+                content: '...';
+            }
+        }
+    </style>
 </head>
 
-<body>
-    <h1>Socket.IO Chat Test</h1>
-    <p>Open your browser's developer console (F12) to see chat messages and interact.</p>
+<body class="bg-gray-100 font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+            <div class="p-4 border-b border-gray-200">
+                <h1 class="text-xl font-bold text-gray-800">Secure Chat</h1>
+                <div class="mt-4">
+                    <input type="text" id="userIdInput" placeholder="User ID"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md mb-2" value="8">
+                    <input type="text" id="tokenInput" placeholder="JWT Token"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7ImlkIjo4LCJhY2NvdW50VHlwZSI6InBhcmVudCIsInByb2ZpbGVDb21wbGV0ZSI6dHJ1ZSwiYWNjb3VudFR5cGVJZCI6N30sImlhdCI6MTc0OTAyMjEzNCwianRpIjoiYWUyMWEzZmItZWE1YS00NWU5LWEyNTAtMDJjMDQ2YzFmOGE2In0.GwlnAbB6s8sbU6lttsNIJmZzk6o6kD2rI0ZQx1PVOJI">
+                </div>
+                <button id="connectBtn" class="mt-2 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
+                    Connect
+                </button>
+                <div id="connectionStatus" class="mt-2 text-sm text-gray-600"></div>
+            </div>
+
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="font-semibold text-gray-700">Chat Rooms</h2>
+                <div class="mt-2">
+                    <input type="text" id="roomIdInput" placeholder="Enter Room ID"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <button id="joinRoomBtn" class="mt-2 w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700">
+                    Join Room
+                </button>
+                <button id="leaveRoomBtn" class="mt-2 w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700">
+                    Leave Room
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4">
+                <h2 class="font-semibold text-gray-700 mb-2">Active Rooms</h2>
+                <ul id="activeRoomsList" class="space-y-1"></ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col">
+            <!-- Chat Header -->
+            <div class="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+                <h2 id="currentRoomDisplay" class="text-lg font-semibold text-gray-800">Not in a room</h2>
+                <div id="typingIndicator" class="text-sm text-gray-500 italic"></div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                <div class="text-center text-gray-500">Join a room to start chatting</div>
+            </div>
+
+            <!-- Message Input -->
+            <div class="bg-white border-t border-gray-200 p-4">
+                <div class="flex space-x-2">
+                    <input type="text" id="messageInput" placeholder="Type a message..."
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="sendMessageBtn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        Send
+                    </button>
+                </div>
+                <div class="mt-2 flex space-x-2">
+                    <input type="file" id="fileUpload" class="hidden">
+                    <button id="uploadBtn" class="bg-gray-200 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-300">
+                        Upload File
+                    </button>
+                    <button id="testNotificationBtn"
+                        class="bg-purple-600 text-white px-3 py-1 rounded-md hover:bg-purple-700">
+                        Test Notification
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Panel -->
+        <div class="w-64 bg-white border-l border-gray-200 flex flex-col">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="font-semibold text-gray-700">Notifications</h2>
+                <div class="flex space-x-2">
+                    <button id="markAllReadBtn" class="text-blue-600 text-sm hover:underline">
+                        Mark all read
+                    </button>
+                    <button id="clearNotificationsBtn" class="text-red-600 text-sm hover:underline">
+                        Clear all
+                    </button>
+                </div>
+            </div>
+            <div id="notificationsContainer" class="flex-1 overflow-y-auto p-2 space-y-2">
+                <div class="text-center text-gray-500 p-4">No notifications yet</div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // --- Configuration ---
-        const BACKEND_URL = 'http://localhost:3000'; // Your backend server URL
-        const USER_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7ImlkIjo4LCJhY2NvdW50VHlwZSI6InBhcmVudCIsInByb2ZpbGVDb21wbGV0ZSI6dHJ1ZSwiYWNjb3VudFR5cGVJZCI6N30sImlhdCI6MTc0ODQ0MTQzMywianRpIjoiN2RjN2MxODEtYjdiNi00YThhLTg2YmEtNmJmYjRhZWI2NDE5In0.-VuJniuzfoE6oVibAUVZklSgU-I_WO1hpVsOAaqOAXM'; // <--- PASTE YOUR JWT TOKEN HERE
-        const RIDE_GROUP_ID_TO_JOIN = 2; // <--- REPLACE WITH AN ACTUAL RIDE GROUP ID (e.g., 1, 2, 3...)
+        // DOM Elements
+        const userIdInput = document.getElementById('userIdInput');
+        const tokenInput = document.getElementById('tokenInput');
+        const connectBtn = document.getElementById('connectBtn');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const roomIdInput = document.getElementById('roomIdInput');
+        const joinRoomBtn = document.getElementById('joinRoomBtn');
+        const leaveRoomBtn = document.getElementById('leaveRoomBtn');
+        const activeRoomsList = document.getElementById('activeRoomsList');
+        const currentRoomDisplay = document.getElementById('currentRoomDisplay');
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileUpload = document.getElementById('fileUpload');
+        const testNotificationBtn = document.getElementById('testNotificationBtn');
+        const notificationsContainer = document.getElementById('notificationsContainer');
+        const markAllReadBtn = document.getElementById('markAllReadBtn');
+        const clearNotificationsBtn = document.getElementById('clearNotificationsBtn');
+        const typingIndicator = document.getElementById('typingIndicator');
 
-        // --- Connect to Socket.IO Server ---
-        let socket;
-        try {
-            socket = io(BACKEND_URL, {
+        // Socket.IO variables
+        let socket = null;
+        let currentUserId = null;
+        let currentRoomId = null;
+        let isTyping = false;
+        let typingTimeout = null;
+
+        // Connect to Socket.IO server with JWT authentication
+        connectBtn.addEventListener('click', () => {
+            const userId = userIdInput.value.trim();
+            const token = tokenInput.value.trim();
+
+            if (!userId || !token) {
+                updateConnectionStatus('Please enter both User ID and Token', 'text-red-600');
+                return;
+            }
+
+            if (socket) {
+                socket.disconnect();
+            }
+
+            currentUserId = userId;
+
+            // Connect with JWT authentication
+            socket = io('http://localhost:3000', {
+                transports: ['websocket'],
                 auth: {
-                    token: USER_JWT_TOKEN // This passes your JWT for authentication
-                }
+                    token: `Bearer ${token}`,
+                    userId: userId
+                },
+                query: {
+                    userId: userId
+                },
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000,
+                timeout: 20000
             });
 
-            // --- Socket.IO Event Listeners (Frontend side) ---
+            setupSocketListeners();
+            updateUI();
+        });
+
+        // Join a room
+        joinRoomBtn.addEventListener('click', () => {
+            if (!socket || !socket.connected) {
+                updateConnectionStatus('Please connect first', 'text-red-600');
+                return;
+            }
+
+            const roomId = roomIdInput.value.trim();
+            if (!roomId) {
+                updateConnectionStatus('Please enter a room ID', 'text-red-600');
+                return;
+            }
+
+            socket.emit('join_room', roomId);
+            currentRoomId = roomId;
+            currentRoomDisplay.textContent = `Room: ${roomId}`;
+            updateActiveRoomsList();
+            updateUI();
+        });
+
+        // Leave current room
+        leaveRoomBtn.addEventListener('click', () => {
+            if (!socket || !socket.connected || !currentRoomId) {
+                updateConnectionStatus('Not in a room', 'text-red-600');
+                return;
+            }
+
+            socket.emit('leave_room', currentRoomId);
+            currentRoomId = null;
+            currentRoomDisplay.textContent = 'Not in a room';
+            chatContainer.innerHTML = '<div class="text-center text-gray-500">Join a room to start chatting</div>';
+            updateActiveRoomsList();
+            updateUI();
+        });
+
+        // Send a message
+        sendMessageBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Typing indicator
+        messageInput.addEventListener('input', () => {
+            if (!isTyping && currentRoomId) {
+                isTyping = true;
+                socket.emit('typing', { roomId: currentRoomId, userId: currentUserId });
+            }
+
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                isTyping = false;
+                socket.emit('stop_typing', { roomId: currentRoomId, userId: currentUserId });
+            }, 2000);
+        });
+
+        function sendMessage() {
+            if (!socket || !socket.connected || !currentRoomId) {
+                updateConnectionStatus('Not connected or not in a room', 'text-red-600');
+                return;
+            }
+
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Emit the message to the server
+            socket.emit('new_message', {
+                roomId: currentRoomId,
+                message,
+                senderId: currentUserId,
+                timestamp: new Date().toISOString()
+            });
+
+            // Clear input
+            messageInput.value = '';
+        }
+
+        // File upload
+        uploadBtn.addEventListener('click', () => {
+            fileUpload.click();
+        });
+
+        fileUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file || !socket || !currentRoomId) return;
+
+            // In a real app, you would upload to your server first
+            // For demo, we'll simulate with a local URL
+            const fileUrl = URL.createObjectURL(file);
+            const fileType = file.type.split('/')[0]; // 'image', 'video', etc.
+
+            socket.emit('new_message', {
+                roomId: currentRoomId,
+                media_url: fileUrl,
+                type: fileType,
+                senderId: currentUserId,
+                timestamp: new Date().toISOString()
+            });
+
+            fileUpload.value = '';
+        });
+
+        // Test notification
+        testNotificationBtn.addEventListener('click', () => {
+            if (!socket || !socket.connected) {
+                updateConnectionStatus('Please connect first', 'text-red-600');
+                return;
+            }
+
+            socket.emit('test_notification', {
+                recipientId: currentUserId,
+                title: 'Test Notification',
+                message: 'This is a test notification from the client',
+                type: 'test'
+            });
+        });
+
+        // Mark all notifications as read
+        markAllReadBtn.addEventListener('click', () => {
+            if (!socket || !socket.connected) return;
+
+            socket.emit('mark_all_notifications_read', { userId: currentUserId });
+        });
+
+        // Clear all notifications
+        clearNotificationsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            notificationsContainer.innerHTML = '<div class="text-center text-gray-500 p-4">No notifications yet</div>';
+        });
+
+        // Setup Socket.IO listeners
+        function setupSocketListeners() {
             socket.on('connect', () => {
-                console.log('✅ Socket Connected! Client ID:', socket.id);
-                socket.emit('join_ride_group_chat', RIDE_GROUP_ID_TO_JOIN);
-                console.log(`Attempting to join ride group chat: ${RIDE_GROUP_ID_TO_JOIN}`);
+                console.log('Connected to server');
+                //    updateConnectionStatus('Connected', 'text-green-600');
+                //  updateUI();
             });
 
             socket.on('disconnect', (reason) => {
-                console.warn('❌ Socket Disconnected:', reason);
+                console.log('Disconnected to server');
+
+                //    updateConnectionStatus(`Disconnected: ${reason}`, 'text-red-600');
+                //   updateUI();
             });
 
-            socket.on('connect_error', (error) => {
-                console.error('❌ Socket Connection Error:', error.message);
+            socket.on('connect_error', (err) => {
+                console.error('Connection error:', err);
+                updateConnectionStatus(`Error: ${err.message}`, 'text-red-600');
             });
 
-            socket.on('chat_error', (errorMessage) => {
-                console.error('⚠️ Chat Error from Server:', errorMessage);
+            socket.on('new_message', (message) => {
+                console.log('New message:', message);
+                addMessageToUI({
+                    ...message,
+                    isCurrentUser: message.senderId === currentUserId
+                });
             });
 
-            socket.on('chat_history', (messages) => {
-                console.log('--- 📜 Chat History Received ---');
-                if (messages.length === 0) {
-                    console.log('No previous messages in this chat.');
-                } else {
-                    messages.forEach(msg => {
-                        console.log(`[${new Date(msg.createdAt).toLocaleTimeString()}] <span class="math-inline">\{msg\.senderName\} \(</span>{msg.senderType}): ${msg.message}`);
+            socket.on('message_deleted', (data) => {
+                console.log('Message deleted:', data);
+                const messageElement = document.getElementById(`message-${data.messageId}`);
+                if (messageElement) {
+                    messageElement.innerHTML = '<div class="text-gray-500 italic">Message deleted</div>';
+                }
+            });
+
+            socket.on('user_typing', (data) => {
+                if (data.roomId === currentRoomId && data.userId !== currentUserId) {
+                    typingIndicator.textContent = `User ${data.userId} is typing...`;
+                }
+            });
+
+            socket.on('user_stopped_typing', (data) => {
+                if (data.roomId === currentRoomId && data.userId !== currentUserId) {
+                    typingIndicator.textContent = '';
+                }
+            });
+
+            socket.on('new_notification', (notification) => {
+                console.log('New notification:', notification);
+                addNotificationToUI(notification);
+            });
+
+            socket.on('notifications_read', (data) => {
+                console.log('Notifications marked as read:', data);
+                markNotificationsAsRead(data.notificationIds);
+            });
+
+            socket.on('all_notifications_read', () => {
+                console.log('All notifications marked as read');
+                markAllNotificationsAsRead();
+            });
+
+            socket.on('room_joined', (roomId) => {
+                console.log(`Joined room: ${roomId}`);
+                updateActiveRoomsList();
+            });
+
+            socket.on('room_left', (roomId) => {
+                console.log(`Left room: ${roomId}`);
+                updateActiveRoomsList();
+            });
+        }
+
+        // Add message to UI
+        function addMessageToUI(message) {
+            if (!currentRoomId || (message.roomId && message.roomId !== currentRoomId)) {
+                return;
+            }
+
+            // Clear "join a room" message if present
+            if (chatContainer.children.length === 1 && chatContainer.children[0].classList.contains('text-center')) {
+                chatContainer.innerHTML = '';
+            }
+
+            const messageElement = document.createElement('div');
+            messageElement.id = `message-${message.id || Date.now()}`;
+            messageElement.className = `flex ${message.isCurrentUser ? 'justify-end' : 'justify-start'}`;
+
+            let contentHtml = '';
+            if (message.type === 'image') {
+                contentHtml = `<img src="${message.media_url}" alt="Image" class="max-w-xs max-h-48 rounded-md">`;
+            } else if (message.type === 'video') {
+                contentHtml = `<video src="${message.media_url}" controls class="max-w-xs max-h-48 rounded-md"></video>`;
+            } else if (message.type === 'audio') {
+                contentHtml = `<audio src="${message.media_url}" controls class="w-full"></audio>`;
+            } else if (message.type === 'document') {
+                contentHtml = `<a href="${message.media_url}" target="_blank" class="text-blue-600 hover:underline">Download file</a>`;
+            } else {
+                contentHtml = `<div class="bg-white p-3 rounded-lg shadow">${message.message}</div>`;
+            }
+
+            messageElement.innerHTML = `
+                <div class="max-w-xs lg:max-w-md relative message-container">
+                    <div class="text-xs text-gray-500 mb-1 ${message.isCurrentUser ? 'text-right' : 'text-left'}">
+                        ${message.isCurrentUser ? 'You' : `User ${message.senderId}`}
+                        <span class="ml-2">${formatTime(message.timestamp)}</span>
+                    </div>
+                    <div class="relative">
+                        ${contentHtml}
+                        <div class="absolute right-0 bottom-0 flex space-x-1 message-actions opacity-0 transition-opacity">
+                            ${message.isCurrentUser ? `
+                                <button class="text-xs text-red-600 hover:text-red-800" 
+                                        onclick="deleteMessage('${message.id || ''}')">
+                                    Delete
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Add notification to UI
+        function addNotificationToUI(notification) {
+            // Clear "no notifications" message if present
+            if (notificationsContainer.children.length === 1 &&
+                notificationsContainer.children[0].classList.contains('text-center')) {
+                notificationsContainer.innerHTML = '';
+            }
+
+            const notificationElement = document.createElement('div');
+            notificationElement.id = `notification-${notification.id || Date.now()}`;
+            notificationElement.className = `p-3 rounded-md cursor-pointer hover:bg-gray-100 notification-item ${notification.isRead ? 'bg-white' : 'bg-blue-50 relative'}`;
+
+            if (!notification.isRead) {
+                notificationElement.innerHTML = '<div class="notification-dot"></div>';
+            }
+
+            notificationElement.innerHTML += `
+                <div class="text-sm font-medium text-gray-800">${notification.title}</div>
+                <div class="text-xs text-gray-600 mt-1">${notification.message}</div>
+                <div class="text-xs text-gray-400 mt-1">${formatTime(notification.timestamp || new Date().toISOString())}</div>
+            `;
+
+            notificationElement.addEventListener('click', () => {
+                if (!notification.isRead) {
+                    socket.emit('mark_notification_read', {
+                        notificationId: notification.id,
+                        userId: currentUserId
                     });
                 }
-                console.log('---------------------------');
             });
 
-            socket.on('receive_message', (newMessage) => {
-                console.log('--- 💬 NEW MESSAGE ---');
-                console.log(`[${new Date(newMessage.createdAt).toLocaleTimeString()}] <span class="math-inline">\{newMessage\.senderName\} \(</span>{newMessage.senderType}): ${newMessage.message}`);
-                console.log('-------------------');
-            });
-
-            console.log('Starting Socket.IO connection attempt...');
-
-        } catch (error) {
-            console.error('Error initializing Socket.IO:', error);
+            notificationsContainer.insertBefore(notificationElement, notificationsContainer.firstChild);
         }
 
-        // --- Helper function to send a message ---
-        function sendMessage(msgText) {
-            if (socket && socket.connected) {
-                console.log(`Sending message: "${msgText}" to ride group ${RIDE_GROUP_ID_TO_JOIN}`);
-                socket.emit('send_message', { message: msgText });
-            } else {
-                console.warn('Socket not connected or not ready. Cannot send message.');
+        // Mark notifications as read
+        function markNotificationsAsRead(notificationIds) {
+            notificationIds.forEach(id => {
+                const notificationElement = document.getElementById(`notification-${id}`);
+                if (notificationElement) {
+                    notificationElement.classList.remove('bg-blue-50');
+                    notificationElement.classList.add('bg-white');
+                    const dot = notificationElement.querySelector('.notification-dot');
+                    if (dot) dot.remove();
+                }
+            });
+        }
+
+        // Mark all notifications as read
+        function markAllNotificationsAsRead() {
+            document.querySelectorAll('.notification-item').forEach(item => {
+                item.classList.remove('bg-blue-50');
+                item.classList.add('bg-white');
+                const dot = item.querySelector('.notification-dot');
+                if (dot) dot.remove();
+            });
+        }
+
+        // Update active rooms list
+        function updateActiveRoomsList() {
+            // In a real app, you would get this from the server
+            // For demo, we'll just show the current room
+            activeRoomsList.innerHTML = '';
+            if (currentRoomId) {
+                const roomItem = document.createElement('li');
+                roomItem.className = 'text-sm text-gray-700 p-2 bg-gray-100 rounded';
+                roomItem.textContent = currentRoomId;
+                activeRoomsList.appendChild(roomItem);
             }
         }
+
+        // Update connection status
+        function updateConnectionStatus(message, colorClass = 'text-gray-600') {
+            connectionStatus.textContent = message;
+            connectionStatus.className = `mt-2 text-sm ${colorClass}`;
+        }
+
+        // Update UI based on connection state
+        function updateUI() {
+            const isConnected = socket && socket.connected;
+            const isInRoom = !!currentRoomId;
+
+            connectBtn.disabled = isConnected;
+            connectBtn.textContent = isConnected ? 'Connected' : 'Connect';
+            connectBtn.className = isConnected ?
+                'mt-2 w-full bg-green-600 text-white py-2 rounded-md' :
+                'mt-2 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700';
+
+            joinRoomBtn.disabled = !isConnected;
+            leaveRoomBtn.disabled = !isConnected || !isInRoom;
+            sendMessageBtn.disabled = !isConnected || !isInRoom;
+            messageInput.disabled = !isConnected || !isInRoom;
+            uploadBtn.disabled = !isConnected || !isInRoom;
+            testNotificationBtn.disabled = !isConnected;
+        }
+
+        // Format time for display
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Global function for message deletion
+        window.deleteMessage = function (messageId) {
+            if (!socket || !currentRoomId) return;
+
+            socket.emit('delete_message', {
+                messageId,
+                roomId: currentRoomId,
+                userId: currentUserId
+            });
+        };
     </script>
 </body>
 

@@ -143,6 +143,18 @@ const chatController = {
       next(error);
     }
   },
+  asssginMediaMeta: (req, res, next) => {
+    if (req.file) {
+      req.body.media_url = req.file.path; // Store the Cloudinary URL in req.body
+      req.body.type = getFileType(req.file.mimetype); // Determine file type based on MIME type
+    } else {
+      return res
+        .status(400)
+        .json({ success: false, message: "No file uploaded." });
+    }
+    next(); // Pass control to the next middleware (your final response)
+  },
+
   createMessage: async (req, res, next) => {
     try {
       const { chatRoomId } = req.params;

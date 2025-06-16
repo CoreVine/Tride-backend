@@ -1,7 +1,8 @@
 // src/services/socketio.service.js
 const { Server } = require("socket.io");
 const logger = require("./logging.service").getLogger();
-
+const jwt = require("jsonwebtoken");
+require("dotenv").config(); // Ensure you have dotenv to load environment variables
 let io; // This will hold our Socket.IO server instance
 let attachedHttpServer; // To store the HTTP server instance we attach to
 
@@ -23,6 +24,9 @@ function init(httpServer) {
   io = new Server(httpServer, {
     cors: {
       origin: process.env.CLIENT_URL || "*", // Adjust CORS as needed for your frontend
+      allowedHeaders: ["Authorization"], // Allow auth header
+      credentials: true,
+
       methods: ["GET", "POST"],
     },
     // Add other options like transports if necessary
@@ -30,38 +34,62 @@ function init(httpServer) {
 
   attachedHttpServer = httpServer; // Store the provided http server
 
-  io.on("connection", (socket) => {
-    logger.info(`[Socket.IO] User connected: ${socket.id}`);
+  // In socketio.service.js, modify the connection handler:
+  io.use((socket, next) => {
+    try {
+      const token =
+        socket.handshake.auth.token || socket.handshake.headers.authorization;
 
-    // Extract userId from handshake (e.g., query params or auth payload)
-    const userId =
-      socket.handshake.query.userId || socket.handshake.auth.userId;
-
-    if (userId) {
-      // Store the userId on the socket for easy access later
-      socket.userId = userId;
-
-      // Add socket.id to the userSocketMap for this userId
-      if (!userSocketMap.has(userId)) {
-        userSocketMap.set(userId, new Set());
+      if (!token) {
+        throw new Error("No token provided");
       }
-      userSocketMap.get(userId).add(socket.id);
-      logger.info(
-        `[Socket.IO] Socket ${
-          socket.id
-        } associated with user_${userId}. Total sockets for user: ${
-          userSocketMap.get(userId).size
-        }`
-      );
 
-      // Also join a private room for this user for general user-specific notifications
-      socket.join(`user_${userId}`);
-      logger.info(`[Socket.IO] Socket ${socket.id} joined room user_${userId}`);
-    } else {
-      logger.warn(
-        `[Socket.IO] Connected socket ${socket.id} has no associated userId.`
+      const decoded = jwt.verify(
+        token.replace("Bearer ", ""),
+        process.env.SERVER_JWT_SECRET
       );
+      socket.userId = decoded.payload.id; // Adjust based on your JWT structure
+      next();
+    } catch (error) {
+      logger.error(`Authentication failed: ${error.message}`);
+      next(new Error("Authentication error"));
     }
+  });
+
+  io.on("connection", (socket) => {
+    // logger.info(`[Socket.IO] User connected: ${socket.id}`);
+
+    // // Verify token from handshake
+    // const token =
+    //   socket.handshake.auth.token || socket.handshake.headers.authorization;
+    // if (!token) throw new Error("No token provided");
+
+    // const decoded = jwt.verify(
+    //   token.replace("Bearer ", ""),
+    //   process.env.SERVER_JWT_SECRET
+    // );
+    // const userId = decoded.payload.id; // Adjust based on your JWT structure
+
+    // if (userId) {
+    // Store the userId on the socket for easy access later
+    const userId = socket.userId;
+
+    // Add socket.id to the userSocketMap for this userId
+    if (!userSocketMap.has(userId)) {
+      userSocketMap.set(userId, new Set());
+    }
+    userSocketMap.get(userId).add(socket.id);
+    logger.info(
+      `[Socket.IO] Socket ${
+        socket.id
+      } associated with user_${userId}. Total sockets for user: ${
+        userSocketMap.get(userId).size
+      }`
+    );
+
+    // Also join a private room for this user for general user-specific notifications
+    socket.join(`user_${userId}`);
+    logger.info(`[Socket.IO] Socket ${socket.id} joined room user_${userId}`);
 
     socket.on("join_room", (roomId) => {
       socket.join(roomId);
