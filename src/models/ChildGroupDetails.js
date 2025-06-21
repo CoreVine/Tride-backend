@@ -41,7 +41,14 @@ class ChildGroupDetails extends Model {
       sequelize,
       modelName: 'ChildGroupDetails',
       tableName: 'child_group_details',
-      timestamps: false
+      timestamps: false,
+      indexes: [
+        {
+          unique: true,
+          fields: ['parent_group_id', 'child_id'],
+          name: 'unique_child_per_parent_group'
+        }
+      ]
     });
   }
 

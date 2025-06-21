@@ -20,14 +20,20 @@ class DayDatesGroup extends Model {
         onDelete: 'CASCADE'
       },
       date_day: {
-        type: DataTypes.DATEONLY,
-        allowNull: true
+        type: DataTypes.STRING
       }
     }, {
       sequelize,
       modelName: 'DayDatesGroup',
       tableName: 'day_dates_group',
-      timestamps: false
+      timestamps: false,
+      indexes: [
+        {
+          unique: true,
+          fields: ['ride_group_detailsid', 'date_day'],
+          name: 'unique_day_per_group'
+        }
+      ]
     });
   }
 
