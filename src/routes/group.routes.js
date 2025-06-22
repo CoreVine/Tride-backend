@@ -42,6 +42,19 @@ const createGroupSchema = Yup.object().shape({
     )
 });
 
+
+const addParentToGroupSchema = Yup.object().shape({
+  group_id: Yup.string().required(),
+  home: Yup.object().shape({
+    home_lat: Yup.string().required(),
+    home_lng: Yup.string().required(),
+  })
+});
+
+const addParentToGroupParamsSchema = Yup.object().shape({
+  invitation_code: Yup.string().min(8).max(8).required()
+});
+
 const addChildToGroupSchema = Yup.object().shape({
   group_id: Yup.string().required(),
   children: Yup.array().of(Yup.object().shape({
@@ -62,6 +75,7 @@ const addChildToGroupSchema = Yup.object().shape({
 });
 
 groupRoutes.use(authMiddleware, verifiedEmailRequired, isParent);
+groupRoutes.get('/ride/group/:rideGroupId', RideGroupController.getRideGroupById);
 groupRoutes.post('/ride/group/create',
   validate(createGroupSchema),
   RideGroupController.createRideGroup
@@ -71,7 +85,14 @@ groupRoutes.post('/ride/group/add-child',
   RideGroupController.addChildToGroup
 );
 
-// groupRoutes.post('/ride/group/add-parent', )
-groupRoutes.get('/ride/group/:rideGroupId', RideGroupController.getRideGroupById);
+groupRoutes.post('/ride/group/add-parent/:invitation_code', 
+  validate(
+    {
+      body: addParentToGroupSchema,
+      params: addParentToGroupParamsSchema
+    }
+  ),
+  RideGroupController.addNewParentGroup
+);
 
 module.exports = groupRoutes;

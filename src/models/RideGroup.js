@@ -71,6 +71,12 @@ class RideGroup extends Model {
         },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL'
+      },
+      invite_code: {
+        type: DataTypes.STRING(255),
+        unique: {
+          msg: 'This invite code is already taken'
+        }
       }
     }, {
       sequelize,

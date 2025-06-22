@@ -28,11 +28,16 @@ class ChildGroupDetailsRepository extends BaseRepository {
                 const child = children[i];
 
                 // check for the child existence
-                await ChildRepository.findById(child.child_id, {
+                const childExists = await ChildRepository.findOne({
                     where: {
+                        id: child.child_id,
                         parent_id: parentId
                     }
                 });
+
+                if (!childExists) {
+                    throw new NotFoundError(`Child with ID ${child.child_id} does not exist for this parent.`);
+                }
 
                 // Check for existing children before starting transaction
                 const existingChild = await this.model.findOne({

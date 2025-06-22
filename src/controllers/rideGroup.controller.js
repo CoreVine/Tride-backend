@@ -10,12 +10,12 @@ const {
   NotFoundError,
   ForbiddenError,
 } = require("../utils/errors/types/Api.error");
+const { generateInviteCode } = require("../utils/generators/uuid-gen");
 const logger = loggingService.getLogger();
 
 const RideGroupController = {
   getRideGroupById: async (req, res, next) => {
     const { rideGroupId } = req.params;
-
     try {
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -79,7 +79,8 @@ const RideGroupController = {
         throw new BadRequestError("Parent profile not exists for this account");
       }
 
-      // implement
+      // Generate a unique invite code for the group
+      const inviteCode = await RideGroupRepository.generateUniqueInviteCode();
 
       // step 1: create a new ride group
       const rideGroupPayload = {
@@ -87,6 +88,7 @@ const RideGroupController = {
         group_name: req.body.group_name,
         school_id: req.body.school_id,
         current_seats_taken: req.body.seats,
+        invite_code: inviteCode
       }
       const rideGroup = await RideGroupRepository.create(rideGroupPayload);
 
@@ -143,8 +145,10 @@ const RideGroupController = {
 
   // TODO: implement this method
   addNewParentGroup: async (req, res, next) => {
+    const { invitation_code } = req.params;
+    const { group_id, home } = req.body;
+
     try {
-      logger.info("Parent attempting to add new group", { accountId: req.userId });
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -154,55 +158,54 @@ const RideGroupController = {
 
       if (!account.is_verified) {
         throw new ForbiddenError(
-          "Account email must be verified before creating a group"
+          "Account email must be verified before creating a profile"
         );
       }
 
-      // Check if parent profile exists
+      // Check if parent profile already exists BEFORE processing files
       const parentProfile = await ParentRepository.findByAccountId(req.userId);
+
       if (!parentProfile) {
         throw new BadRequestError("Parent profile not exists for this account");
       }
 
-      // Check if the parent is already part of the ride group with the given school_id
-      const existingRideGroup = await RideGroupRepository.findBySchoolAndParent(
-        req.body.school_id, 
-        parentProfile.id
-      );
+      const rideGroup = await RideGroupRepository.findByInviteCode(invitation_code);
 
-      if (!existingRideGroup) {
-        throw new NotFoundError("The requested ride group does not exist!");
+      if (!rideGroup) {
+        throw new NotFoundError("Invalid invitation");
       }
 
-      // Find the parent group for this ride group
-      const existingParentGroup = await ParentGroupRepository.findByGroupAndParentId(
-        existingRideGroup.id,
-        parentProfile.id
+      // check if parent is already part of this group
+      const existingRideGroup = await RideGroupRepository.findByIdIfParent(
+        parentProfile.id,
+        rideGroup.id
       );
 
-      if (existingParentGroup) {
-        // Get children in this parent group
-        const children = await ChildrenGroupDetailsRepository.findByParentGroupId(existingParentGroup.id);
-        
-        // Get days for this ride group
-        const days = await GroupDaysRepository.findByRideGroupId(existingRideGroup.id);
-        
-        logger.info("Parent already has a group for this school", { 
-          parentId: parentProfile.id, 
-          rideGroupId: existingRideGroup.id 
-        });
-        
-        return res.success("You already have a group for this school", {
-          rideGroup: {
-            ...existingRideGroup,
-            parentGroup: {
-              ...existingParentGroup,
-              children
-            },
-            days
-          }
-        });
+      if (existingRideGroup) {
+        throw new NotFoundError("Parent is a part of this group");
       }
+
+      // Create a new parent group for this ride group
+      const newParentGroupPayload = {
+        group_id: rideGroup.id,
+        parent_id: parentProfile.id,
+        home_lat: home.home_lat,
+        home_lng: home.home_lng,
+      };
+
+      const newParentGroup = await ParentGroupRepository.create(newParentGroupPayload);
+
+      if (!newParentGroup) {
+        throw new BadRequestError("Unable to create a new parent group");
+      }
+
+      return res.success("You have been added to the ride group successfully", {
+        rideGroup: {
+          ...rideGroup,
+          parentGroup: newParentGroup
+        }
+      });
+
     } catch (error) {
       logger.error("Unable to create a new ride group", {
         error: error.message,
