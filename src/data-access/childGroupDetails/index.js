@@ -1,8 +1,7 @@
 const ChildGroupDetailsModel = require('../../models/ChildGroupDetails');
 const ChildRepository = require('../child');
-const { BadRequestError } = require('../../utils/errors/types/Api.error');
 const BaseRepository = require('../base.repository');
-const { DatabaseError } = require("sequelize");
+const { NotFoundError } = require('../../utils/errors/types/Api.error');
 
 class ChildGroupDetailsRepository extends BaseRepository {
     constructor() {
@@ -29,16 +28,11 @@ class ChildGroupDetailsRepository extends BaseRepository {
                 const child = children[i];
 
                 // check for the child existence
-                const childRecord = await ChildRepository.findById(child.child_id, {
+                await ChildRepository.findById(child.child_id, {
                     where: {
                         parent_id: parentId
                     }
                 });
-
-                if (!childRecord) {
-                    await t.rollback();
-                    throw new BadRequestError('Invalid child record!');
-                }
 
                 // Check for existing children before starting transaction
                 const existingChild = await this.model.findOne({
@@ -69,6 +63,10 @@ class ChildGroupDetailsRepository extends BaseRepository {
             return parentChildrenGroup;
         } catch(error) {
             await t.rollback();
+
+            if (error.name === 'SequelizeForeignKeyConstraintError')
+                throw new NotFoundError("Invalid child");
+            
             throw error;
         }
     }

@@ -13,6 +13,49 @@ const {
 const logger = loggingService.getLogger();
 
 const RideGroupController = {
+  getRideGroupById: async (req, res, next) => {
+    const { rideGroupId } = req.params;
+
+    try {
+      // Verify account exists and is verified
+      const account = await AccountRepository.findById(req.userId);
+      if (!account) {
+        throw new NotFoundError("Account not found");
+      }
+
+      if (!account.is_verified) {
+        throw new ForbiddenError(
+          "Account email must be verified before creating a group"
+        );
+      }
+
+      // Check if parent profile exists
+      const parentProfile = await ParentRepository.findByAccountId(req.userId);
+      if (!parentProfile) {
+        throw new BadRequestError("Parent profile not exists for this account");
+      }
+
+      const rideGroup = await RideGroupRepository.findByIdIfParent(parentProfile.id, rideGroupId);
+
+      if (!rideGroup) {
+        throw new NotFoundError("Ride group not found");
+      }
+
+      // Get all details for a ride group
+      const rideGroupWithDetails = await RideGroupRepository.getRideGroupDetails(rideGroupId);
+
+      return res.success("Ride group details fetched successfully", {
+        rideGroup: rideGroupWithDetails,
+      });
+    } catch (error) {
+      logger.error("Error fetching ride group by ID", {
+        error: error.message,
+        stack: error.stack,
+      });
+      return next(new NotFoundError("Ride group not found"));
+    }
+  },
+
   createRideGroup: async (req, res, next) => {
     try {
       logger.info("Parent profile creation attempt", { accountId: req.userId });
@@ -98,6 +141,7 @@ const RideGroupController = {
     }
   },
 
+  // TODO: implement this method
   addNewParentGroup: async (req, res, next) => {
     try {
       logger.info("Parent attempting to add new group", { accountId: req.userId });

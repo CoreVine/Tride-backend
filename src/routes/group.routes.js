@@ -1,15 +1,8 @@
 const { Router } = require("express");
-const childController = require("../controllers/childern.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 const verifiedEmailRequired = require("../middlewares/verifiedEmailRequired.middleware");
 const { isParent } = require("../middlewares/isAccount.middleware");
 const validate = require("../middlewares/validation.middleware");
-const {
-  createUploader,
-  cloudinaryResourceTypes,
-  cloudinaryAccountTypes,
-  cloudinaryPurposeTypes,
-} = require("../config/upload");
 const Yup = require("yup");
 const RideGroupController = require("../controllers/rideGroup.controller");
 
@@ -77,5 +70,8 @@ groupRoutes.post('/ride/group/add-child',
   validate(addChildToGroupSchema),
   RideGroupController.addChildToGroup
 );
+
+// groupRoutes.post('/ride/group/add-parent', )
+groupRoutes.get('/ride/group/:rideGroupId', RideGroupController.getRideGroupById);
 
 module.exports = groupRoutes;
