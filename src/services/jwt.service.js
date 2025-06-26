@@ -4,7 +4,6 @@ import {
   InternalServerError,
 } from "../utils/errors/types/Api.error";
 const jwt = require("jsonwebtoken");
-const moment = require("moment");
 const loggingService = require("../services/logging.service");
 const redisService = require("../services/redis.service");
 const logger = loggingService.getLogger();

@@ -41,7 +41,14 @@ class ParentGroup extends Model {
       sequelize,
       modelName: 'ParentGroup',
       tableName: 'parent_group',
-      timestamps: false
+      timestamps: false,
+      indexes: [
+        {
+          unique: true,
+          fields: ['group_id', 'parent_id'],
+          name: 'unique_parent_per_group'
+        }
+      ]
     });
   }
 

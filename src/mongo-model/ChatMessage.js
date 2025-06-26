@@ -52,13 +52,13 @@ const chatMessageSchema = new mongoose.Schema({
     },
   },
   // For media metadata
-  media_meta: {
-    size: Number, // in bytes
-    duration: Number, // for audio/video in seconds
-    width: Number, // for images/videos
-    height: Number, // for images/videos
-    mime_type: String,
-  },
+  // media_meta: {
+  //   size: Number, // in bytes
+  //   duration: Number, // for audio/video in seconds
+  //   width: Number, // for images/videos
+  //   height: Number, // for images/videos
+  //   mime_type: String,
+  // },
   // For location messages
 
   // System messages (like "User joined")

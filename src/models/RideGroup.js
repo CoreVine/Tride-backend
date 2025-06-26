@@ -21,7 +21,11 @@ class RideGroup extends Model {
       },
       group_name: {
         type: DataTypes.STRING(255),
-        allowNull: false
+        allowNull: false,
+        unique: {
+          fields: ['parent_creator_id', 'group_name'],
+          msg: 'This group name is already taken by this parent'
+        }
       },
       created_at: {
         type: DataTypes.DATE,
@@ -67,6 +71,12 @@ class RideGroup extends Model {
         },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL'
+      },
+      invite_code: {
+        type: DataTypes.STRING(255),
+        unique: {
+          msg: 'This invite code is already taken'
+        }
       }
     }, {
       sequelize,
@@ -122,3 +132,4 @@ class RideGroup extends Model {
 }
 
 module.exports = RideGroup;
+
