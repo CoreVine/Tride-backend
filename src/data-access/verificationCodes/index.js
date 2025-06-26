@@ -1,8 +1,8 @@
-const VerificationCodeModel = require('../../models/VerificationCode');
-const BaseRepository = require('../base.repository');
+const VerificationCodeModel = require("../../models/VerificationCode");
+const BaseRepository = require("../base.repository");
 const { Op } = require("sequelize");
-const crypto = require('crypto');
-const { DatabaseError } = require('../../utils/errors/types/Sequelize.error');
+const crypto = require("crypto");
+const { DatabaseError } = require("../../utils/errors/types/Sequelize.error");
 
 class VerificationCodeRepository extends BaseRepository {
   constructor() {
@@ -15,13 +15,13 @@ class VerificationCodeRepository extends BaseRepository {
    * @param {String} type - The verification type
    * @returns {Promise<Object>} The found verification code
    */
-  async findByEmailAndType(email, type = 'password_reset') {
+  async findByEmailAndType(email, type = "password_reset") {
     try {
       return await this.model.findOne({
-        where: { 
+        where: {
           email,
-          type
-        }
+          type,
+        },
       });
     } catch (error) {
       throw new DatabaseError(error);
@@ -35,15 +35,15 @@ class VerificationCodeRepository extends BaseRepository {
    * @param {String} type - The verification type
    * @returns {Promise<Object>} The found verification code
    */
-  async findValidCode(email, code, type = 'password_reset') {
+  async findValidCode(email, code, type = "password_reset") {
     try {
       return await this.model.findOne({
-        where: { 
+        where: {
           email,
           code,
           type,
-          expires_at: { [Op.gt]: new Date() }
-        }
+          expires_at: { [Op.gt]: new Date() },
+        },
       });
     } catch (error) {
       throw new DatabaseError(error);
@@ -57,10 +57,7 @@ class VerificationCodeRepository extends BaseRepository {
    */
   async markAsVerified(id) {
     try {
-      return await this.model.update(
-        { verified: true },
-        { where: { id } }
-      );
+      return await this.model.update({ verified: true }, { where: { id } });
     } catch (error) {
       throw new DatabaseError(error);
     }
@@ -72,15 +69,15 @@ class VerificationCodeRepository extends BaseRepository {
    * @param {String} type - The verification type
    * @returns {Promise<Object>} The found verification code
    */
-  async findVerifiedCode(email, type = 'password_reset') {
+  async findVerifiedCode(email, type = "password_reset") {
     try {
       return await this.model.findOne({
-        where: { 
+        where: {
           email,
           type,
           verified: true,
-          expires_at: { [Op.gt]: new Date() }
-        }
+          expires_at: { [Op.gt]: new Date() },
+        },
       });
     } catch (error) {
       throw new DatabaseError(error);
@@ -95,15 +92,15 @@ class VerificationCodeRepository extends BaseRepository {
   async deleteExpired(email = null) {
     try {
       const whereCondition = {
-        expires_at: { [Op.lt]: new Date() }
+        expires_at: { [Op.lt]: new Date() },
       };
-      
+
       if (email) {
         whereCondition.email = email;
       }
-      
+
       return await this.model.destroy({
-        where: whereCondition
+        where: whereCondition,
       });
     } catch (error) {
       throw new DatabaseError(error);
@@ -116,10 +113,10 @@ class VerificationCodeRepository extends BaseRepository {
    * @param {String} type - The verification type
    * @returns {Promise<Number>} The number of deleted codes
    */
-  async deleteByEmailAndType(email, type = 'password_reset') {
+  async deleteByEmailAndType(email, type = "password_reset") {
     try {
       return await this.model.destroy({
-        where: { email, type }
+        where: { email, type },
       });
     } catch (error) {
       throw new DatabaseError(error);
@@ -134,15 +131,15 @@ class VerificationCodeRepository extends BaseRepository {
   async deleteUsedTokens(email = null) {
     try {
       const whereCondition = {
-        token_used: true
+        token_used: true,
       };
-      
+
       if (email) {
         whereCondition.email = email;
       }
-      
+
       return await this.model.destroy({
-        where: whereCondition
+        where: whereCondition,
       });
     } catch (error) {
       throw new DatabaseError(error);
@@ -172,17 +169,17 @@ class VerificationCodeRepository extends BaseRepository {
   async generateResetToken(id) {
     try {
       // Generate a secure random token
-      const resetToken = crypto.randomBytes(32).toString('hex');
-      
+      const resetToken = crypto.randomBytes(32).toString("hex");
+
       // Update the verification code with the token
       await this.model.update(
-        { 
+        {
           reset_token: resetToken,
-          token_used: false
+          token_used: false,
         },
         { where: { id } }
       );
-      
+
       return resetToken;
     } catch (error) {
       throw new DatabaseError(error);
@@ -198,13 +195,13 @@ class VerificationCodeRepository extends BaseRepository {
   async findByResetToken(email, resetToken) {
     try {
       return await this.model.findOne({
-        where: { 
+        where: {
           email,
           reset_token: resetToken,
           verified: true,
           token_used: false,
-          expires_at: { [Op.gt]: new Date() }
-        }
+          expires_at: { [Op.gt]: new Date() },
+        },
       });
     } catch (error) {
       throw new DatabaseError(error);
@@ -217,11 +214,11 @@ class VerificationCodeRepository extends BaseRepository {
    * @param {String} type - The verification type
    * @returns {Promise<Object>} The updated verification code
    */
-  async incrementAttempt(email, type = 'password_reset') {
+  async incrementAttempt(email, type = "password_reset") {
     try {
       const verificationCode = await this.findByEmailAndType(email, type);
       if (!verificationCode) return null;
-      
+
       return await this.model.update(
         { attempt_count: verificationCode.attempt_count + 1 },
         { where: { id: verificationCode.id } }
@@ -238,10 +235,7 @@ class VerificationCodeRepository extends BaseRepository {
    */
   async markTokenAsUsed(id) {
     try {
-      return await this.model.update(
-        { token_used: true },
-        { where: { id } }
-      );
+      return await this.model.update({ token_used: true }, { where: { id } });
     } catch (error) {
       throw new DatabaseError(error);
     }
@@ -255,14 +249,11 @@ class VerificationCodeRepository extends BaseRepository {
   async markUsedAndDelete(id) {
     try {
       // First mark as used (for tracking/audit purposes if needed)
-      await this.model.update(
-        { token_used: true },
-        { where: { id } }
-      );
-      
+      await this.model.update({ token_used: true }, { where: { id } });
+
       // Then immediately delete it
       return await this.model.destroy({
-        where: { id }
+        where: { id },
       });
     } catch (error) {
       throw new DatabaseError(error);

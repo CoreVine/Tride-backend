@@ -1,137 +1,130 @@
-const { Router } = require('express');
-const authController = require('../controllers/auth.controller');
-const socialAuthController = require('../controllers/socialAuth.controller');
-const passwordResetController = require('../controllers/passwordReset.controller');
-const emailVerificationController = require('../controllers/emailVerification.controller');
-const authMiddleware = require('../middlewares/auth.middleware');
-const verifiedEmailRequired = require('../middlewares/verifiedEmailRequired.middleware');
+const { Router } = require("express");
+const authController = require("../controllers/auth.controller");
+const socialAuthController = require("../controllers/socialAuth.controller");
+const passwordResetController = require("../controllers/passwordReset.controller");
+const emailVerificationController = require("../controllers/emailVerification.controller");
+const authMiddleware = require("../middlewares/auth.middleware");
+const verifiedEmailRequired = require("../middlewares/verifiedEmailRequired.middleware");
 const validate = require("../middlewares/validation.middleware");
 const Yup = require("yup");
 
 const loginSchema = Yup.object().shape({
   email: Yup.string().email().required(),
   password: Yup.string().required(),
-  account_type: Yup.string().oneOf(['parent', 'driver']).default('parent')
+  account_type: Yup.string().oneOf(["parent", "driver"]).default("parent"),
 });
 
 const registerSchema = Yup.object().shape({
   email: Yup.string().email().required(),
   password: Yup.string().min(6).required(),
-  account_type: Yup.string().oneOf(['parent', 'driver']).default('parent')
+  account_type: Yup.string().oneOf(["parent", "driver"]).default("parent"),
 });
 
 const passwordResetRequestSchema = Yup.object().shape({
-  email: Yup.string().email().required()
+  email: Yup.string().email().required(),
 });
 
 const verifyCodeSchema = Yup.object().shape({
   email: Yup.string().email().required(),
-  code: Yup.string().length(6).required()
+  code: Yup.string().length(6).required(),
 });
 
 const resetPasswordSchema = Yup.object().shape({
   email: Yup.string().email().required(),
   password: Yup.string().min(6).required(),
-  resetToken: Yup.string().required()
+  resetToken: Yup.string().required(),
 });
 
 const emailVerificationSchema = Yup.object().shape({
   email: Yup.string().email().required(),
-  code: Yup.string().length(6).required()
+  code: Yup.string().length(6).required(),
 });
 
 // Social auth schemas
 const googleAuthSchema = Yup.object().shape({
   idToken: Yup.string().required(),
-  account_type: Yup.string().oneOf(['parent', 'driver']).default('parent')
+  account_type: Yup.string().oneOf(["parent", "driver"]).default("parent"),
 });
 
 const facebookAuthSchema = Yup.object().shape({
   accessToken: Yup.string().required(),
-  account_type: Yup.string().oneOf(['parent', 'driver']).default('parent')
+  account_type: Yup.string().oneOf(["parent", "driver"]).default("parent"),
 });
 
 const authRoutes = Router();
 
 // Update register route to include validation
 authRoutes.post(
-  '/auth/register', 
+  "/auth/register",
   validate(registerSchema),
   authController.register
 );
 
-authRoutes.post(
-  '/auth/login', 
-  validate(loginSchema),
-  authController.login
-);
+authRoutes.post("/auth/login", validate(loginSchema), authController.login);
 
 authRoutes.post(
-  '/auth/refresh',
+  "/auth/refresh",
   verifiedEmailRequired,
   authController.refreshToken
 );
 
-authRoutes.post(
-  '/auth/logout',
-  authController.logout
-);
+authRoutes.post("/auth/logout", authController.logout);
 
 // Get current user - requires verified email
 authRoutes.get(
-  '/auth/me', 
-  authMiddleware, 
-  verifiedEmailRequired, 
+  "/auth/me",
+  authMiddleware,
+  verifiedEmailRequired,
   authController.me
 );
 
 // Email verification routes
 authRoutes.post(
-  '/auth/email/verify',
+  "/auth/email/verify",
   validate(emailVerificationSchema),
   emailVerificationController.verifyEmail
 );
 
 authRoutes.post(
-  '/auth/email/verify/resend',
+  "/auth/email/verify/resend",
   validate(passwordResetRequestSchema), // Reuse existing schema since they're identical
   emailVerificationController.resendVerificationCode
 );
 
 // Password reset routes
 authRoutes.post(
-  '/auth/password/request',
+  "/auth/password/request",
   validate(passwordResetRequestSchema),
   passwordResetController.requestVerificationCode
 );
 
 authRoutes.post(
-  '/auth/password/resend',
+  "/auth/password/resend",
   validate(passwordResetRequestSchema),
   passwordResetController.resendVerificationCode
 );
 
 authRoutes.post(
-  '/auth/password/verify',
+  "/auth/password/verify",
   validate(verifyCodeSchema),
   passwordResetController.verifyCode
 );
 
 authRoutes.post(
-  '/auth/password/reset',
+  "/auth/password/reset",
   validate(resetPasswordSchema),
   passwordResetController.resetPassword
 );
 
 // Social authentication routes
 authRoutes.post(
-  '/auth/google',
+  "/auth/google",
   validate(googleAuthSchema),
   socialAuthController.googleAuth
 );
 
 authRoutes.post(
-  '/auth/facebook',
+  "/auth/facebook",
   validate(facebookAuthSchema),
   socialAuthController.facebookAuth
 );

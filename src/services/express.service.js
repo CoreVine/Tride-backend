@@ -1,79 +1,92 @@
+// services/express.service.js
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
-// cors will be imported through the corsService
-const { globalErrorHandler, notFoundHandler } = require("../middlewares/errorHandler.middleware");
+const {
+  globalErrorHandler,
+  notFoundHandler,
+} = require("../middlewares/errorHandler.middleware");
 const responseMiddleware = require("../middlewares/response.middleware");
-const path = require('path');
-const multerErrorHandler = require('../middlewares/multerErrorHandler.middleware');
+// const path = require('path'); // No longer needed if not serving local static uploads
+const multerErrorHandler = require("../middlewares/multerErrorHandler.middleware");
 const apiRouter = require("../routes");
 const loggingService = require("./logging.service");
 const rateLimitService = require("./rateLimit.service");
 const corsService = require("./cors.service");
 
-let server;
+let app;
 let logger;
 
 const expressService = {
-
   init: async () => {
     try {
       // Initialize logging service first
       const { logger: winstonLogger, morgan } = await loggingService.init();
       logger = winstonLogger;
-      
+
       // Initialize rate limiting service
-      if (process.env.NODE_ENV === 'production') {
+      if (process.env.NODE_ENV === "production") {
         await rateLimitService.init();
       }
-      
+
       // Initialize CORS service
       corsService.init(logger);
-      
-      server = express();
+
+      app = express(); // Initialize Express app
 
       // Apply response formatting middleware
-      server.use(responseMiddleware);
-      
+      app.use(responseMiddleware);
+
       // Apply CORS middleware (before other middleware)
-      server.use(corsService.getCorsMiddleware());
-      
+      app.use(corsService.getCorsMiddleware());
+
       // Apply middleware
-      server.use(bodyParser.json());
+      app.use(bodyParser.json());
 
       // Use cookie-parser middleware
-      server.use(cookieParser());
-      
-      if (process.env.NODE_ENV === 'production') {
+      app.use(cookieParser());
+
+      if (process.env.NODE_ENV === "production") {
         // Apply rate limiting middleware to all requests
-        server.use(rateLimitService.standardLimiter());
+        app.use(rateLimitService.standardLimiter());
       }
       // Apply morgan middleware for HTTP request logging
-      server.use(morgan);
-      
-      // Apply routes
-      // Static file serving for uploads
-      server.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
-      // API routes under /api
-      server.use('/api', apiRouter);
+      app.use(morgan);
 
-      
+      // Apply routes
+      // *** REMOVED: Static file serving for uploads, as files are now on Cloudinary ***
+      // app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+
+      // API routes under /api
+      app.use("/api", apiRouter);
+
       // Handle 404 routes
-      server.use('*', notFoundHandler);
+      app.use("*", notFoundHandler);
 
       // MUST BE AT THE END TO HANDLE ERRORS!
       // Handle multer-specific errors first
-      server.use(multerErrorHandler);
+      app.use(multerErrorHandler);
 
       // Apply global error handler
-      server.use(globalErrorHandler);
-      
-      server.listen(process.env.SERVER_PORT);
-      logger.info(`[EXPRESS] Express initialized on port ${process.env.SERVER_PORT}`);
+      app.use(globalErrorHandler);
+
+      logger.info(`[EXPRESS] Express app configured.`);
+      return app; // IMPORTANT: Return the Express app instance
     } catch (error) {
-      logger.error("[EXPRESS] Error during express service initialization", error);
+      logger.error(
+        "[EXPRESS] Error during express service initialization",
+        error
+      );
       throw error;
     }
+  },
+  // Optionally, you can add a getApp method if other services need direct access to the app
+  getApp: () => {
+    if (!app) {
+      throw new Error("Express app not initialized. Call init() first.");
+    }
+    return app;
   },
 };
 

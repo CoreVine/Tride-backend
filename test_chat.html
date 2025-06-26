@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO Chat Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+
+<body>
+    <h1>Socket.IO Chat Test</h1>
+    <p>Open your browser's developer console (F12) to see chat messages and interact.</p>
+
+    <script>
+        // --- Configuration ---
+        const BACKEND_URL = 'http://localhost:3000'; // Your backend server URL
+        const USER_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7ImlkIjo4LCJhY2NvdW50VHlwZSI6InBhcmVudCIsInByb2ZpbGVDb21wbGV0ZSI6dHJ1ZSwiYWNjb3VudFR5cGVJZCI6N30sImlhdCI6MTc0ODQ0MTQzMywianRpIjoiN2RjN2MxODEtYjdiNi00YThhLTg2YmEtNmJmYjRhZWI2NDE5In0.-VuJniuzfoE6oVibAUVZklSgU-I_WO1hpVsOAaqOAXM'; // <--- PASTE YOUR JWT TOKEN HERE
+        const RIDE_GROUP_ID_TO_JOIN = 2; // <--- REPLACE WITH AN ACTUAL RIDE GROUP ID (e.g., 1, 2, 3...)
+
+        // --- Connect to Socket.IO Server ---
+        let socket;
+        try {
+            socket = io(BACKEND_URL, {
+                auth: {
+                    token: USER_JWT_TOKEN // This passes your JWT for authentication
+                }
+            });
+
+            // --- Socket.IO Event Listeners (Frontend side) ---
+            socket.on('connect', () => {
+                console.log('✅ Socket Connected! Client ID:', socket.id);
+                socket.emit('join_ride_group_chat', RIDE_GROUP_ID_TO_JOIN);
+                console.log(`Attempting to join ride group chat: ${RIDE_GROUP_ID_TO_JOIN}`);
+            });
+
+            socket.on('disconnect', (reason) => {
+                console.warn('❌ Socket Disconnected:', reason);
+            });
+
+            socket.on('connect_error', (error) => {
+                console.error('❌ Socket Connection Error:', error.message);
+            });
+
+            socket.on('chat_error', (errorMessage) => {
+                console.error('⚠️ Chat Error from Server:', errorMessage);
+            });
+
+            socket.on('chat_history', (messages) => {
+                console.log('--- 📜 Chat History Received ---');
+                if (messages.length === 0) {
+                    console.log('No previous messages in this chat.');
+                } else {
+                    messages.forEach(msg => {
+                        console.log(`[${new Date(msg.createdAt).toLocaleTimeString()}] <span class="math-inline">\{msg\.senderName\} \(</span>{msg.senderType}): ${msg.message}`);
+                    });
+                }
+                console.log('---------------------------');
+            });
+
+            socket.on('receive_message', (newMessage) => {
+                console.log('--- 💬 NEW MESSAGE ---');
+                console.log(`[${new Date(newMessage.createdAt).toLocaleTimeString()}] <span class="math-inline">\{newMessage\.senderName\} \(</span>{newMessage.senderType}): ${newMessage.message}`);
+                console.log('-------------------');
+            });
+
+            console.log('Starting Socket.IO connection attempt...');
+
+        } catch (error) {
+            console.error('Error initializing Socket.IO:', error);
+        }
+
+        // --- Helper function to send a message ---
+        function sendMessage(msgText) {
+            if (socket && socket.connected) {
+                console.log(`Sending message: "${msgText}" to ride group ${RIDE_GROUP_ID_TO_JOIN}`);
+                socket.emit('send_message', { message: msgText });
+            } else {
+                console.warn('Socket not connected or not ready. Cannot send message.');
+            }
+        }
+    </script>
+</body>
+
+</html>
