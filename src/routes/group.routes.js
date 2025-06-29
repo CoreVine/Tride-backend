@@ -132,4 +132,9 @@ groupRoutes.post('/ride/group/subscribe/confirm',
   RideGroupController.confirmNewSubscription
 );
 
+groupRoutes.post('/ride/group/:rideGroupId/subscribe/installment', 
+  validate(subscribeSchema),
+  RideGroupController.payInstallments
+);
+
 module.exports = groupRoutes;

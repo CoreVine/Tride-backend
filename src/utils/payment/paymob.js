@@ -22,7 +22,7 @@ async function requestPaymentToken(data) {
     }
 }
 
-function createPaymobOrderObject(userAccount, rideGroup, planDetails, seatsTaken, totalDays, overallPrice, toPayPrice) {
+function createPaymobOrderObject(orderType, userAccount, rideGroup, planDetails, seatsTaken, totalDays, overallPrice, toPayPrice, extraData = {}) {
     return {
         // we multiply by 100 because Paymob only takes integer values, and 1000 = 10.00 EGP
         amount: Number(toPayPrice) * 100,
@@ -53,11 +53,12 @@ function createPaymobOrderObject(userAccount, rideGroup, planDetails, seatsTaken
             parent_id: userAccount.parent.id,
             plan_id: planDetails.id,
             total_price: overallPrice,
-            new_subscription: true,
+            order_type: orderType,
             installment_plan: planDetails.installment_plan,
             seats_taken: seatsTaken,
             total_days: totalDays,
             months_count: planDetails.months_count,
+            ...extraData
         },
         notification_url: process.env.BACKEND_PAYMOB_WEBHOOK_URL,
     };

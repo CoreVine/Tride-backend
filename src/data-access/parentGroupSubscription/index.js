@@ -28,6 +28,19 @@ class ParentGroupSubscriptionRepository extends BaseRepository {
         }
     }
 
+    async addNewPaymentHistory(payload) {
+        const { subscription_id, payment } = payload;
+
+        try {
+            await PaymentHistoryRepository.create({
+                ...payment,
+                parent_subscription_id: subscription_id
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
+
     async findActiveSubscriptionByParentAndGroup(parentId, groupId) {
         try {
             return await this.model.findOne({

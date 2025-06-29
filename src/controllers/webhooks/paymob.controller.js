@@ -20,7 +20,7 @@ const paymobController = {
             if(!extra)
                 throw new Error('Missing extra data in payment claims');
     
-            if(extra.new_subscription) {
+            if(extra.order_type === 'new') {
                 // create a new subscription for the parent in this ride group
                 const subscriptionData = {
                     ride_group_id:       extra.ride_group_id,
@@ -56,6 +56,30 @@ const paymobController = {
                 console.log('New subscription is created');
 
                 return res.success('Payment processed successfully');
+            } else if (extra.order_type === 'existing/installment') {
+                const next_payment_due = extra.remaining_months ? new Date().setMonth(new Date().getMonth() + 1) : null;
+                const next_payment_amount = extra.remaining_months ? extra.total_price / extra.months_count : null;
+                // add payment details
+                const paymentData = {
+                    paymob_receipt_id:   req.body.obj.id,
+                    paid_at:             new Date(),
+                    amount:              req.body.obj.amount_cents / 100,
+                    next_payment_due:    next_payment_due,
+                    next_payment_amount: next_payment_amount
+                };
+    
+                const payload = {
+                    subscription_id: extra.subscription_id,
+                    payment:         paymentData
+                };
+    
+                await ParentGroupSubscriptionRepository.addNewPaymentHistory(payload);
+
+                redisService.set(req.body.obj.order.id, 'true');
+                console.log('Subscription is updated');
+
+                return res.success('Payment processed successfully');
+
             }
         } catch (error) {
             await t.rollback();

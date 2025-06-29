@@ -78,6 +78,7 @@ const RideGroupController = {
       });
 
       const paymobOrder = paymobUtil.createPaymobOrderObject(
+        "new",
         req.account,
         rideGroup,
         planDetails,
@@ -198,14 +199,52 @@ const RideGroupController = {
           // Check if the next payment is due
           if (existingSubscription.payment_history[0].next_payment_due) {
             // we are paying installments
+            const paymobOrderObject = paymobUtil.createPaymobOrderObject(
+              "existing/installment",
+              req.account,
+              rideGroup,
+              existingSubscription.plan,
+              existingSubscription.current_seats_taken,
+              existingSubscription.total_days,
+              existingSubscription.total_amount,
+              existingSubscription.payment_history[0].next_payment_amount,
+              {
+                subscription_id: existingSubscription.id,
+                remaining_months: existingSubscription.plan.months_count - existingSubscription.payment_history.length,
+              }
+            );
+
+            const { clientSecret, orderId } = await paymobUtil.requestPaymentToken(paymobOrderObject);
+
+            const orderDetails = {
+              orderId,
+              planType: existingSubscription.plan.range,
+              installmentPlan: existingSubscription.plan.installment_plan,
+              seats: existingSubscription.current_seats_taken,
+              total_days: existingSubscription.total_days,
+              distance: existingSubscription.distance,
+              overallPrice: Number(existingSubscription.total_amount),
+              toPayPrice: Number(existingSubscription.payment_history[0].next_payment_amount),
+            };
+
+            let paymentRedirectParams = `?publicKey=${process.env.PAYMOB_PUBLIC_KEY}`;
+            paymentRedirectParams += `&clientSecret=${clientSecret}`;
+
+            return res.success("Next payment details fetched successfully", {
+              paymentRedirectUrl: `${process.env.PAYMOB_CHECKOUT_URI}${paymentRedirectParams}`,
+              orderDetails
+            });
           } else {
             // We are resubscribing to the same plan but installments
+            throw new BadRequestError("Resubscription to the same plan is not yet implemented!");
           }
         } else {
           // we are resubscribing to the same plan but full payment
+          throw new BadRequestError("Resubscription to the same plan with full payment is not yet implemented!");
         }
       } else {
         // We are changing the plan
+        throw new BadRequestError("You cannot change the plan type or installment option, not implemented yet!");
         if (installment_plan) {
           
         } else {
