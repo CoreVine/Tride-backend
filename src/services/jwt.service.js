@@ -1,8 +1,8 @@
-import * as crypto from "crypto";
-import {
+const crypto = require("crypto");
+const {
   BadTokenError,
   InternalServerError,
-} from "../utils/errors/types/Api.error";
+} = require("../utils/errors/types/Api.error");
 const jwt = require("jsonwebtoken");
 const loggingService = require("../services/logging.service");
 const redisService = require("../services/redis.service");

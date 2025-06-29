@@ -1,4 +1,4 @@
-import {
+const {
     NotFoundError,
     BadRequestError,
     ValidationError,
@@ -15,12 +15,12 @@ import {
     ResetTokenUsedError,
     TooManyAttemptsError,
     isApiError
-} from "./types/Api.error";
+} = require("./types/Api.error");
 
-import {
+const {
     DatabaseError,
     isDatabaseError
-} from "./types/Sequelize.error";
+} = require("./types/Sequelize.error");
 
 module.exports = {
     // API Errors

@@ -1,0 +1,780 @@
+{
+  "info": {
+    "name": "City & Governorate Management API",
+    "description": "Complete API collection for managing cities and governorates with CRUD operations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Governorate Management",
+      "item": [
+        {
+          "name": "Get All Governorates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/governorate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "governorate"]
+            },
+            "description": "Retrieve all governorates ordered by name"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/governorate",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "governorate"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Governorates retrieved successfully\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"governorate_name\": \"Cairo\"\n    },\n    {\n      \"id\": 2,\n      \"governorate_name\": \"Alexandria\"\n    },\n    {\n      \"id\": 3,\n      \"governorate_name\": \"Giza\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Governorate by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/governorate/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "governorate", "1"]
+            },
+            "description": "Retrieve a specific governorate by ID with its cities"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/governorate/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "governorate", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Governorate retrieved successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"governorate_name\": \"Cairo\",\n    \"cities\": [\n      {\n        \"id\": 1,\n        \"name\": \"Cairo City\",\n        \"governorate_id\": 1\n      },\n      {\n        \"id\": 2,\n        \"name\": \"Heliopolis\",\n        \"governorate_id\": 1\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Governorate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"governorate_name\": \"New Governorate\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/governorate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "governorate"]
+            },
+            "description": "Create a new governorate"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"governorate_name\": \"New Governorate\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/governorate",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "governorate"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Governorate created successfully\",\n  \"data\": {\n    \"id\": 4,\n    \"governorate_name\": \"New Governorate\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Governorate",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"governorate_name\": \"Updated Governorate Name\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/governorate/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "governorate", "1"]
+            },
+            "description": "Update an existing governorate"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"governorate_name\": \"Updated Governorate Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/governorate/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "governorate", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Governorate updated successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"governorate_name\": \"Updated Governorate Name\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Governorate",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/governorate/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "governorate", "1"]
+            },
+            "description": "Delete a governorate and all its cities"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/governorate/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "governorate", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Governorate deleted successfully with ID: 1 along with 5 cities\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search Governorates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/governorate/search?name=cairo",
+              "host": ["{{base_url}}"],
+              "path": ["api", "governorate", "search"],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "cairo"
+                }
+              ]
+            },
+            "description": "Search governorates by name"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/governorate/search?name=cairo",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "governorate", "search"],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "cairo"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Governorates retrieved successfully\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"governorate_name\": \"Cairo\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "City Management",
+      "item": [
+        {
+          "name": "Get All Cities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/cities",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cities"]
+            },
+            "description": "Retrieve all cities ordered by name"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/cities",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "cities"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Cities fetched successfully\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Cairo City\",\n      \"governorate_id\": 1\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Heliopolis\",\n      \"governorate_id\": 1\n    },\n    {\n      \"id\": 3,\n      \"name\": \"Alexandria City\",\n      \"governorate_id\": 2\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get City by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/cities/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cities", "1"]
+            },
+            "description": "Retrieve a specific city by ID"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/cities/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "cities", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"City fetched successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Cairo City\",\n    \"governorate_id\": 1,\n    \"governorate\": {\n      \"id\": 1,\n      \"governorate_name\": \"Cairo\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Cities by Governorate",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/cities/governorate/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cities", "governorate", "1"]
+            },
+            "description": "Retrieve all cities for a specific governorate"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/cities/governorate/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "cities", "governorate", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Cities fetched successfully\",\n  \"data\": {\n    \"cities\": [\n      {\n        \"id\": 1,\n        \"name\": \"Cairo City\",\n        \"governorate_id\": 1\n      },\n      {\n        \"id\": 2,\n        \"name\": \"Heliopolis\",\n        \"governorate_id\": 1\n      }\n    ],\n    \"governorate\": {\n      \"id\": 1,\n      \"governorate_name\": \"Cairo\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create City",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New City\",\n  \"governorate_id\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/cities",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cities"]
+            },
+            "description": "Create a new city in a specific governorate"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"New City\",\n  \"governorate_id\": 1\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/cities",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "cities"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"City created successfully\",\n  \"data\": {\n    \"id\": 4,\n    \"name\": \"New City\",\n    \"governorate_id\": 1,\n    \"governorate\": {\n      \"id\": 1,\n      \"governorate_name\": \"Cairo\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update City",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated City Name\",\n  \"governorate_id\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/cities/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cities", "1"]
+            },
+            "description": "Update an existing city"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Updated City Name\",\n  \"governorate_id\": 2\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/cities/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "cities", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"City updated successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Updated City Name\",\n    \"governorate_id\": 2,\n    \"governorate\": {\n      \"id\": 2,\n      \"governorate_name\": \"Alexandria\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete City",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/cities/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cities", "1"]
+            },
+            "description": "Delete a city (only if it has no parents, drivers, or schools)"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/cities/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "cities", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"City deleted successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search Cities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/cities/search?name=cairo",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cities", "search"],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "cairo"
+                }
+              ]
+            },
+            "description": "Search cities by name"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/cities/search?name=cairo",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "cities", "search"],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "cairo"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Cities retrieved successfully\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Cairo City\",\n      \"governorate_id\": 1\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://192.168.1.39:3000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    }
+  ]
+} 

@@ -31,7 +31,7 @@ const requireFileUpload = (fieldName) => (req, res, next) => {
 const fileFilters = {
   // Filter for image files
   images: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
