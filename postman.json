@@ -1,1112 +1,2853 @@
 {
-  "info": {
-    "name": "Tride API",
-    "description": "API collection for Tride Gateway API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:3000/api",
-      "type": "string"
-    }
-  ],
-  "item": [
-    {
-      "name": "Auth",
-      "description": "Authentication endpoints",
-      "item": [
-        {
-          "name": "Register",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\",\n    \"account_type\": \"parent\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
-            },
-            "description": "Register a new user account"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const response = pm.response.json();",
-                  "if (response.success) {",
-                  "    if (response.data.token) {",
-                  "        pm.environment.set('token', response.data.token);",
-                  "    }",
-                  "    if (response.data.refreshToken) {",
-                  "        pm.environment.set('refresh_token', response.data.refreshToken);",
-                  "    }",
-                  "    if (response.data.account) {",
-                  "        pm.environment.set('user_email', response.data.account.email);",
-                  "    }",
-                  "}",
-                  "pm.test(\"Registration successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    pm.expect(response.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Login",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"{{user_email}}\",\n    \"password\": \"password123\",\n    \"account_type\": \"parent\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
-            },
-            "description": "Login to an existing account"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const response = pm.response.json();",
-                  "if (response.success) {",
-                  "    if (response.data.token) {",
-                  "        pm.environment.set('token', response.data.token);",
-                  "    }",
-                  "    if (response.data.refreshToken) {",
-                  "        pm.environment.set('refresh_token', response.data.refreshToken);",
-                  "    }",
-                  "}",
-                  "pm.test(\"Login successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    pm.expect(response.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Current User",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/me",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "me"]
-            },
-            "description": "Get current user profile information"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const response = pm.response.json();",
-                  "pm.test(\"Profile retrieved successfully\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    pm.expect(response.success).to.be.true;",
-                  "    pm.expect(response.data.account).to.be.an('object');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Refresh Token",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/refresh",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "refresh"]
-            },
-            "description": "Get a new token using refresh token"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const response = pm.response.json();",
-                  "if (response.success && response.data.token) {",
-                  "    pm.environment.set('token', response.data.token);",
-                  "}",
-                  "pm.test(\"Token refreshed successfully\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    pm.expect(response.success).to.be.true;",
-                  "    pm.expect(response.data.token).to.be.a('string');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/auth/logout",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "logout"]
-            },
-            "description": "Logout and invalidate tokens"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const response = pm.response.json();",
-                  "if (response.success) {",
-                  "    pm.environment.unset('token');",
-                  "    pm.environment.unset('refresh_token');",
-                  "}",
-                  "pm.test(\"Logout successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    pm.expect(response.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Social Authentication",
-          "description": "Social authentication endpoints for Google and Facebook",
-          "item": [
-            {
-              "name": "Google Authentication",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n    \"idToken\": \"YOUR_GOOGLE_ID_TOKEN\",\n    \"account_type\": \"parent\"\n}"
-                },
-                "url": {
-                  "raw": "{{base_url}}/auth/google",
-                  "host": ["{{base_url}}"],
-                  "path": ["api", "auth", "google"]
-                },
-                "description": "Authenticate with Google ID token"
-              },
-              "response": [],
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "type": "text/javascript",
-                    "exec": [
-                      "const response = pm.response.json();",
-                      "if (response.success) {",
-                      "    if (response.data.token) {",
-                      "        pm.environment.set('token', response.data.token);",
-                      "    }",
-                      "    if (response.data.refreshToken) {",
-                      "        pm.environment.set('refresh_token', response.data.refreshToken);",
-                      "    }",
-                      "    if (response.data.account) {",
-                      "        pm.environment.set('user_email', response.data.account.email);",
-                      "    }",
-                      "}",
-                      "pm.test(\"Google authentication successful\", function() {",
-                      "    pm.response.to.have.status(200);",
-                      "    pm.expect(response.success).to.be.true;",
-                      "    pm.expect(response.data.account).to.be.an('object');",
-                      "});"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "name": "Facebook Authentication",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n    \"accessToken\": \"YOUR_FACEBOOK_ACCESS_TOKEN\",\n    \"account_type\": \"parent\"\n}"
-                },
-                "url": {
-                  "raw": "{{base_url}}/auth/facebook",
-                  "host": ["{{base_url}}"],
-                  "path": ["api", "auth", "facebook"]
-                },
-                "description": "Authenticate with Facebook access token"
-              },
-              "response": [],
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "type": "text/javascript",
-                    "exec": [
-                      "const response = pm.response.json();",
-                      "if (response.success) {",
-                      "    if (response.data.token) {",
-                      "        pm.environment.set('token', response.data.token);",
-                      "    }",
-                      "    if (response.data.refreshToken) {",
-                      "        pm.environment.set('refresh_token', response.data.refreshToken);",
-                      "    }",
-                      "    if (response.data.account) {",
-                      "        pm.environment.set('user_email', response.data.account.email);",
-                      "    }",
-                      "}",
-                      "pm.test(\"Facebook authentication successful\", function() {",
-                      "    pm.response.to.have.status(200);",
-                      "    pm.expect(response.success).to.be.true;",
-                      "    pm.expect(response.data.account).to.be.an('object');",
-                      "});"
-                    ]
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Email Verification",
-      "description": "Email verification endpoints",
-      "item": [
-        {
-          "name": "Verify Email",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"{{user_email}}\",\n    \"code\": \"123456\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/email/verify",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "email", "verify"]
-            },
-            "description": "Verify email with verification code"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const response = pm.response.json();",
-                  "pm.test(\"Email verification processed\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Resend Verification Code",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"{{user_email}}\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/email/verify/resend",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "email", "verify", "resend"]
-            },
-            "description": "Resend email verification code"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const response = pm.response.json();",
-                  "pm.test(\"Verification code resent\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    pm.expect(response.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Password Reset",
-      "description": "Password reset endpoints",
-      "item": [
-        {
-          "name": "Request Password Reset",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"{{user_email}}\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/password/request",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "password", "request"]
-            },
-            "description": "Request a password reset code"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const response = pm.response.json();",
-                  "pm.test(\"Password reset requested\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    pm.expect(response.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Resend Password Reset Code",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"{{user_email}}\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/password/resend",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "password", "resend"]
-            },
-            "description": "Resend password reset code"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const response = pm.response.json();",
-                  "pm.test(\"Password reset code resent\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    pm.expect(response.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Verify Password Reset Code",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"{{user_email}}\",\n    \"code\": \"123456\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/password/verify",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "password", "verify"]
-            },
-            "description": "Verify password reset code"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const response = pm.response.json();",
-                  "if (response.success && response.data.resetToken) {",
-                  "    pm.environment.set('reset_token', response.data.resetToken);",
-                  "}",
-                  "pm.test(\"Password reset code verified\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    pm.expect(response.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Reset Password",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"{{user_email}}\",\n    \"password\": \"newPassword123\",\n    \"resetToken\": \"{{reset_token}}\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/password/reset",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "password", "reset"]
-            },
-            "description": "Reset password with token"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const response = pm.response.json();",
-                  "if (response.success) {",
-                  "    pm.environment.unset('reset_token');",
-                  "}",
-                  "pm.test(\"Password reset successful\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    pm.expect(response.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Profile",
-      "description": "Profile management endpoints",
-      "item": [
-        {
-          "name": "Parent Profile",
-          "item": [
-            {
-              "name": "Create Parent Profile",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "name",
-                      "value": "Parent Name",
-                      "type": "text"
-                    },
-                    {
-                      "key": "phone",
-                      "value": "+1234567890",
-                      "type": "text"
-                    },
-                    {
-                      "key": "gender",
-                      "value": "female",
-                      "type": "text"
-                    },
-                    {
-                      "key": "city_id",
-                      "value": "1",
-                      "type": "text"
-                    },
-                    {
-                      "key": "google_place_id",
-                      "value": "ChIJN1t_tDeuEmsRUsoyG83frY4",
-                      "type": "text"
-                    },
-                    {
-                      "key": "lat",
-                      "value": "37.7749",
-                      "type": "text"
-                    },
-                    {
-                      "key": "lng",
-                      "value": "-122.4194",
-                      "type": "text"
-                    },
-                    {
-                      "key": "formatted_address",
-                      "value": "123 Main St, City, Country",
-                      "type": "text"
-                    },
-                    {
-                      "key": "profile_pic",
-                      "type": "file",
-                      "src": "/path/to/profile_picture.jpg",
-                      "disabled": false
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{base_url}}/profile/parent",
-                  "host": ["{{base_url}}"],
-                  "path": ["profile", "parent"]
-                },
-                "description": "Create a parent profile with profile picture"
-              },
-              "response": [],
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "type": "text/javascript",
-                    "exec": [
-                      "const response = pm.response.json();",
-                      "if (response.success && response.data.token) {",
-                      "    pm.environment.set('token', response.data.token);",
-                      "}",
-                      "if (response.success && response.data.refreshToken) {",
-                      "    pm.environment.set('refresh_token', response.data.refreshToken);",
-                      "}",
-                      "pm.test(\"Parent profile created\", function() {",
-                      "    pm.response.to.have.status(200);",
-                      "    pm.expect(response.success).to.be.true;",
-                      "});"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "name": "Update Parent Profile",
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "name",
-                      "value": "Updated Parent Name",
-                      "type": "text"
-                    },
-                    {
-                      "key": "phone",
-                      "value": "+1234567890",
-                      "type": "text"
-                    },
-                    {
-                      "key": "gender",
-                      "value": "female",
-                      "type": "text",
-                      "disabled": true
-                    },
-                    {
-                      "key": "city_id",
-                      "value": "1",
-                      "type": "text",
-                      "disabled": true
-                    },
-                    {
-                      "key": "profile_pic",
-                      "type": "file",
-                      "src": "/path/to/updated_profile.jpg",
-                      "disabled": true
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{base_url}}/profile/parent",
-                  "host": ["{{base_url}}"],
-                  "path": ["profile", "parent"]
-                },
-                "description": "Update a parent profile"
-              },
-              "response": [],
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "type": "text/javascript",
-                    "exec": [
-                      "const response = pm.response.json();",
-                      "pm.test(\"Parent profile updated\", function() {",
-                      "    pm.response.to.have.status(200);",
-                      "    pm.expect(response.success).to.be.true;",
-                      "});"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "name": "Upload Parent ID Documents",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "front_side_nic",
-                      "type": "file",
-                      "src": "/path/to/id_front.jpg"
-                    },
-                    {
-                      "key": "back_side_nic",
-                      "type": "file",
-                      "src": "/path/to/id_back.jpg"
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{base_url}}/profile/parent/papers",
-                  "host": ["{{base_url}}"],
-                  "path": ["profile", "parent", "papers"]
-                },
-                "description": "Upload parent ID documents"
-              },
-              "response": [],
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "type": "text/javascript",
-                    "exec": [
-                      "const response = pm.response.json();",
-                      "pm.test(\"Parent ID documents uploaded\", function() {",
-                      "    pm.response.to.have.status(200);",
-                      "    pm.expect(response.success).to.be.true;",
-                      "});"
-                    ]
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Driver Profile",
-          "item": [
-            {
-              "name": "Create Driver Profile",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "name",
-                      "value": "Driver Name",
-                      "type": "text"
-                    },
-                    {
-                      "key": "phone",
-                      "value": "+1234567890",
-                      "type": "text"
-                    },
-                    {
-                      "key": "license_number",
-                      "value": "DL12345678",
-                      "type": "text"
-                    },
-                    {
-                      "key": "gender",
-                      "value": "male",
-                      "type": "text"
-                    },
-                    {
-                      "key": "city_id",
-                      "value": "1",
-                      "type": "text"
-                    },
-                    {
-                      "key": "lat",
-                      "value": "37.7749",
-                      "type": "text"
-                    },
-                    {
-                      "key": "lng",
-                      "value": "-122.4194",
-                      "type": "text"
-                    },
-                    {
-                      "key": "formatted_address",
-                      "value": "123 Main St, City, Country",
-                      "type": "text"
-                    },
-                    {
-                      "key": "profile_pic",
-                      "type": "file",
-                      "src": "/path/to/driver_profile.jpg"
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{base_url}}/profile/driver",
-                  "host": ["{{base_url}}"],
-                  "path": ["profile", "driver"]
-                },
-                "description": "Create a driver profile with required profile picture"
-              },
-              "response": [],
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "type": "text/javascript",
-                    "exec": [
-                      "const response = pm.response.json();",
-                      "if (response.success && response.data.token) {",
-                      "    pm.environment.set('token', response.data.token);",
-                      "}",
-                      "if (response.success && response.data.refreshToken) {",
-                      "    pm.environment.set('refresh_token', response.data.refreshToken);",
-                      "}",
-                      "pm.test(\"Driver profile created\", function() {",
-                      "    pm.response.to.have.status(200);",
-                      "    pm.expect(response.success).to.be.true;",
-                      "});"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "name": "Update Driver Profile",
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "name",
-                      "value": "Updated Driver Name",
-                      "type": "text"
-                    },
-                    {
-                      "key": "phone",
-                      "value": "+9876543210",
-                      "type": "text"
-                    },
-                    {
-                      "key": "license_number",
-                      "value": "DL87654321",
-                      "type": "text",
-                      "disabled": true
-                    },
-                    {
-                      "key": "profile_pic",
-                      "type": "file",
-                      "src": "/path/to/updated_driver_profile.jpg",
-                      "disabled": true
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{base_url}}/profile/driver",
-                  "host": ["{{base_url}}"],
-                  "path": ["profile", "driver"]
-                },
-                "description": "Update a driver profile"
-              },
-              "response": [],
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "type": "text/javascript",
-                    "exec": [
-                      "const response = pm.response.json();",
-                      "pm.test(\"Driver profile updated\", function() {",
-                      "    pm.response.to.have.status(200);",
-                      "    pm.expect(response.success).to.be.true;",
-                      "});"
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "name": "Upload Driver Papers",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "front_side_national",
-                      "type": "file",
-                      "src": "/path/to/national_id_front.jpg"
-                    },
-                    {
-                      "key": "back_side_national",
-                      "type": "file",
-                      "src": "/path/to/national_id_back.jpg"
-                    },
-                    {
-                      "key": "driver_license",
-                      "type": "file",
-                      "src": "/path/to/driver_license.jpg"
-                    },
-                    {
-                      "key": "car_license",
-                      "type": "file",
-                      "src": "/path/to/car_license.jpg"
-                    },
-                    {
-                      "key": "car_model",
-                      "value": "Toyota Camry",
-                      "type": "text"
-                    },
-                    {
-                      "key": "car_model_year",
-                      "value": "2020",
-                      "type": "text"
-                    },
-                    {
-                      "key": "driver_license_exp_date",
-                      "value": "2025-12-31",
-                      "type": "text"
-                    },
-                    {
-                      "key": "car_license_exp_date",
-                      "value": "2024-06-30",
-                      "type": "text"
-                    },
-                    {
-                      "key": "face_auth_complete",
-                      "value": "true",
-                      "type": "text"
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{base_url}}/profile/driver/papers",
-                  "host": ["{{base_url}}"],
-                  "path": ["profile", "driver", "papers"]
-                },
-                "description": "Upload driver papers and documents"
-              },
-              "response": [],
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "type": "text/javascript",
-                    "exec": [
-                      "const response = pm.response.json();",
-                      "if (response.success && response.data.token) {",
-                      "    pm.environment.set('token', response.data.token);",
-                      "}",
-                      "if (response.success && response.data.refreshToken) {",
-                      "    pm.environment.set('refresh_token', response.data.refreshToken);",
-                      "}",
-                      "pm.test(\"Driver papers uploaded\", function() {",
-                      "    pm.response.to.have.status(200);",
-                      "    pm.expect(response.success).to.be.true;",
-                      "});"
-                    ]
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Get Profile Status",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/profile/status",
-              "host": ["{{base_url}}"],
-              "path": ["profile", "status"]
-            },
-            "description": "Get profile status and approval information"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const response = pm.response.json();",
-                  "pm.test(\"Profile status retrieved\", function() {",
-                  "    pm.response.to.have.status(200);",
-                  "    pm.expect(response.success).to.be.true;",
-                  "    pm.expect(response.data.accountType).to.be.a('string');",
-                  "    pm.expect(response.data.isVerified).to.be.a('boolean');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "// Global pre-request script",
-          "const currentTime = new Date().toISOString();",
-          "pm.variables.set('currentTimestamp', currentTime);"
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "// Global test script",
-          "pm.test(\"Response time is acceptable\", function() {",
-          "    pm.expect(pm.response.responseTime).to.be.below(1000);",
-          "});",
-          "",
-          "pm.test(\"Status code is in success range\", function() {",
-          "    pm.expect(pm.response.code).to.be.within(200, 304);",
-          "});"
-        ]
-      }
-    }
-  ]
+	"info": {
+		"_postman_id": "9a350a25-3d0a-49a4-99c0-f7ea865e89ae",
+		"name": "Tride",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15043408",
+		"_collection_link": "https://solar-water-247594.postman.co/workspace/%25D8%25A7%25D9%2584%25D8%25B9%25D8%25AA%25D8%25A7%25D9%2588%25D9%2584%25D8%25A9-Workspace~63b8eee3-6d46-442f-857b-7fe526f2ed89/collection/40667681-9a350a25-3d0a-49a4-99c0-f7ea865e89ae?action=share&source=collection_link&creator=15043408"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"vekiti5651@betzenn.com\",\n    \"password\": \"vekiti5651@betzenn.com\",\n    \"account_type\":\"parent\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new user account"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"if (jsonResponse && jsonResponse.data && jsonResponse.data.token) {",
+									"    pm.globals.set('token', jsonResponse.data.token);",
+									"}",
+									"if (jsonResponse && jsonResponse.data && jsonResponse.data.refreshToken) {",
+									"    pm.globals.set('refresh_token', jsonResponse.data.refreshToken);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"vekiti5651@betzenn.com\",\n    \"password\": \"vekiti5651@betzenn.com\",\n    \"account_type\":\"parent\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login with existing credentials"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"if (jsonResponse && jsonResponse.data && jsonResponse.data.token) {",
+									"    pm.globals.set('token', jsonResponse.data.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Exchange a refresh token for a new access token"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Logout and invalidate current session"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						},
+						"description": "Get details of currently logged-in user"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication-related endpoints"
+		},
+		{
+			"name": "Email Verification",
+			"item": [
+				{
+					"name": "Verify Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"vekiti5651@betzenn.com\",\n    \"code\": \"222562\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/email/verify",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"email",
+								"verify"
+							]
+						},
+						"description": "Verify email using verification code"
+					},
+					"response": []
+				},
+				{
+					"name": "Resend Email Verification Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"jilike7518@daxiake.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/email/verify/resend",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"email",
+								"verify",
+								"resend"
+							]
+						},
+						"description": "Request a new email verification code"
+					},
+					"response": []
+				}
+			],
+			"description": "Email verification-related endpoints"
+		},
+		{
+			"name": "Password Reset",
+			"item": [
+				{
+					"name": "Request Password Reset",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"jilike7518@daxiake.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/password/request",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"password",
+								"request"
+							]
+						},
+						"description": "Request a password reset verification code"
+					},
+					"response": []
+				},
+				{
+					"name": "Resend Password Reset Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"jilike7518@daxiake.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/password/resend",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"password",
+								"resend"
+							]
+						},
+						"description": "Resend a password reset verification code"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Password Reset Code",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"if (jsonResponse && jsonResponse.data && jsonResponse.data.resetToken) {",
+									"    pm.globals.set('reset_token', jsonResponse.data.resetToken);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"jilike7518@daxiake.com\",\n    \"code\": \"527053\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/password/verify",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"password",
+								"verify"
+							]
+						},
+						"description": "Verify password reset code and get reset token"
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"jilike7518@daxiake.com\",\n    \"password\": \"newpassword123\",\n    \"resetToken\": \"{{reset_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/password/reset",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"password",
+								"reset"
+							]
+						},
+						"description": "Reset password using verification token"
+					},
+					"response": []
+				}
+			],
+			"description": "Password reset-related endpoints"
+		},
+		{
+			"name": "Profile",
+			"item": [
+				{
+					"name": "parent",
+					"item": [
+						{
+							"name": "update Parent",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "jack",
+											"type": "text"
+										},
+										{
+											"key": "phone",
+											"value": "465456456",
+											"type": "text"
+										},
+										{
+											"key": "gender",
+											"value": "male",
+											"type": "text"
+										},
+										{
+											"key": "city_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "lng",
+											"value": "39",
+											"type": "text"
+										},
+										{
+											"key": "lat",
+											"value": "31",
+											"type": "text"
+										},
+										{
+											"key": "profile_pic",
+											"type": "file",
+											"src": "/C:/Users/dream/Pictures/logo.png"
+										},
+										{
+											"key": "google_place_id",
+											"value": "1",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/profile/parent",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"profile",
+										"parent"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create Parent",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "jack",
+											"type": "text"
+										},
+										{
+											"key": "phone",
+											"value": "465456456",
+											"type": "text"
+										},
+										{
+											"key": "gender",
+											"value": "male",
+											"type": "text"
+										},
+										{
+											"key": "city_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "lng",
+											"value": "30",
+											"type": "text"
+										},
+										{
+											"key": "lat",
+											"value": "31",
+											"type": "text"
+										},
+										{
+											"key": "profile_pic",
+											"type": "file",
+											"src": "/C:/Users/dream/Pictures/logo.png"
+										},
+										{
+											"key": "google_place_id",
+											"value": "1",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/profile/parent",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"profile",
+										"parent"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get Parent",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "jack",
+											"type": "text"
+										},
+										{
+											"key": "phone",
+											"value": "465456456",
+											"type": "text"
+										},
+										{
+											"key": "gender",
+											"value": "male",
+											"type": "text"
+										},
+										{
+											"key": "city_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "lng",
+											"value": "30",
+											"type": "text"
+										},
+										{
+											"key": "lat",
+											"value": "31",
+											"type": "text"
+										},
+										{
+											"key": "profile_pic",
+											"type": "file",
+											"src": "/C:/Users/dream/Pictures/logo.png"
+										},
+										{
+											"key": "google_place_id",
+											"value": "1",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/profile/parent",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"profile",
+										"parent"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create Parent papers",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "back_side_nic",
+											"type": "file",
+											"src": "/C:/Users/dream/Pictures/logo.png"
+										},
+										{
+											"key": "front_side_nic",
+											"type": "file",
+											"src": "postman-cloud:///1f038b2b-5a18-4140-9282-1b41132996ab"
+										},
+										{
+											"key": "face_auth_complete",
+											"value": "1",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/profile/parent/papers",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"profile",
+										"parent",
+										"papers"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "driver",
+					"item": [
+						{
+							"name": "update Driver",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "jack",
+											"type": "text"
+										},
+										{
+											"key": "phone",
+											"value": "465456456",
+											"type": "text"
+										},
+										{
+											"key": "gender",
+											"value": "male",
+											"type": "text"
+										},
+										{
+											"key": "city_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "lng",
+											"value": "30°04'05.3",
+											"type": "text"
+										},
+										{
+											"key": "lat",
+											"value": "31°13'13.2",
+											"type": "text"
+										},
+										{
+											"key": "profile_pic",
+											"type": "file",
+											"src": "/C:/Users/dream/Pictures/e30a1c07-0557-4a8b-96fb-deec5eab3287.png"
+										},
+										{
+											"key": "google_place_id",
+											"value": "1",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/profile/driver",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"profile",
+										"driver"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create Driver",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "jack",
+											"type": "text"
+										},
+										{
+											"key": "phone",
+											"value": "465456456",
+											"type": "text"
+										},
+										{
+											"key": "gender",
+											"value": "male",
+											"type": "text"
+										},
+										{
+											"key": "city_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "lng",
+											"value": "30",
+											"type": "text"
+										},
+										{
+											"key": "lat",
+											"value": "31",
+											"type": "text"
+										},
+										{
+											"key": "profile_pic",
+											"type": "file",
+											"src": "/C:/Users/dream/Pictures/logo.png"
+										},
+										{
+											"key": "formatted_address",
+											"value": "sdf",
+											"type": "text"
+										},
+										{
+											"key": "license_number",
+											"value": "34",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/profile/driver",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"profile",
+										"driver"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get Driver driver",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text",
+										"disabled": true
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7ImlkIjo3LCJhY2NvdW50VHlwZSI6ImRyaXZlciIsInByb2ZpbGVDb21wbGV0ZSI6dHJ1ZSwiYWNjb3VudFR5cGVJZCI6MX0sImlhdCI6MTc0ODEwOTQ2MiwianRpIjoiMGJmZjM5N2EtNmJhNi00ZjUzLWEzNmYtN2MyN2M5MWY1OTVmIn0._sPViQNF6A03qIMfbfiMynUmWVZ-46UJ1be766DW3wE",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "jack",
+											"type": "text"
+										},
+										{
+											"key": "phone",
+											"value": "465456456",
+											"type": "text"
+										},
+										{
+											"key": "gender",
+											"value": "male",
+											"type": "text"
+										},
+										{
+											"key": "city_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "lng",
+											"value": "30",
+											"type": "text"
+										},
+										{
+											"key": "lat",
+											"value": "31",
+											"type": "text"
+										},
+										{
+											"key": "profile_pic",
+											"type": "file",
+											"src": "/C:/Users/dream/Pictures/logo.png"
+										},
+										{
+											"key": "formatted_address",
+											"value": "sdf",
+											"type": "text"
+										},
+										{
+											"key": "license_number",
+											"value": "34",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/profile/driver",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"profile",
+										"driver"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create Driver papers",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "back_side_national",
+											"type": "file",
+											"src": "/C:/Users/dream/Pictures/logo.png"
+										},
+										{
+											"key": "driver_license",
+											"type": "file",
+											"src": "/C:/Users/dream/Pictures/logo.png"
+										},
+										{
+											"key": "front_side_national",
+											"type": "file",
+											"src": "/C:/Users/dream/Pictures/logo.png"
+										},
+										{
+											"key": "car_license",
+											"type": "file",
+											"src": "/C:/Users/dream/Pictures/logo.png"
+										},
+										{
+											"key": "car_model",
+											"value": "fdg",
+											"type": "text"
+										},
+										{
+											"key": "car_model_year",
+											"value": "2016",
+											"type": "text"
+										},
+										{
+											"key": "driver_license_exp_date",
+											"value": "2028-4-20",
+											"type": "text"
+										},
+										{
+											"key": "car_license_exp_date",
+											"value": "2030-4-20",
+											"type": "text"
+										},
+										{
+											"key": "face_auth_complete",
+											"value": "0",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/profile/driver/papers",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"profile",
+										"driver",
+										"papers"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create Driver papers approved",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"approved\":true\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/profile/driver/approved/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"profile",
+										"driver",
+										"approved",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/profile/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"profile",
+								"status"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Governorate",
+			"item": [
+				{
+					"name": "Get All Governorate",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/governorate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"governorate"
+							]
+						},
+						"description": "Get all countries"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Governorate",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/governorate/search?name=united",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"governorate",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "united"
+								}
+							]
+						},
+						"description": "Search countries by name"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Governorate by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/governorate/2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"governorate",
+								"2"
+							]
+						},
+						"description": "Get a specific country by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Governorate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"governorate_name\": \"United Kingdom\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/governorate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"governorate"
+							]
+						},
+						"description": "Create a new country"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Governorate",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"governorate_name\": \"الشرقية\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/governorate/2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"governorate",
+								"2"
+							]
+						},
+						"description": "Update an existing country"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Governorate",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/governorate/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"governorate",
+								"1"
+							]
+						},
+						"description": "Delete a country (admin only)"
+					},
+					"response": []
+				}
+			],
+			"description": "Country management endpoints"
+		},
+		{
+			"name": "Cities",
+			"item": [
+				{
+					"name": "Get All Cities",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/cities",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cities"
+							]
+						},
+						"description": "Get all cities"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Cities",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/cities/search?q=london",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cities",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "london"
+								}
+							]
+						},
+						"description": "Search cities by name"
+					},
+					"response": []
+				},
+				{
+					"name": "Get City by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/cities/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cities",
+								"1"
+							]
+						},
+						"description": "Get a specific city by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create City",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"New York\",\n    \"governorate_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cities",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cities"
+							]
+						},
+						"description": "Create a new city"
+					},
+					"response": []
+				},
+				{
+					"name": "Update City",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"الزقازيق\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cities/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cities",
+								"1"
+							]
+						},
+						"description": "Update an existing city"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete City",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/cities/2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cities",
+								"2"
+							]
+						},
+						"description": "Delete a city (admin only)"
+					},
+					"response": []
+				}
+			],
+			"description": "City management endpoints"
+		},
+		{
+			"name": "children",
+			"item": [
+				{
+					"name": "create chidlen",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "jack",
+									"type": "text"
+								},
+								{
+									"key": "grade",
+									"value": "first",
+									"type": "text"
+								},
+								{
+									"key": "gender",
+									"value": "male",
+									"type": "text"
+								},
+								{
+									"key": "profile_pic",
+									"type": "file",
+									"src": "postman-cloud:///1f038b2b-5a18-4140-9282-1b41132996ab"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/child/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"child",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update chidlen",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "jack",
+									"type": "text"
+								},
+								{
+									"key": "grade",
+									"value": "first",
+									"type": "text"
+								},
+								{
+									"key": "gender",
+									"value": "male",
+									"type": "text"
+								},
+								{
+									"key": "profile_pic",
+									"type": "file",
+									"src": "postman-cloud:///1f038b2b-5a18-4140-9282-1b41132996ab"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/child/2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"child",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all Childen for Perent",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "jack",
+									"type": "text"
+								},
+								{
+									"key": "grade",
+									"value": "first",
+									"type": "text"
+								},
+								{
+									"key": "gender",
+									"value": "male",
+									"type": "text"
+								},
+								{
+									"key": "profile_pic",
+									"type": "file",
+									"src": "/C:/Users/dream/Pictures/logo.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/child/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"child",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete chidlen",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "jack",
+									"type": "text"
+								},
+								{
+									"key": "grade",
+									"value": "first",
+									"type": "text"
+								},
+								{
+									"key": "gender",
+									"value": "male",
+									"type": "text"
+								},
+								{
+									"key": "profile_pic",
+									"type": "file",
+									"src": "/C:/Users/dream/Pictures/logo.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/child/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"child",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Child by ID",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "jack",
+									"type": "text"
+								},
+								{
+									"key": "grade",
+									"value": "first",
+									"type": "text"
+								},
+								{
+									"key": "gender",
+									"value": "male",
+									"type": "text"
+								},
+								{
+									"key": "profile_pic",
+									"type": "file",
+									"src": "/C:/Users/dream/Pictures/logo.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/child/2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"child",
+								"2"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "school",
+			"item": [
+				{
+					"name": "create school",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"school_name\": \"الشهداء\",\r\n        \"city_id\": 1,\r\n        \"lat\": 345,\r\n        \"lng\": 345\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/school?city_id=1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"school"
+							],
+							"query": [
+								{
+									"key": "city_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update school",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"school_name\": \"dfsdgdfg\",\r\n        \"city_id\": 1,\r\n        \"lat\": 4345,\r\n        \"lng\": 34\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/school/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"school",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all school for city id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "jack",
+									"type": "text"
+								},
+								{
+									"key": "grade",
+									"value": "first",
+									"type": "text"
+								},
+								{
+									"key": "gender",
+									"value": "male",
+									"type": "text"
+								},
+								{
+									"key": "profile_pic",
+									"type": "file",
+									"src": "/C:/Users/dream/Pictures/logo.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/school?city=1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"school"
+							],
+							"query": [
+								{
+									"key": "city",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "jack",
+									"type": "text"
+								},
+								{
+									"key": "grade",
+									"value": "first",
+									"type": "text"
+								},
+								{
+									"key": "gender",
+									"value": "male",
+									"type": "text"
+								},
+								{
+									"key": "profile_pic",
+									"type": "file",
+									"src": "/C:/Users/dream/Pictures/logo.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/school/2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"school",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Child by ID",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "jack",
+									"type": "text"
+								},
+								{
+									"key": "grade",
+									"value": "first",
+									"type": "text"
+								},
+								{
+									"key": "gender",
+									"value": "male",
+									"type": "text"
+								},
+								{
+									"key": "profile_pic",
+									"type": "file",
+									"src": "/C:/Users/dream/Pictures/logo.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/school/2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"school",
+								"2"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Chat",
+			"item": [
+				{
+					"name": "Notifications",
+					"item": [
+						{
+							"name": "HTTP Notification Endpoints",
+							"item": [
+								{
+									"name": "Get Notifications",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/notifications",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"notifications"
+											],
+											"query": [
+												{
+													"key": "limit",
+													"value": "10",
+													"disabled": true
+												},
+												{
+													"key": "offset",
+													"value": "0",
+													"disabled": true
+												},
+												{
+													"key": "is_read",
+													"value": "false",
+													"disabled": true
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create Notifications",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"recipientId\": \"user_abc_123\",\r\n  \"senderId\": 12345,\r\n  \"type\": \"new_notification\",\r\n  \"title\": \"Your Order Has Shipped!\",\r\n  \"message\": \"Great news! Your recent order #98765 has been dispatched and is on its way.\",\r\n  \"related_entity_type\": \"Order\",\r\n  \"related_entity_id\": \"order_98765_xyz\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{base_url}}/notifications",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"notifications"
+											],
+											"query": [
+												{
+													"key": "limit",
+													"value": "10",
+													"disabled": true
+												},
+												{
+													"key": "offset",
+													"value": "0",
+													"disabled": true
+												},
+												{
+													"key": "is_read",
+													"value": "false",
+													"disabled": true
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get Unread Count",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/notifications/unread",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"notifications",
+												"unread"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Mark Notification as Read",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/notifications/611a9d4f8fce2c2a1c6e7d5a/read",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"notifications",
+												"611a9d4f8fce2c2a1c6e7d5a",
+												"read"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Mark All Notifications as Read",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/notifications/mark-all-read",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"notifications",
+												"mark-all-read"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete Notification",
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{auth_token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/api/notifications/611a9d4f8fce2c2a1c6e7d5a",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"notifications",
+												"611a9d4f8fce2c2a1c6e7d5a"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "WebSocket Notification Tests",
+							"item": [
+								{
+									"name": "Connect to Socket.IO",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{auth_token}}"
+											}
+										],
+										"url": {
+											"raw": "ws://localhost:3000/socket.io/?token={{token}}&EIO=4&transport=websocket",
+											"protocol": "ws",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"socket.io",
+												""
+											],
+											"query": [
+												{
+													"key": "token",
+													"value": "{{token}}"
+												},
+												{
+													"key": "EIO",
+													"value": "4"
+												},
+												{
+													"key": "transport",
+													"value": "websocket"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Listen for Notification Events",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// First establish the WebSocket connection",
+													"pm.sendRequest({",
+													"  url: 'ws://localhost:3000/socket.io/?token=' + pm.collectionVariables.get('auth_token') + '&EIO=4&transport=websocket',",
+													"  method: 'GET',",
+													"  header: {",
+													"    'Authorization': 'Bearer ' + pm.collectionVariables.get('auth_token')",
+													"  }",
+													"}, function(err, res) {",
+													"  if (err) {",
+													"    console.error(err);",
+													"    return;",
+													"  }",
+													"  // Store the WebSocket connection",
+													"  pm.collectionVariables.set('ws_connection', res);",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{auth_token}}"
+											}
+										],
+										"url": {
+											"raw": "ws://localhost:3000/socket.io?token={{token}}&EIO=4&transport=websocket",
+											"protocol": "ws",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"socket.io"
+											],
+											"query": [
+												{
+													"key": "token",
+													"value": "{{token}}"
+												},
+												{
+													"key": "EIO",
+													"value": "4"
+												},
+												{
+													"key": "transport",
+													"value": "websocket"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Simulate New Notification (Admin)",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"recipientId\": 9,\n    \"type\": \"system_message\",\n    \"title\": \"Test Notification\",\n    \"message\": \"This is a test notification sent from Postman\",\n    \"metadata\": {\n        \"test\": true,\n        \"sender\": \"Postman\"\n    }\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{base_url}}/notifications/",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"notifications",
+												""
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Get Notifications",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/notifications?limit=20&offset=0",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"notifications"
+									],
+									"query": [
+										{
+											"key": "limit",
+											"value": "20"
+										},
+										{
+											"key": "offset",
+											"value": "0"
+										}
+									]
+								},
+								"description": "Retrieves notifications for the authenticated user, with pagination. Requires authentication."
+							},
+							"response": []
+						},
+						{
+							"name": "Upload Chat Media",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"description": "Select an image, video, audio, or document file to upload.",
+											"type": "file",
+											"src": [
+												"postman-cloud:///1f038b2b-5a18-4140-9282-1b41132996ab",
+												"/path/to/your/file.jpg"
+											]
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/messages/upload",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"messages",
+										"upload"
+									]
+								},
+								"description": "Uploads a media file for chat. Use 'file' as the form-data key. Requires authentication."
+							},
+							"response": []
+						},
+						{
+							"name": "Mark Notifications as Read",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"notificationIds\": [\"60d5ec49c6d3f00015f8a0a2\", \"60d5ec49c6d3f00015f8a0a3\"]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/notifications/mark-read",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"notifications",
+										"mark-read"
+									]
+								},
+								"description": "Marks a list of notifications as read for the authenticated user. Requires authentication."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Chat-Room",
+					"item": [
+						{
+							"name": "Get or Create Chat Room",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer{{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/ride-group/1/room",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"ride-group",
+										"1",
+										"room"
+									]
+								},
+								"description": "Retrieves or creates a chat room for a specific ride group. Requires authentication."
+							},
+							"response": []
+						},
+						{
+							"name": "Get or Create Chat Message",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/ride-group/1/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"ride-group",
+										"1",
+										"messages"
+									]
+								},
+								"description": "Retrieves or creates a chat room for a specific ride group. Requires authentication."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Message",
+					"item": [
+						{
+							"name": "Create Message (Text)",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"type\": \"text\",\n  \"message\": \"Hello from Postman! This is a test message.\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/messages/683ed1fccbe8be2b733c8363/message",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"messages",
+										"683ed1fccbe8be2b733c8363",
+										"message"
+									]
+								},
+								"description": "Creates a new text message in a specified chat room."
+							},
+							"response": []
+						},
+						{
+							"name": "Create Message (Image)",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "type",
+											"value": "image",
+											"type": "text"
+										},
+										{
+											"key": "file",
+											"type": "file",
+											"src": "/C:/Users/dream/Downloads/Gamal-Ahmed.pdf"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/messages/683ed1fccbe8be2b733c8363/media",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"messages",
+										"683ed1fccbe8be2b733c8363",
+										"media"
+									]
+								},
+								"description": "Creates a new image message with a media URL and metadata."
+							},
+							"response": []
+						},
+						{
+							"name": "Create Message (Reply to Existing Message)",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"type\": \"text\",\n  \"message\": \"Replying to your last message!\",\n  \"reply_to\": \"683ee78ab7f29872577cbe41\" \n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/messages/683ed1fccbe8be2b733c8363/",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"messages",
+										"683ed1fccbe8be2b733c8363",
+										""
+									]
+								},
+								"description": "Creates a new message that is a reply to an existing message. Replace `{{existingMessageId}}` with a real message ID."
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Message",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/messages/683ee88fb7f29872577cbe4a",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"messages",
+										"683ee88fb7f29872577cbe4a"
+									]
+								},
+								"description": "Deletes a specific chat message by ID. Only the sender can delete their own message. Requires authentication."
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Group",
+			"item": [
+				{
+					"name": "1. Create a ride group",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"group_name\": \"first group!\",\r\n\t\"school_id\": 1,\r\n\t\"seats\": 4,\r\n\t\"home\": {\r\n\t\t\"home_lat\": \"123.65\",\r\n\t\t\"home_lng\": \"123.65\"\r\n\t},\r\n\t\"children\": [\r\n\t\t{\r\n\t\t\t\"child_id\": 1,\r\n\t\t\t\"timing_from\": \"09:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t},\r\n\t\t\t\t{\r\n\t\t\t\"child_id\": 2,\r\n\t\t\t\"timing_from\": \"10:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t}\r\n\t],\r\n\t\"days\": [\"saturday\", \"sunday\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/group/create",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ride",
+								"group",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Add children to a parent group",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \r\n\t\"group_id\": 8,\r\n    \"children\": [\r\n        {\r\n        \"child_id\": 3,\r\n        \"timing_from\": \"01:00:00\",\r\n        \"timing_to\": \"12:00:00\"\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/group/add-child",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ride",
+								"group",
+								"add-child"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "NOT WORKING YET! 3. Add a new parent to a ride group",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"group_id\": 8,\r\n    \"home\": {\r\n\t\t\"home_lat\": \"123.65\",\r\n\t\t\"home_lng\": \"123.65\"\r\n\t}\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/group/add-parent/VXM64DDS",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ride",
+								"group",
+								"add-parent",
+								"VXM64DDS"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get an owned ride group details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/ride/group/20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ride",
+								"group",
+								"20"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Subscriptions",
+			"item": [
+				{
+					"name": "Test paymob",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Token egy_sk_test_6226fce628fe23f7adec1162873b838cd2e55972aac85f81272412de6937b56e",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"amount\": 10,\r\n  \"currency\": \"EGP\",\r\n  \"payment_methods\": [\r\n    5099005\r\n  ],\r\n  \"items\": [\r\n    {\r\n      \"name\": \"Item name 1\",\r\n      \"amount\": 10,\r\n      \"description\": \"Watch\",\r\n      \"quantity\": 1\r\n    }\r\n  ],\r\n  \"billing_data\": {\r\n    // \"apartment\": \"6\",\r\n    \"first_name\": \"Ammar\",\r\n    \"last_name\": \"Sadek\",\r\n    // \"street\": \"938, Al-Jadeed Bldg\",\r\n    // \"building\": \"939\",\r\n    \"phone_number\": \"+96824480228\",\r\n    // \"country\": \"OMN\",\r\n    \"email\": \"AmmarSadek@gmail.com\"\r\n    // \"floor\": \"1\",\r\n    // \"state\": \"Alkhuwair\"\r\n  },\r\n  \"customer\": {\r\n    \"first_name\": \"Ammar\",\r\n    \"last_name\": \"Sadek\",\r\n    \"email\": \"AmmarSadek@gmail.com\",\r\n    \"extras\": {\r\n      \"re\": \"22\"\r\n    }\r\n  },\r\n  \"extras\": {\r\n    \"ee\": 22\r\n  }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://accept.paymob.com/v1/intention/",
+							"protocol": "https",
+							"host": [
+								"accept",
+								"paymob",
+								"com"
+							],
+							"path": [
+								"v1",
+								"intention",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Test distance",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "5b3ce3597851110001cf62483af21737a2f544ca9a0cdb14672b677b",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"locations\": [\r\n        [\r\n            31.2357,\r\n            30.0444\r\n        ], // Cairo (Tahrir Square)\r\n        [\r\n            29.9187,\r\n            31.2001\r\n        ] // Alexandria (Citadel)\r\n    ],\r\n    \"metrics\": [\r\n        \"distance\",\r\n        \"duration\"\r\n    ],\r\n    \"units\": \"km\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.openrouteservice.org/v2/matrix/driving-car",
+							"protocol": "https",
+							"host": [
+								"api",
+								"openrouteservice",
+								"org"
+							],
+							"path": [
+								"v2",
+								"matrix",
+								"driving-car"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Subscribe",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"plan_type\": \"double-terms\",\r\n    \"installment_plan\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/group/20/subscribe",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ride",
+								"group",
+								"20",
+								"subscribe"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Current subscription status",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/group/20/subscription",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ride",
+								"group",
+								"20",
+								"subscription"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Confirm subscription",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"order_id\": 348570951\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/group/subscribe/confirm",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ride",
+								"group",
+								"subscribe",
+								"confirm"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "HealthRequest",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000/api",
+			"type": "default"
+		}
+	]
 }
