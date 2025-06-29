@@ -19,6 +19,20 @@ class ParentGroupRepository extends BaseRepository {
             throw new DatabaseError(error);
         }
     }
+
+    async getSeatsTaken(groupId, parentId) {
+        try {
+            const parentGroup = await this.findByGroupAndParentId(groupId, parentId);
+            if (!parentGroup) {
+                return 0; // No seats taken if no parent group found
+            }
+            console.log(parentGroup);
+            
+            return parentGroup.current_seats_taken || 0;
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
 }
 
 module.exports = new ParentGroupRepository();

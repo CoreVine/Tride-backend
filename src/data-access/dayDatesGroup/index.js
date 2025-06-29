@@ -7,9 +7,19 @@ class GroupDaysRepository extends BaseRepository {
         super(DayDatesGroupModel);
     }
 
-    async createBulkDaysGroup(rideGroupId, days) {
-        const t = await this.model.sequelize.transaction();
+    async countDaysInGroup(rideGroupId) {
+        try {
+            return await this.model.count({
+                where: {
+                    ride_group_detailsid: rideGroupId
+                }
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
 
+    async createBulkDaysGroup(rideGroupId, days, options = {}) {
         try {
             const daysAdded = [];
 
@@ -19,15 +29,13 @@ class GroupDaysRepository extends BaseRepository {
                 const dayAdded = await this.create({
                     ride_group_detailsid: rideGroupId,
                     date_day: day
-                }, { transaction: t });
+                }, options);
 
                 daysAdded.push(dayAdded);
             }
 
-            await t.commit();
             return daysAdded;
         } catch (error) {
-            await t.rollback();
             throw error;
         }
     }

@@ -40,6 +40,27 @@ class AccountRepository extends BaseRepository {
         }
     }
 
+    async findByIdIncludeParentAndDriver(id) {
+        try {
+            return await this.model.findByPk(id, {
+                include: [
+                    {
+                        model: this.model.sequelize.models.Parent,
+                        as: 'parent',
+                        required: false
+                    },
+                    {
+                        model: this.model.sequelize.models.Driver,
+                        as: 'driver',
+                        required: false
+                    }
+                ]
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
+
     /**
      * Delete an account and all associated data
      * @param {number} accountId - The ID of the account to delete

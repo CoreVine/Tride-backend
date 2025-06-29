@@ -3,6 +3,10 @@ const BaseRepository = require('../base.repository');
 const { DatabaseError, Op } = require("sequelize");
 const { generateInviteCode } = require('../../utils/generators/uuid-gen');
 
+const ParentGroupRepository = require('../parentGroup');
+const ChildGroupDetailsRepository = require('../childGroupDetails');
+const GroupDaysRepository = require('../dayDatesGroup');
+
 class RideGroupRepository extends BaseRepository {
     constructor() {
         super(RideGroupModel);
@@ -14,7 +18,7 @@ class RideGroupRepository extends BaseRepository {
                 include: [
                     {
                         association: 'creator',
-                        attributes: { exclude: ['created_at', 'updated_at'] }
+                        attributes: ['id']
                     },
                     {
                         association: 'driver',
@@ -22,9 +26,6 @@ class RideGroupRepository extends BaseRepository {
                     },
                     {
                         association: 'school'
-                    },
-                    {
-                        association: 'plan'
                     },
                     {
                         association: 'parentGroups',
@@ -48,6 +49,85 @@ class RideGroupRepository extends BaseRepository {
                     }
                 ]
             });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
+
+    async createNewRideGroup(payload) {
+        let { rideGroupPayload, parentGroupPayload, children, days } = payload;
+        const t = await this.model.sequelize.transaction();
+        try {            
+            // Step 1: Create the ride group
+            const rideGroup = await this.model.create(rideGroupPayload, { transaction: t });
+
+            if (!rideGroup) {
+                throw new DatabaseError('Failed to create a new ride group!');
+            }
+
+            // Step 2: Create the parent group
+            parentGroupPayload = {
+                ...parentGroupPayload,
+                group_id: rideGroup.id,
+            };
+
+            const parentGroup = await ParentGroupRepository.create(parentGroupPayload, { transaction: t });
+
+            if (!parentGroup) {
+                throw new DatabaseError('Failed to create a new parent group!');
+            }
+
+            // Step 3: Associate children with the parent group
+            const childrenOnParentGroup = await 
+            ChildGroupDetailsRepository
+            .addChildrenToParentGroup(parentGroupPayload.parent_id, parentGroup.id, children, { transaction: t });
+
+            // step-4: add days
+            const daysAdded = await GroupDaysRepository.createBulkDaysGroup(rideGroup.id, days, { transaction: t });
+
+            if (!daysAdded) {
+                throw new DatabaseError('Unable to add new days to a group!');
+            }
+
+            await t.commit();
+
+            return {
+                ...rideGroup,
+                parentGroup: {
+                  ...parentGroup,
+                  children: childrenOnParentGroup
+                },
+                days: daysAdded
+              };
+        } catch (error) {
+            await t.rollback();
+            
+            throw error;
+        }
+    }
+
+    async findOneByIdWithSchoolAndParent(parentId, rideGroupId, options = {}) {
+        try {
+            const queryOptions = {
+                where: {
+                    id: rideGroupId,
+                    '$parentGroups.parent_id$': parentId,
+                },
+                include: [{
+                    association: 'parentGroups',
+                    where: {
+                        parent_id: parentId,
+                    },
+                    required: true
+                },
+                {
+                    association: 'school',
+                    required: true
+                }],
+                ...options
+            };
+            
+            return await this.model.findOne(queryOptions);
         } catch (error) {
             throw new DatabaseError(error);
         }
