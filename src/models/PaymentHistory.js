@@ -13,13 +13,31 @@ class PaymentHistory extends Model {
         type: DataTypes.STRING(255),
         allowNull: false
       },
-      payed_at: {
+      paid_at: {
         type: DataTypes.DATE,
         allowNull: false
       },
-      payment_sub_type: {
-        type: DataTypes.STRING(50),
+      amount: {
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false
+      },
+      next_payment_due: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
+      next_payment_amount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+      },
+      parent_subscription_id: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: false,
+        references: {
+          model: 'parent_group_subscription',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       }
     }, {
       sequelize,
@@ -30,9 +48,9 @@ class PaymentHistory extends Model {
   }
 
   static associate(models) {
-    this.hasMany(models.GroupSubscription, {
-      foreignKey: 'payment_details_id',
-      as: 'subscriptions'
+    this.belongsTo(models.ParentGroupSubscription, {
+      foreignKey: 'parent_subscription_id',
+      as: 'parent_group_subscription'
     });
   }
 }
