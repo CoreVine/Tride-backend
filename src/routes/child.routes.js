@@ -42,7 +42,7 @@ const childSchemaUpdateSchema = Yup.object().shape({
 
 const childRoutes = Router();
 
-childRoutes.use(authMiddleware, verifiedEmailRequired, isParent);
+childRoutes.use("/child", authMiddleware, verifiedEmailRequired, isParent);
 childRoutes
   .route("/child")
   .get(childController.getChildProfileforParent)
