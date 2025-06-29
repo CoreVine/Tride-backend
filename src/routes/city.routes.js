@@ -24,10 +24,7 @@ const cityUpdateSchema = Yup.object()
   );
 
 // Apply auth middleware to all routes
-router.use(authMiddleware);
-
-// Apply email verification to all routes
-router.use(verifiedEmailRequired);
+router.use("/cities", authMiddleware, verifiedEmailRequired);
 
 router
   .route("/cities")

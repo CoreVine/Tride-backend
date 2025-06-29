@@ -11,11 +11,7 @@ const governorateCreateSchema = Yup.object().shape({
   governorate_name: Yup.string().required().min(2).max(255),
 });
 
-// Apply auth middleware to all routes
-router.use(authMiddleware);
-
-// Apply email verification to all routes
-router.use(verifiedEmailRequired);
+router.use('/governorate', authMiddleware, verifiedEmailRequired);
 router
   .route("/governorate")
   .get(governoratesController.getAllGovernorates)

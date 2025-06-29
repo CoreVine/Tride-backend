@@ -3,7 +3,6 @@ const SchoolRepository = require("../data-access/school");
 const schoolRepository = require("../data-access/school");
 const CityRepository = require("../data-access/city");
 const loggingService = require("../services/logging.service");
-const { deleteUploadedFile } = require("../config/upload");
 const {
   BadRequestError,
   NotFoundError,
@@ -30,7 +29,7 @@ const schoolController = {
       }
 
       // Check if School profile already exists BEFORE processing files
-      const city_id = req.params.city_id;
+      const city_id = req.query.city_id;
       if (!city_id) {
         throw new BadRequestError("City ID is required");
       }
@@ -82,7 +81,7 @@ const schoolController = {
           "Account email must be verified before creating a profile"
         );
       }
-      const city_id = req.params.city_id;
+      const city_id = req.query.city_id;
       if (!city_id) {
         throw new BadRequestError("City ID is required");
       }
