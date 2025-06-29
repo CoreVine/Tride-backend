@@ -23,7 +23,7 @@ const childenUploader = createUploader({
     accountType: cloudinaryAccountTypes.PARENT,
     purpose: cloudinaryPurposeTypes.PROFILE,
     transformationPreset: "child",
-    allowedFormats: ["jpg", "jpeg", "png", "webp"],
+    allowedFormats: ["jpg", "jpeg", "png", "webp", "heic"],
   },
 });
 

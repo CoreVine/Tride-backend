@@ -1,6 +1,6 @@
 const GovernorateModel = require("../../models/Governorate");
 const BaseRepository = require("../base.repository");
-const { DatabaseError } = require("sequelize");
+const { DatabaseError, Op } = require("sequelize");
 
 class GovernorateRepository extends BaseRepository {
   constructor() {

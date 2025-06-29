@@ -9,7 +9,16 @@ const fs = require('fs');
 const filters = {
   // Filter for image files
   images: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
+    
+    // Debug logging to see what MIME type is being received
+    console.log('File upload debug:', {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      fieldname: file.fieldname,
+      size: file.size
+    });
+    
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {

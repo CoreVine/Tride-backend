@@ -71,7 +71,17 @@ const authController = {
         // Generate a verification code
         const code = emailService.generateVerificationCode();
         const expiresAt = getEmailVerificationExpiration();
-
+console.log(
+  {
+    email,
+    code,
+    expires_at: expiresAt,
+    account_type: userAccountType, // Use the same account type
+    type: "email_verification",
+    verified: false,
+    attempt_count: 0,
+  }
+);
         // Save the verification code
         await VerificationCodeRepository.create({
           email,

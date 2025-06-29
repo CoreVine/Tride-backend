@@ -1,4 +1,4 @@
-const { NotFoundError } = require("../utils/errors/types/Api.error");
+const { NotFoundError, BadRequestError } = require("../utils/errors/types/Api.error");
 const loggingService = require("../services/logging.service");
 const CityRepository = require("../data-access/city");
 const GovernorateRepository = require("../data-access/governorate");
@@ -63,7 +63,7 @@ const cityController = {
       const cities = await CityRepository.findAll({
         where: { governorate_id: governorateId },
       });
-
+      console.log(cities);
       return res.success("Cities fetched successfully", {
         cities,
         governorate,
