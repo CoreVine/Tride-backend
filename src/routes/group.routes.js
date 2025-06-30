@@ -78,6 +78,7 @@ const addChildToGroupSchema = Yup.object().shape({
 
 groupRoutes.use(authMiddleware, verifiedEmailRequired, isParent);
 groupRoutes.get('/ride/group/:rideGroupId', RideGroupController.getRideGroupById);
+groupRoutes.get('/ride/groups/', RideGroupController.getRideGroups);
 groupRoutes.post('/ride/group/create',
   validate(createGroupSchema),
   RideGroupController.createRideGroup

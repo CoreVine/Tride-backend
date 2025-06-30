@@ -53,6 +53,59 @@ class RideGroupRepository extends BaseRepository {
         }
     }
 
+    async findAllIfParent(parentId, options = {}) {
+        try {
+            const queryOptions = {
+                where: {
+                    '$parentGroups.parent_id$': parentId
+                },
+                include: [{
+                    association: 'parentGroups',
+                    required: true
+                },
+                {
+                    association: 'creator',
+                    attributes: { exclude: ['created_at', 'updated_at'] }
+                },
+                {
+                    association: 'driver',
+                    attributes: { exclude: ['created_at', 'updated_at'] }
+                },
+                {
+                    association: 'school'
+                },
+                {
+                    association: 'plan'
+                },
+                {
+                    association: 'parentGroups',
+                    include: [
+                        {
+                            association: 'parent',
+                            attributes: { exclude: ['created_at', 'updated_at'] }
+                        },
+                        {
+                            association: 'childDetails',
+                            include: [
+                                {
+                                    association: 'child'
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    association: 'dayDates'
+                }],
+                ...options
+            };
+            
+            return await this.model.findAll(queryOptions);
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
+
     async findByIdIfParent(parentId, rideGroupId, options = {}) {
         try {
             const queryOptions = {
