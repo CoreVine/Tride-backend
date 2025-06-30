@@ -39,7 +39,9 @@ const createGroupSchema = Yup.object().shape({
         if (!days) return true;
         return days.length === new Set(days).size;
       }
-    )
+    ),
+  group_type: Yup.string().oneOf(['regular', 'premium']).default('regular')
+    .required()
 });
 
 
