@@ -51,7 +51,7 @@ const coreServices = [
 
     // 5. Start the HTTP server listening on the specified port
     // This server now handles both Express routes and Socket.IO connections
-    const PORT = process.env.SERVER_PORT || 3000;
+    const PORT = process.env.SERVER_PORT || 4000;
     httpServer.listen(PORT, "0.0.0.0", () => {
       logger.info(`Server running on port ${PORT}`);
       logger.info(`Access API at http://localhost:${PORT}/api`);

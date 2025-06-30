@@ -188,13 +188,29 @@ const profileController = {
       const updateData = {
         front_side_nic: req.files.front_side_nic[0].path,
         back_side_nic: req.files.back_side_nic[0].path,
+        documents_approved: false, // Reset approval status when new documents are uploaded
+        documents_approval_date: null, // Clear approval date
       };
 
+      logger.info("Updating parent with document data:", {
+        parentId: parent.id,
+        updateData: updateData
+      });
+
       // Update parent profile with document URLs
-      await ParentRepository.update(parent.id, updateData);
+      const updateResult = await ParentRepository.update(parent.id, updateData);
+      
+      logger.info("Update result:", { updateResult });
 
       // Fetch updated profile
       const updatedParent = await ParentRepository.findById(parent.id);
+      
+      logger.info("Updated parent data:", {
+        parentId: updatedParent?.id,
+        front_side_nic: updatedParent?.front_side_nic,
+        back_side_nic: updatedParent?.back_side_nic,
+        documents_approved: updatedParent?.documents_approved
+      });
 
       logger.info("Parent ID documents uploaded successfully", {
         accountId: req.userId,
@@ -207,6 +223,53 @@ const profileController = {
       });
     } catch (error) {
       logger.error("Parent ID documents upload error", {
+        error: error.message,
+        stack: error.stack,
+      });
+      next(error);
+    }
+  },
+
+  // Get Parent ID Documents
+  getParentIdDocuments: async (req, res, next) => {
+    try {
+      logger.info("Parent ID documents retrieval attempt", {
+        accountId: req.userId,
+      });
+
+      // Find parent profile
+      const parent = await ParentRepository.findByAccountId(req.userId);
+
+      if (!parent) {
+        throw new NotFoundError("Parent profile not found");
+      }
+
+      // Check if ID documents exist
+      if (!parent.front_side_nic || !parent.back_side_nic) {
+        return res.success("No ID documents uploaded yet", {
+          papers: null,
+        });
+      }
+
+      // Return the ID documents
+      const papers = {
+        front_side_nic: parent.front_side_nic,
+        back_side_nic: parent.back_side_nic,
+        documents_approved: parent.documents_approved,
+        documents_approval_date: parent.documents_approval_date,
+      };
+
+      logger.info("Parent ID documents retrieved successfully", {
+        accountId: req.userId,
+        parentId: parent.id,
+      });
+
+      // Return success with documents
+      return res.success("ID documents retrieved successfully", {
+        papers,
+      });
+    } catch (error) {
+      logger.error("Parent ID documents retrieval error", {
         error: error.message,
         stack: error.stack,
       });
@@ -511,6 +574,65 @@ const profileController = {
     }
   },
 
+  // Approve Parent Documents (Admin function)
+  approveParentDocuments: async (req, res, next) => {
+    try {
+      logger.info("Parent documents approval attempt", { accountId: req.userId });
+      const { parentId } = req.params;
+      const { approved } = req.body;
+      
+      if (!parentId) {
+        throw new BadRequestError("Parent ID is required");
+      }
+      
+      if (typeof approved !== 'boolean') {
+        throw new BadRequestError("Approved status must be a boolean value");
+      }
+
+      // Find parent profile
+      const parent = await ParentRepository.findById(parentId);
+      if (!parent) {
+        throw new NotFoundError("Parent profile not found");
+      }
+
+      // Check if parent has uploaded documents
+      if (!parent.front_side_nic || !parent.back_side_nic) {
+        throw new BadRequestError("Parent must upload ID documents before approval");
+      }
+
+      // Update approval status
+      const updateResult = await ParentRepository.updateDocumentsApprovalStatus(
+        parentId,
+        approved,
+        approved ? new Date().toISOString().split('T')[0] : null
+      );
+
+      // Fetch updated parent profile
+      const updatedParent = await ParentRepository.findById(parentId);
+
+      logger.info("Parent documents approval status updated successfully", {
+        accountId: req.userId,
+        parentId: parentId,
+        approved: approved,
+        updateResult: updateResult
+      });
+
+      // Return success with updated profile
+      return res.success("Parent documents approval status updated successfully", {
+        parent: updatedParent,
+        message: approved 
+          ? "Parent documents have been approved" 
+          : "Parent documents approval has been revoked"
+      });
+    } catch (error) {
+      logger.error("Parent documents approval error", {
+        error: error.message,
+        stack: error.stack,
+      });
+      next(error);
+    }
+  },
+
   // Update Parent Profile
   updateParentProfile: async (req, res, next) => {
     try {
@@ -781,9 +903,42 @@ const profileController = {
         const parent = await ParentRepository.findByAccountId(account.id);
 
         if (parent) {
-          statusData.profileComplete = true;
+          // Debug logging to see what we're getting from the database
+          logger.info("Parent data from database:", {
+            parentId: parent.id,
+            front_side_nic: parent.front_side_nic,
+            back_side_nic: parent.back_side_nic,
+            hasFrontSide: !!parent.front_side_nic,
+            hasBackSide: !!parent.back_side_nic,
+            documents_approved: parent.documents_approved
+          });
+
           statusData.steps.profileCreation = true;
           statusData.profile = parent;
+          
+          // Check if ID documents are uploaded
+          if (parent.front_side_nic && parent.back_side_nic) {
+            statusData.steps.documentsUpload = true;
+            statusData.documents = {
+              front_side_nic: parent.front_side_nic,
+              back_side_nic: parent.back_side_nic
+            };
+            
+            // Check if documents are approved
+            if (parent.documents_approved) {
+              statusData.steps.documentsApproval = true;
+              statusData.profileComplete = true; // Profile is complete when documents are approved
+            } else {
+              statusData.steps.documentsApproval = false;
+              statusData.profileComplete = false; // Profile not complete without approval
+              statusData.nextStep = "pending_approval";
+              statusData.message = "Your documents are under review. You will be notified when they are approved.";
+            }
+          } else {
+            statusData.profileComplete = false; // Profile not complete without documents
+            statusData.nextStep = "upload_id_documents";
+            statusData.message = "Please upload your ID documents to complete your profile.";
+          }
         } else {
           statusData.nextStep = "create_parent_profile";
         }
