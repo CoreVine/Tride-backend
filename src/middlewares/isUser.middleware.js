@@ -13,6 +13,7 @@ const isAccountMiddleware = async (req, res, next) => {
     }
     
     // Add account info to request for later use
+    req.userId = account.id;
     req.account = account;
     
     next();

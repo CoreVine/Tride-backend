@@ -76,7 +76,22 @@ const addChildToGroupSchema = Yup.object().shape({
   .required()
 });
 
-groupRoutes.use(authMiddleware, verifiedEmailRequired, isParent);
+
+const subscribeSchema = {
+  body: Yup.object().shape({
+    plan_type: Yup.string().oneOf(["monthly", "term", "double-terms"]).required(),
+    installment_plan: Yup.boolean().required()
+  }), 
+  params: Yup.object().shape({
+    rideGroupId: Yup.string().required()
+  })
+};
+
+const confirmNewSubscriptionSchema = Yup.object().shape({
+  order_id: Yup.string().required(),
+});
+
+groupRoutes.use('/ride/group', authMiddleware, verifiedEmailRequired, isParent);
 groupRoutes.get('/ride/group/:rideGroupId', RideGroupController.getRideGroupById);
 groupRoutes.get('/ride/groups/', RideGroupController.getRideGroups);
 groupRoutes.post('/ride/group/create',
@@ -88,6 +103,8 @@ groupRoutes.post('/ride/group/add-child',
   RideGroupController.addChildToGroup
 );
 
+// TODO: REMOVE GROUP_ID FROM INVITATION CODE
+// not working yet!
 groupRoutes.post('/ride/group/add-parent/:invitation_code', 
   validate(
     {
@@ -96,6 +113,31 @@ groupRoutes.post('/ride/group/add-parent/:invitation_code',
     }
   ),
   RideGroupController.addNewParentGroup
+);
+
+groupRoutes.get('/ride/group/:rideGroupId/subscription', 
+  validate({
+    params: Yup.object().shape({
+      rideGroupId: Yup.string().required()
+    })
+  }),
+  RideGroupController.getCurrentSubscriptionStatus
+);
+
+groupRoutes.post('/ride/group/:rideGroupId/subscribe',
+  validate(subscribeSchema),
+  RideGroupController.createNewSubscribeRequest
+);
+
+// polling
+groupRoutes.post('/ride/group/subscribe/confirm',
+  validate(confirmNewSubscriptionSchema),
+  RideGroupController.confirmNewSubscription
+);
+
+groupRoutes.post('/ride/group/:rideGroupId/subscribe/installment', 
+  validate(subscribeSchema),
+  RideGroupController.payInstallments
 );
 
 module.exports = groupRoutes;

@@ -25,7 +25,6 @@ const cityUpdateSchema = Yup.object()
 
 // Apply auth middleware to all routes
 router.use("/cities", authMiddleware, verifiedEmailRequired);
-
 // More specific routes FIRST
 router.get("/cities/governorate/:governorateId", cityController.getCitiesByGovernorate);
 router.get("/cities/debug", (req, res) => {

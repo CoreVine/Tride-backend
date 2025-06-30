@@ -124,9 +124,9 @@ class Parent extends Model {
       as: 'createdGroups'
     });
     
-    this.hasMany(models.GroupSubscription, {
+    this.hasMany(models.ParentGroupSubscription, {
       foreignKey: 'parent_id',
-      as: 'subscriptions'
+      as: 'parent_group_subscription'
     });
     
     this.hasMany(models.ParentGroup, {
