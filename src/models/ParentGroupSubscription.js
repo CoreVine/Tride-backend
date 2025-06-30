@@ -1,6 +1,6 @@
 const { Model, DataTypes } = require('sequelize');
 
-class GroupSubscription extends Model {
+class ParentGroupSubscription extends Model {
   static init(sequelize) {
     return super.init({
       id: {
@@ -19,10 +19,6 @@ class GroupSubscription extends Model {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      seat_numbers: {
-        type: DataTypes.TINYINT.UNSIGNED,
-        allowNull: false
-      },
       ride_group_id: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
@@ -33,24 +29,45 @@ class GroupSubscription extends Model {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      payed_at: {
+      current_seats_taken: {
+        type: DataTypes.TINYINT.UNSIGNED,
+        allowNull: false
+      },
+      pickup_days_count: {
+        type: DataTypes.TINYINT.UNSIGNED,
+        allowNull: false
+      },
+      started_at: {
         type: DataTypes.DATE,
         allowNull: false
       },
-      payment_details_id: {
+      valid_until: {
+        type: DataTypes.DATE,
+        allowNull: false
+      },
+      plan_id: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
-          model: 'payment_history',
+          model: 'plan',
           key: 'id'
         },
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT'
+      },
+      total_amount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false
+      },
+      status: {
+        type: DataTypes.ENUM('active', 'expired', 'inactive', 'cancelled'),
+        allowNull: false,
+        defaultValue: 'active'
       }
     }, {
       sequelize,
-      modelName: 'GroupSubscription',
-      tableName: 'group_subscription',
+      modelName: 'ParentGroupSubscription',
+      tableName: 'parent_group_subscription',
       timestamps: false
     });
   }
@@ -66,11 +83,16 @@ class GroupSubscription extends Model {
       as: 'rideGroup'
     });
     
-    this.belongsTo(models.PaymentHistory, {
-      foreignKey: 'payment_details_id',
-      as: 'paymentDetails'
+    this.belongsTo(models.Plan, {
+      foreignKey: 'plan_id',
+      as: 'plan'
+    });
+
+    this.hasMany(models.PaymentHistory, {
+      foreignKey: 'parent_subscription_id',
+      as: 'payment_history'
     });
   }
 }
 
-module.exports = GroupSubscription;
+module.exports = ParentGroupSubscription;

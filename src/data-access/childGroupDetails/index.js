@@ -8,12 +8,10 @@ class ChildGroupDetailsRepository extends BaseRepository {
         super(ChildGroupDetailsModel);
     }
 
-    async addChildrenToParentGroup(parentId, parentGroupId, children) {
+
+    async addChildrenToParentGroup(parentId, parentGroupId, children, options = {}) {
         if (!children || !children.length)
             return [];
-
-        const t = await this.model.sequelize.transaction();
-
         try {
             let childDetailsPayload = {
                 parent_group_id: parentGroupId,
@@ -50,7 +48,7 @@ class ChildGroupDetailsRepository extends BaseRepository {
                 if (existingChild) {
                     existingChild.timing_from = child.timing_from;
                     existingChild.timing_to = child.timing_to;
-                    await existingChild.save({ transaction: t });
+                    await existingChild.save(options);
                     parentChildrenGroup.push(existingChild);
                     continue;
                 }
@@ -59,16 +57,12 @@ class ChildGroupDetailsRepository extends BaseRepository {
                 childDetailsPayload.timing_from = child.timing_from;
                 childDetailsPayload.timing_to = child.timing_to;
     
-                const newChildOnGroup = await this.create(childDetailsPayload, { transaction: t });
+                const newChildOnGroup = await this.create(childDetailsPayload, options);
                 parentChildrenGroup.push(newChildOnGroup);
             }
 
-            await t.commit();
-
             return parentChildrenGroup;
         } catch(error) {
-            await t.rollback();
-
             if (error.name === 'SequelizeForeignKeyConstraintError')
                 throw new NotFoundError("Invalid child");
             

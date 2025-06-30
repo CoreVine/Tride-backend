@@ -21,7 +21,7 @@ const isAccountType = (requiredType) => {
       }
 
       // Get account from database
-      const account = await AccountRepository.findById(accountId);
+      const account = await AccountRepository.findByIdIncludeParentAndDriver(accountId);
       if (!account) {
         logger.warn("Account not found", { accountId });
         throw new UnauthorizedError("Account not found");
@@ -45,9 +45,14 @@ const isAccountType = (requiredType) => {
         );
       }
 
-      // Add account type to request for use in controllers
-      req.accountType = account.account_type;
-
+      req.account = {
+        id: account.id,
+        email: account.email,
+        account_type: account.account_type,
+        is_verified: account.is_verified,
+        [requiredType]: account[requiredType] || null,
+      };
+      
       next();
     } catch (error) {
       next(error);

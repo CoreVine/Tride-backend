@@ -62,16 +62,6 @@ class RideGroup extends Model {
         allowNull: false,
         defaultValue: 0
       },
-      group_plan_id: {
-        type: DataTypes.INTEGER.UNSIGNED,
-        allowNull: true,
-        references: {
-          model: 'group_plan',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL'
-      },
       invite_code: {
         type: DataTypes.STRING(255),
         unique: {
@@ -104,19 +94,14 @@ class RideGroup extends Model {
       as: 'school'
     });
     
-    this.belongsTo(models.GroupPlan, {
-      foreignKey: 'group_plan_id',
-      as: 'plan'
-    });
-    
     this.hasMany(models.ParentGroup, {
       foreignKey: 'group_id',
       as: 'parentGroups'
     });
     
-    this.hasMany(models.GroupSubscription, {
+    this.hasMany(models.ParentGroupSubscription, {
       foreignKey: 'ride_group_id',
-      as: 'subscriptions'
+      as: 'parent_group_subscription'
     });
     
     this.hasMany(models.RideInstance, {

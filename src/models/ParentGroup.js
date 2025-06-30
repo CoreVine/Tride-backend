@@ -36,7 +36,11 @@ class ParentGroup extends Model {
       home_lng: {
         type: DataTypes.DECIMAL(10, 6),
         allowNull: false
-      }
+      },
+      current_seats_taken: {
+        type: DataTypes.TINYINT.UNSIGNED,
+        allowNull: false
+      },
     }, {
       sequelize,
       modelName: 'ParentGroup',
