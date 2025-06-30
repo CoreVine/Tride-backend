@@ -1,10 +1,9 @@
 {
 	"info": {
-		"_postman_id": "9a350a25-3d0a-49a4-99c0-f7ea865e89ae",
+		"_postman_id": "756f2bf5-1bce-4354-bb78-d5293a1715ef",
 		"name": "Tride",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "15043408",
-		"_collection_link": "https://solar-water-247594.postman.co/workspace/%25D8%25A7%25D9%2584%25D8%25B9%25D8%25AA%25D8%25A7%25D9%2588%25D9%2584%25D8%25A9-Workspace~63b8eee3-6d46-442f-857b-7fe526f2ed89/collection/40667681-9a350a25-3d0a-49a4-99c0-f7ea865e89ae?action=share&source=collection_link&creator=15043408"
+		"_exporter_id": "15043408"
 	},
 	"item": [
 		{
@@ -2524,7 +2523,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n\t\"group_name\": \"first group!\",\r\n\t\"school_id\": 1,\r\n\t\"seats\": 4,\r\n\t\"home\": {\r\n\t\t\"home_lat\": \"123.65\",\r\n\t\t\"home_lng\": \"123.65\"\r\n\t},\r\n\t\"children\": [\r\n\t\t{\r\n\t\t\t\"child_id\": 1,\r\n\t\t\t\"timing_from\": \"09:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t},\r\n\t\t\t\t{\r\n\t\t\t\"child_id\": 2,\r\n\t\t\t\"timing_from\": \"10:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t}\r\n\t],\r\n\t\"days\": [\"saturday\", \"sunday\"]\r\n}",
+							"raw": "{\r\n\t\"group_name\": \"second group!\",\r\n\t\"school_id\": 1,\r\n\t\"seats\": 4,\r\n\t\"home\": {\r\n\t\t\"home_lat\": \"123.65\",\r\n\t\t\"home_lng\": \"123.65\"\r\n\t},\r\n\t\"children\": [\r\n\t\t{\r\n\t\t\t\"child_id\": 1,\r\n\t\t\t\"timing_from\": \"09:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t},\r\n\t\t\t\t{\r\n\t\t\t\"child_id\": 2,\r\n\t\t\t\"timing_from\": \"10:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t}\r\n\t],\r\n\t\"days\": [\"saturday\", \"sunday\"],\r\n    \"group_type\": \"premium\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2634,6 +2633,30 @@
 								"ride",
 								"group",
 								"20"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all ride groups",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/ride/groups",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ride",
+								"groups"
 							]
 						}
 					},

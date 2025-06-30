@@ -74,6 +74,15 @@ class Parent extends Model {
         allowNull: false,
         defaultValue: false
       },
+      documents_approved: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+      },
+      documents_approval_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+      },
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,

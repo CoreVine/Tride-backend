@@ -47,6 +47,24 @@ class ParentRepository extends BaseRepository {
             throw new DatabaseError(error);
         }
     }
+
+    async updateDocumentsApprovalStatus(parentId, approved, approvalDate = null) {
+        try {
+            const updateData = {
+                documents_approved: approved
+            };
+            
+            if (approvalDate) {
+                updateData.documents_approval_date = approvalDate;
+            }
+            
+            return await this.model.update(updateData, {
+                where: { id: parentId }
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
 }
 
 module.exports = new ParentRepository();

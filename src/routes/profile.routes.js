@@ -128,6 +128,10 @@ const driverPapersSchema = Yup.object().shape({
   face_auth_complete: Yup.boolean().required(),
 });
 
+const parentApprovalSchema = Yup.object().shape({
+  approved: Yup.boolean().required("Approved status is required"),
+});
+
 const profileRoutes = Router();
 
 // Parent profile routes
@@ -168,6 +172,27 @@ profileRoutes.post(
     { name: "back_side_nic", maxCount: 1 },
   ]),
   profileController.uploadParentIdDocuments
+);
+
+// Get parent ID documents
+profileRoutes.get(
+  "/profile/parent/papers",
+  authMiddleware,
+  verifiedEmailRequired,
+  isParent,
+  profileController.getParentIdDocuments
+);
+
+// Approve parent documents (Admin function)
+profileRoutes.put(
+  "/profile/parent/approved/:parentId",
+  authMiddleware,
+  verifiedEmailRequired,
+  // This route is for admin to approve parent documents
+  // so we need to ensure the user is a parent (or could be admin in future)
+  isParent,
+  validate(parentApprovalSchema),
+  profileController.approveParentDocuments
 );
 
 profileRoutes

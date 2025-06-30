@@ -54,6 +54,58 @@ class RideGroupRepository extends BaseRepository {
         }
     }
 
+    async findAllIfParent(parentId, options = {}) {
+        try {
+            const queryOptions = {
+                where: {
+                    '$parentGroups.parent_id$': parentId
+                },
+                include: [{
+                    association: 'parentGroups',
+                    required: true
+                },
+                {
+                    association: 'creator',
+                    attributes: { exclude: ['created_at', 'updated_at'] }
+                },
+                {
+                    association: 'driver',
+                    attributes: { exclude: ['created_at', 'updated_at'] }
+                },
+                {
+                    association: 'school'
+                },
+                {
+                    association: 'plan'
+                },
+                {
+                    association: 'parentGroups',
+                    include: [
+                        {
+                            association: 'parent',
+                            attributes: { exclude: ['created_at', 'updated_at'] }
+                        },
+                        {
+                            association: 'childDetails',
+                            include: [
+                                {
+                                    association: 'child'
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    association: 'dayDates'
+                }],
+                ...options
+            };
+            return await this.model.findAll(queryOptions);
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
+
     async createNewRideGroup(payload) {
         let { rideGroupPayload, parentGroupPayload, children, days } = payload;
         const t = await this.model.sequelize.transaction();

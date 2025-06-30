@@ -67,6 +67,11 @@ class RideGroup extends Model {
         unique: {
           msg: 'This invite code is already taken'
         }
+      },
+      group_type: {
+        type: DataTypes.ENUM('regular', 'premium'),
+        allowNull: false,
+        defaultValue: 'regular'
       }
     }, {
       sequelize,
