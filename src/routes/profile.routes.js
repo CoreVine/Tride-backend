@@ -23,7 +23,7 @@ const parentProfileUploader = createUploader({
     accountType: cloudinaryAccountTypes.PARENT,
     purpose: cloudinaryPurposeTypes.PROFILE,
     transformationPreset: "profile",
-    allowedFormats: ["jpg", "jpeg", "png", "webp"],
+    allowedFormats: ["jpg", "jpeg", "png", "webp", "heic"],
   },
 });
 
@@ -37,7 +37,7 @@ const parentIdUploader = createUploader({
     accountType: cloudinaryAccountTypes.PARENT,
     purpose: cloudinaryPurposeTypes.ID_CARDS,
     transformationPreset: "document",
-    allowedFormats: ["jpg", "jpeg", "png", "webp", "pdf"],
+    allowedFormats: ["jpg", "jpeg", "png", "webp", "pdf", "heic"],
   },
 });
 
@@ -51,7 +51,7 @@ const driverProfileUploader = createUploader({
     accountType: cloudinaryAccountTypes.DRIVER,
     purpose: cloudinaryPurposeTypes.PROFILE,
     transformationPreset: "profile",
-    allowedFormats: ["jpg", "jpeg", "png", "webp"],
+    allowedFormats: ["jpg", "jpeg", "png", "webp", "heic"],
   },
 });
 
@@ -65,7 +65,7 @@ const driverDocumentsUploader = createUploader({
     accountType: cloudinaryAccountTypes.DRIVER,
     purpose: cloudinaryPurposeTypes.DOCUMENTS,
     transformationPreset: "document",
-    allowedFormats: ["jpg", "jpeg", "png", "webp", "pdf"],
+    allowedFormats: ["jpg", "jpeg", "png", "webp", "pdf", "heic"],
   },
 });
 

@@ -1,5 +1,5 @@
-import DEFAULT_ERRORS from "../messages.errors";
-import BaseError from "./Base.error";
+const DEFAULT_ERRORS = require("../messages.errors");
+const BaseError = require("./Base.error");
 
 /**
  * @class ApiError
@@ -10,7 +10,7 @@ class ApiError extends BaseError {
   }
 }
 
-export class NotFoundError extends ApiError {
+class NotFoundError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.NOT_FOUND.message,
     type = DEFAULT_ERRORS.NOT_FOUND.code
@@ -19,7 +19,7 @@ export class NotFoundError extends ApiError {
   }
 }
 
-export class BadRequestError extends ApiError {
+class BadRequestError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.BAD_REQUEST.message,
     type = DEFAULT_ERRORS.BAD_REQUEST.code
@@ -28,7 +28,7 @@ export class BadRequestError extends ApiError {
   }
 }
 
-export class ValidationError extends ApiError {
+class ValidationError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.VALIDATION.message,
     type = DEFAULT_ERRORS.VALIDATION.code
@@ -40,7 +40,7 @@ export class ValidationError extends ApiError {
   }
 }
 
-export class UnauthorizedError extends ApiError {
+class UnauthorizedError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.UNAUTHORIZED.message,
     type = DEFAULT_ERRORS.UNAUTHORIZED.code
@@ -48,7 +48,7 @@ export class UnauthorizedError extends ApiError {
     super(message, 401, type);
   }
 }
-export class ForbiddenError extends ApiError {
+class ForbiddenError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.FORBIDDEN.message,
     type = DEFAULT_ERRORS.FORBIDDEN.code
@@ -57,7 +57,7 @@ export class ForbiddenError extends ApiError {
   }
 }
 
-export class InternalServerError extends ApiError {
+class InternalServerError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.SERVER_ERROR.message,
     type = DEFAULT_ERRORS.SERVER_ERROR.code
@@ -66,7 +66,7 @@ export class InternalServerError extends ApiError {
   }
 }
 
-export class BadTokenError extends ApiError {
+class BadTokenError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.BAD_TOKEN.message,
     type = DEFAULT_ERRORS.BAD_TOKEN.code
@@ -75,7 +75,7 @@ export class BadTokenError extends ApiError {
   }
 }
 
-export class TokenExpiredError extends ApiError {
+class TokenExpiredError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.TOKEN_EXPIRED.message,
     type = DEFAULT_ERRORS.TOKEN_EXPIRED.code
@@ -84,7 +84,7 @@ export class TokenExpiredError extends ApiError {
   }
 }
 
-export class VerificationCodeExpiredError extends ApiError {
+class VerificationCodeExpiredError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.VERIFICATION_CODE_EXPIRED.message,
     type = DEFAULT_ERRORS.VERIFICATION_CODE_EXPIRED.code
@@ -93,7 +93,7 @@ export class VerificationCodeExpiredError extends ApiError {
   }
 }
 
-export class VerificationCodeInvalidError extends ApiError {
+class VerificationCodeInvalidError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.VERIFICATION_CODE_INVALID.message,
     type = DEFAULT_ERRORS.VERIFICATION_CODE_INVALID.code
@@ -102,7 +102,7 @@ export class VerificationCodeInvalidError extends ApiError {
   }
 }
 
-export class PasswordResetRequiredError extends ApiError {
+class PasswordResetRequiredError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.PASSWORD_RESET_REQUIRED.message,
     type = DEFAULT_ERRORS.PASSWORD_RESET_REQUIRED.code
@@ -111,7 +111,7 @@ export class PasswordResetRequiredError extends ApiError {
   }
 }
 
-export class InvalidResetTokenError extends ApiError {
+class InvalidResetTokenError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.INVALID_RESET_TOKEN.message,
     type = DEFAULT_ERRORS.INVALID_RESET_TOKEN.code
@@ -120,7 +120,7 @@ export class InvalidResetTokenError extends ApiError {
   }
 }
 
-export class ResetTokenUsedError extends ApiError {
+class ResetTokenUsedError extends ApiError {
   constructor(
     message = DEFAULT_ERRORS.RESET_TOKEN_USED.message,
     type = DEFAULT_ERRORS.RESET_TOKEN_USED.code
@@ -129,7 +129,7 @@ export class ResetTokenUsedError extends ApiError {
   }
 }
 
-export class CorsError extends ApiError {
+class CorsError extends ApiError {
   constructor(
     origin = null,
     message = DEFAULT_ERRORS.CORS_ERROR.message,
@@ -141,7 +141,7 @@ export class CorsError extends ApiError {
   }
 }
 
-export class TooManyAttemptsError extends Error {
+class TooManyAttemptsError extends Error {
   constructor(message = 'Too many attempts. Please try again later.') {
     super(message);
     this.name = 'TooManyAttemptsError';
@@ -154,5 +154,25 @@ export class TooManyAttemptsError extends Error {
  * @param {Error} err - Error object
  * @returns {boolean} - Is this error an ApiError
  */
-export const isApiError = (err) =>
+const isApiError = (err) =>
     err instanceof ApiError ? err.isOperational : false;
+
+module.exports = {
+  ApiError,
+  NotFoundError,
+  BadRequestError,
+  ValidationError,
+  UnauthorizedError,
+  ForbiddenError,
+  InternalServerError,
+  BadTokenError,
+  TokenExpiredError,
+  VerificationCodeExpiredError,
+  VerificationCodeInvalidError,
+  PasswordResetRequiredError,
+  InvalidResetTokenError,
+  ResetTokenUsedError,
+  CorsError,
+  TooManyAttemptsError,
+  isApiError
+};

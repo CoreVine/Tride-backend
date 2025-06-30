@@ -1,6 +1,6 @@
 const CityModel = require("../../models/City");
 const BaseRepository = require("../base.repository");
-const { DatabaseError } = require("sequelize");
+const { DatabaseError, Op } = require("sequelize");
 
 class CityRepository extends BaseRepository {
   constructor() {
@@ -28,6 +28,23 @@ class CityRepository extends BaseRepository {
       throw new DatabaseError(error);
     }
   }
+
+  async findByName(name) {
+    try {
+      return await this.model.findAll({
+        where: {
+          name: {
+            [Op.like]: `%${name}%`,
+          },
+        },
+        attributes: ["id", "name", "governorate_id"],
+        order: [["name", "ASC"]],
+      });
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
   async findByIdWithParentsDriversSchools(id) {
     try {
       return await this.model.findByPk(id, {

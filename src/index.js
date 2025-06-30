@@ -7,14 +7,14 @@ const sequelizeService = require("./services/sequelize.service");
 const awsService = require("./services/aws.service");
 const emailService = require("./services/email.service");
 const redisService = require("./services/redis.service");
-const mongodbService = require("./config/monogodb");
+//const mongodbService = require("./config/monogodb");
 const socketioService = require("./services/socketio.service");
 
 require("dotenv").config(); // Ensure dotenv is loaded early
 
 // This array holds services that can be initialized without special dependencies
 const coreServices = [
-  mongodbService,
+ // mongodbService,
   sequelizeService,
   awsService,
   emailService,
@@ -52,7 +52,7 @@ const coreServices = [
     // 5. Start the HTTP server listening on the specified port
     // This server now handles both Express routes and Socket.IO connections
     const PORT = process.env.SERVER_PORT || 3000;
-    httpServer.listen(PORT, () => {
+    httpServer.listen(PORT, "0.0.0.0", () => {
       logger.info(`Server running on port ${PORT}`);
       logger.info(`Access API at http://localhost:${PORT}/api`);
       logger.info(`Socket.IO listening on ws://localhost:${PORT}`);

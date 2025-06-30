@@ -25,7 +25,13 @@ const cityUpdateSchema = Yup.object()
 
 // Apply auth middleware to all routes
 router.use("/cities", authMiddleware, verifiedEmailRequired);
+// More specific routes FIRST
+router.get("/cities/governorate/:governorateId", cityController.getCitiesByGovernorate);
+router.get("/cities/debug", (req, res) => {
+  res.json({ message: "City routes are loaded", routes: router.stack.map(layer => layer.route?.path).filter(Boolean) });
+});
 
+// General routes LAST
 router
   .route("/cities")
   .get(cityController.getAllCities)
