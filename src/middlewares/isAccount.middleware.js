@@ -21,7 +21,7 @@ const isAccountType = (requiredType) => {
       }
 
       // Get account from database
-      const account = await AccountRepository.findByIdIncludeParentAndDriver(accountId);
+      const account = await AccountRepository.findByIdIncludeDetails(accountId);
       if (!account) {
         logger.warn("Account not found", { accountId });
         throw new UnauthorizedError("Account not found");
@@ -63,5 +63,6 @@ const isAccountType = (requiredType) => {
 module.exports = {
   isParent: isAccountType("parent"),
   isDriver: isAccountType("driver"),
+  isAdmin: isAccountType("admin"),
   isAccountType,
 };

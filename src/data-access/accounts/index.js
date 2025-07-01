@@ -40,7 +40,7 @@ class AccountRepository extends BaseRepository {
         }
     }
 
-    async findByIdIncludeParentAndDriver(id) {
+    async findByIdIncludeDetails(id) {
         try {
             return await this.model.findByPk(id, {
                 include: [
@@ -52,6 +52,11 @@ class AccountRepository extends BaseRepository {
                     {
                         model: this.model.sequelize.models.Driver,
                         as: 'driver',
+                        required: false
+                    },
+                    {
+                        model: this.model.sequelize.models.Admin,
+                        as: 'admin',
                         required: false
                     }
                 ]

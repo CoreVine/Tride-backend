@@ -64,6 +64,13 @@ class Account extends Model {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE'
     });
+    
+    this.hasMany(models.AdminPermission, {
+      foreignKey: 'account_id',
+      as: 'adminPermissions',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
+    });
   }
 
   checkPassword(password) {
