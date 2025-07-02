@@ -1,6 +1,6 @@
 const ParentGroupSubscriptionModel = require('../../models/ParentGroupSubscription');
 const BaseRepository = require('../base.repository');
-const { DatabaseError } = require("sequelize");
+const { DatabaseError, Op } = require("sequelize");
 const PaymentHistoryRepository = require('../paymentHistory');
 
 class ParentGroupSubscriptionRepository extends BaseRepository {
@@ -47,7 +47,10 @@ class ParentGroupSubscriptionRepository extends BaseRepository {
                 where: {
                     parent_id: parentId,
                     ride_group_id: groupId,
-                    status: 'active'
+                    status: 'active',
+                    valid_until: {
+                        [Op.gte]: new Date() // Check expiration date
+                    }
                 },
                 include: [{
                     association: 'plan'
@@ -90,11 +93,69 @@ class ParentGroupSubscriptionRepository extends BaseRepository {
                 
                 subscription.dataValues.remaining_months = 
                     Number(subscription.plan.months_count) - subscription.dataValues.months_paid_done;
-                subscription.dataValues.next_payment_due = subscription.payment_history[0].next_payment_due;
-                subscription.dataValues.next_payment_amount = Number(subscription.payment_history[0].next_payment_amount);
             }
 
             return subscription;
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
+
+    async extendSubscription(subscriptionId, extensionMonths, paymentData) {
+        const t = await this.model.sequelize.transaction();
+        
+        try {
+            // Get current subscription
+            const subscription = await this.findById(subscriptionId);
+            if (!subscription) {
+                throw new DatabaseError('Subscription not found');
+            }
+
+            // Calculate new valid_until date
+            const currentValidUntil = new Date(subscription.valid_until);
+            const currentDate = new Date();
+            
+            // If subscription is expired, extend from current date, otherwise from valid_until
+            const baseDate = currentValidUntil > currentDate ? currentValidUntil : currentDate;
+            const newValidUntil = new Date(baseDate);
+            newValidUntil.setMonth(newValidUntil.getMonth() + extensionMonths);
+
+            // Update subscription
+            await this.update(subscriptionId, {
+                valid_until: newValidUntil,
+                status: 'active'
+            }, { transaction: t });
+
+            // Add payment record
+            const paymentPayload = {
+                ...paymentData,
+                parent_subscription_id: subscriptionId
+            };
+            
+            await PaymentHistoryRepository.create(paymentPayload, { transaction: t });
+            
+            await t.commit();
+            
+            return await this.findById(subscriptionId);
+        } catch (error) {
+            await t.rollback();
+            throw new DatabaseError(error);
+        }
+    }
+
+    async findSubscriptionByParentAndGroup(parentId, groupId) {
+        try {
+            return await this.model.findOne({
+                where: {
+                    parent_id: parentId,
+                    ride_group_id: groupId
+                },
+                include: [{
+                    association: 'plan'
+                }],
+                order: [['started_at', 'DESC']],
+                limit: 1
+            });
         } catch (error) {
             throw new DatabaseError(error);
         }

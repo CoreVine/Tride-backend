@@ -1,11 +1,11 @@
-require('dotenv').config();
+require("dotenv").config();
 const AccountRepository = require("../data-access/accounts");
 const ParentRepository = require("../data-access/parent");
-const RideGroupRepository = require('../data-access/rideGroup');
-const ParentGroupRepository = require('../data-access/parentGroup');
-const ChildrenGroupDetailsRepository = require('../data-access/childGroupDetails');
-const PlanRepository = require('../data-access/plan');
-const ParentGroupSubscriptionRepository = require('../data-access/parentGroupSubscription');
+const RideGroupRepository = require("../data-access/rideGroup");
+const ParentGroupRepository = require("../data-access/parentGroup");
+const ChildrenGroupDetailsRepository = require("../data-access/childGroupDetails");
+const PlanRepository = require("../data-access/plan");
+const ParentGroupSubscriptionRepository = require("../data-access/parentGroupSubscription");
 const loggingService = require("../services/logging.service");
 const {
   BadRequestError,
@@ -13,88 +13,14 @@ const {
   ForbiddenError,
 } = require("../utils/errors/types/Api.error");
 const paymobUtil = require("../utils/payment/paymob");
-const redisService = require('../services/redis.service');
-const subscriptionDomain = require('../domain/subscription/subscription');
+const redisService = require("../services/redis.service");
+const subscriptionDomain = require("../domain/subscription/subscription");
 const logger = loggingService.getLogger();
 
 const RideGroupController = {
-
-  getAvailablePlans: async (req, res, next) => {
-    const { rideGroupId } = req.params;
-
-    try {
-      if (!req.account.parent) {
-        throw new ForbiddenError(
-          "Account email must be verified, have a valid parent profile"
-        );
-      }
-
-      // Get the ride group details
-      const rideGroup = await RideGroupRepository
-      .findOneByIdWithSchoolAndParent(req.account.parent.id, rideGroupId);
-      
-      if (!rideGroup) {
-        throw new NotFoundError("Ride group not found");
-      }
-
-      // create a new subscription for the parent in this ride group
-      const { distance, seatsTaken, totalDays } = await subscriptionDomain.getPriceFactors({
-        rideGroupId: rideGroup.id,
-        parentId: req.account.parent.id,
-        homeLocation: {
-          homeLat: rideGroup.parentGroups[0].home_lat,
-          homeLng: rideGroup.parentGroups[0].home_lng
-        },
-        schoolLocation: {
-          schoolLat: rideGroup.school.lat,
-          schoolLng: rideGroup.school.lng
-        }
-      });
-
-      const planDetails = await PlanRepository.getAllPlans();
-  
-      if (!planDetails) {
-        throw new NotFoundError("Plan not found for the specified type");
-      }
-
-      const plans = [];
-      for (const plan of planDetails) {
-        // calculate the overall price based on the plan type        
-        const { overallPrice, afterDiscountPrice, toPayPrice } = await subscriptionDomain.calculateOverallPrice({
-          distance,
-          seatsTaken,
-          totalDays,
-          planDetails: plan
-        });
-
-        plans.push({
-          totalDistance:`${distance * plan.months_count * totalDays} km`,
-          totalDays: totalDays * plan.months_count * 4,
-          ...plan.dataValues,
-          overallPrice: Number(overallPrice.toFixed(2)),
-          afterDiscountPrice: Number(afterDiscountPrice.toFixed(2)),
-          toPayPrice: Number(toPayPrice.toFixed(2))
-        });
-      }
-
-      return res.success("Available plans fetched successfully", {
-        factors: {
-          seatsTaken,
-          daysPerWeek: totalDays,
-        },
-        plans
-      });
-    } catch (error) {
-      logger.error("Error fetching next payment details", {
-        error: error.message,
-        stack: error.stack,
-      });
-      return next(error);
-    }
-  },
   createNewSubscribeRequest: async (req, res, next) => {
     const { rideGroupId } = req.params;
-    const { plan_type, installment_plan } = req.body;  // installment_plan:boolean
+    const { plan_type } = req.body;
 
     try {
       if (!req.account.parent) {
@@ -104,52 +30,58 @@ const RideGroupController = {
       }
 
       // Get the ride group details
-      const rideGroup = await RideGroupRepository
-      .findOneByIdWithSchoolAndParent(req.account.parent.id, rideGroupId);
-      
+      const rideGroup =
+        await RideGroupRepository.findOneByIdWithSchoolAndParent(
+          req.account.parent.id,
+          rideGroupId
+        );
+
       if (!rideGroup) {
         throw new NotFoundError("Ride group not found");
       }
 
       // check if a parent already has an active subscription
-      const existingSubscription = await ParentGroupSubscriptionRepository
-      .findActiveSubscriptionByParentAndGroup(
-        req.account.parent.id,
-        rideGroup.id
-      );
+      const existingSubscription =
+        await ParentGroupSubscriptionRepository.findActiveSubscriptionByParentAndGroup(
+          req.account.parent.id,
+          rideGroup.id
+        );
 
       if (existingSubscription) {
-        throw new BadRequestError("You already have an active subscription for this ride group");
+        throw new BadRequestError(
+          "You already have an active subscription for this ride group"
+        );
       }
 
       // create a new subscription for the parent in this ride group
-      const { distance, seatsTaken, totalDays } = await subscriptionDomain.getPriceFactors({
-        rideGroupId: rideGroup.id,
-        parentId: req.account.parent.id,
-        homeLocation: {
-          homeLat: rideGroup.parentGroups[0].home_lat,
-          homeLng: rideGroup.parentGroups[0].home_lng
-        },
-        schoolLocation: {
-          schoolLat: rideGroup.school.lat,
-          schoolLng: rideGroup.school.lng
-        }
-      });
+      const { distance, seatsTaken, totalDays } =
+        await subscriptionDomain.getPriceFactors({
+          rideGroupId: rideGroup.id,
+          parentId: req.account.parent.id,
+          homeLocation: {
+            homeLat: rideGroup.parentGroups[0].home_lat,
+            homeLng: rideGroup.parentGroups[0].home_lng,
+          },
+          schoolLocation: {
+            schoolLat: rideGroup.school.lat,
+            schoolLng: rideGroup.school.lng,
+          },
+        });
 
-      const planDetails = await PlanRepository.getPlanByType(plan_type, installment_plan);
-  
+      const planDetails = await PlanRepository.getPlanByType(plan_type);
+
       if (!planDetails) {
         throw new NotFoundError("Plan not found for the specified type");
       }
 
       // calculate the overall price based on the plan type
-      const { overallPrice, afterDiscountPrice, toPayPrice } = await subscriptionDomain.calculateOverallPrice({
-        distance,
-        seatsTaken,
-        totalDays,
-        planDetails,
-        installment_plan
-      });
+      const { overallPrice, toPayPrice } =
+        await subscriptionDomain.calculateOverallPrice({
+          distance,
+          seatsTaken,
+          totalDays,
+          planDetails,
+        });
 
       const paymobOrder = paymobUtil.createPaymobOrderObject(
         "new",
@@ -162,17 +94,17 @@ const RideGroupController = {
         toPayPrice
       );
 
-      const { clientSecret, orderId } = await paymobUtil.requestPaymentToken(paymobOrder);
+      const { clientSecret, orderId } = await paymobUtil.requestPaymentToken(
+        paymobOrder
+      );
 
       const orderDetails = {
         orderId,
         planType: plan_type,
-        installmentPlan: installment_plan,
         seats: seatsTaken,
         total_days: totalDays,
         distance,
         overallPrice: Number(overallPrice),
-        afterDiscountPrice: Number(afterDiscountPrice),
         toPayPrice: Number(toPayPrice),
       };
 
@@ -181,7 +113,7 @@ const RideGroupController = {
 
       return res.success("Next payment details fetched successfully", {
         paymentRedirectUrl: `${process.env.PAYMOB_CHECKOUT_URI}${paymentRedirectParams}`,
-        orderDetails
+        orderDetails,
       });
     } catch (error) {
       logger.error("Error fetching next payment details", {
@@ -203,26 +135,30 @@ const RideGroupController = {
       }
 
       // Get the ride group details
-      const rideGroup = await RideGroupRepository.findOneByIdWithSchoolAndParent(req.account.parent.id, rideGroupId);
+      const rideGroup =
+        await RideGroupRepository.findOneByIdWithSchoolAndParent(
+          req.account.parent.id,
+          rideGroupId
+        );
       if (!rideGroup) {
         throw new NotFoundError("Ride group not found");
       }
 
       // check if a parent already has an active subscription
-      const existingSubscription = await ParentGroupSubscriptionRepository
-      .findLatestSubscriptionByParentAndGroup(
-        req.account.parent.id,
-        rideGroup.id
-      );
+      const existingSubscription =
+        await ParentGroupSubscriptionRepository.findLatestSubscriptionByParentAndGroup(
+          req.account.parent.id,
+          rideGroup.id
+        );
 
       if (!existingSubscription) {
         return res.success("No subscription was found for this ride group", {
-          status: "inactive"
+          status: "inactive",
         });
       }
 
       return res.success("Current subscription status fetched successfully", {
-        subscription: existingSubscription
+        subscription: existingSubscription,
       });
     } catch (error) {
       logger.error("Error fetching current subscription status", {
@@ -232,10 +168,8 @@ const RideGroupController = {
       return next(error);
     }
   },
-
-  payInstallments: async (req, res, next) => {
+  updateCurrentSubscriptionStatus: async (req, res, next) => {
     const { rideGroupId } = req.params;
-    const { plan_type, installment_plan } = req.body;  // installment_plan:boolean
 
     try {
       if (!req.account.parent) {
@@ -245,90 +179,139 @@ const RideGroupController = {
       }
 
       // Get the ride group details
-      const rideGroup = await RideGroupRepository.findOneByIdWithSchoolAndParent(req.account.parent.id, rideGroupId);
+      const rideGroup =
+        await RideGroupRepository.findOneByIdWithSchoolAndParent(
+          req.account.parent.id,
+          rideGroupId
+        );
       if (!rideGroup) {
         throw new NotFoundError("Ride group not found");
       }
 
       // check if a parent already has an active subscription
-      const existingSubscription = await ParentGroupSubscriptionRepository
-      .findActiveSubscriptionByParentAndGroup(
-        req.account.parent.id,
-        rideGroup.id
-      );
+      const existingSubscription =
+        await ParentGroupSubscriptionRepository.findLatestSubscriptionByParentAndGroup(
+          req.account.parent.id,
+          rideGroup.id
+        );
 
       if (!existingSubscription) {
-        throw new BadRequestError("You do not have an active subscription for this ride group");
+        return res.success("No subscription was found for this ride group", {
+          status: "inactive",
+        });
       }
+      const updatedSubscription =
+        await ParentGroupSubscriptionRepository.update(
+          existingSubscription.id,
+          { status: req.body.status }
+        );
 
-      console.log(existingSubscription.plan.range, plan_type);
-      console.log(existingSubscription.plan.installment_plan, installment_plan);
-      
-      // TODO: Implement logic to handle existing subscription
-      if (
-        existingSubscription.plan.range === plan_type &&
-        existingSubscription.plan.installment_plan === installment_plan
-      ) {
-        // We are paying installments, or resubscribing to the same plan if next_payment_due is null
-        if(installment_plan) {
-          // Check if the next payment is due
-          if (existingSubscription.payment_history[0].next_payment_due) {
-            // we are paying installments
-            const paymobOrderObject = paymobUtil.createPaymobOrderObject(
-              "existing/installment",
-              req.account,
-              rideGroup,
-              existingSubscription.plan,
-              existingSubscription.current_seats_taken,
-              existingSubscription.total_days,
-              existingSubscription.total_amount,
-              existingSubscription.payment_history[0].next_payment_amount,
-              {
-                subscription_id: existingSubscription.id,
-                remaining_months: existingSubscription.plan.months_count - existingSubscription.payment_history.length,
-              }
-            );
-
-            const { clientSecret, orderId } = await paymobUtil.requestPaymentToken(paymobOrderObject);
-
-            const orderDetails = {
-              orderId,
-              planType: existingSubscription.plan.range,
-              installmentPlan: existingSubscription.plan.installment_plan,
-              seats: existingSubscription.current_seats_taken,
-              total_days: existingSubscription.total_days,
-              distance: existingSubscription.distance,
-              overallPrice: Number(existingSubscription.total_amount),
-              toPayPrice: Number(existingSubscription.payment_history[0].next_payment_amount),
-            };
-
-            let paymentRedirectParams = `?publicKey=${process.env.PAYMOB_PUBLIC_KEY}`;
-            paymentRedirectParams += `&clientSecret=${clientSecret}`;
-
-            return res.success("Next payment details fetched successfully", {
-              paymentRedirectUrl: `${process.env.PAYMOB_CHECKOUT_URI}${paymentRedirectParams}`,
-              orderDetails
-            });
-          } else {
-            // We are resubscribing to the same plan but installments
-            throw new BadRequestError("Resubscription to the same plan is not yet implemented!");
-          }
-        } else {
-          // we are resubscribing to the same plan but full payment
-          throw new BadRequestError("Resubscription to the same plan with full payment is not yet implemented!");
-        }
-      } else {
-        // We are changing the plan
-        throw new BadRequestError("You cannot change the plan type or installment option, not implemented yet!");
-        if (installment_plan) {
-          
-        } else {
-
-        }
-      }
-
+      return res.success("Current subscription status updated successfully", {
+        subscription: updatedSubscription,
+      });
     } catch (error) {
-      logger.error("Error fetching next payment details for installments", {
+      logger.error("Error updating current subscription status", {
+        error: error.message,
+        stack: error.stack,
+      });
+      return next(error);
+    }
+  },
+
+  extendSubscription: async (req, res, next) => {
+    const { rideGroupId } = req.params;
+    const { plan_type } = req.body;
+
+    try {
+      if (!req.account.parent) {
+        throw new ForbiddenError(
+          "Account email must be verified, have a valid parent profile"
+        );
+      }
+
+      // Get the ride group details
+      const rideGroup = await RideGroupRepository.findOneByIdWithSchoolAndParent(
+        req.account.parent.id,
+        rideGroupId
+      );
+      
+      if (!rideGroup) {
+        throw new NotFoundError("Ride group not found");
+      }
+
+      // Find any existing subscription (active or expired)
+      const existingSubscription = await ParentGroupSubscriptionRepository
+        .findSubscriptionByParentAndGroup(req.account.parent.id, rideGroup.id);
+
+      if (!existingSubscription) {
+        throw new BadRequestError("No subscription found for this ride group. Please create a new subscription.");
+      }
+
+      // Get plan details for extension
+      const planDetails = await PlanRepository.getPlanByType(plan_type);
+      if (!planDetails) {
+        throw new NotFoundError("Plan not found for the specified type");
+      }
+
+      // Calculate price for extension
+      const { distance, seatsTaken, totalDays } = await subscriptionDomain.getPriceFactors({
+        rideGroupId: rideGroup.id,
+        parentId: req.account.parent.id,
+        homeLocation: {
+          homeLat: rideGroup.parentGroups[0].home_lat,
+          homeLng: rideGroup.parentGroups[0].home_lng,
+        },
+        schoolLocation: {
+          schoolLat: rideGroup.school.lat,
+          schoolLng: rideGroup.school.lng,
+        },
+      });
+
+      const { overallPrice, toPayPrice } = await subscriptionDomain.calculateOverallPrice({
+        distance,
+        seatsTaken,
+        totalDays,
+        planDetails,
+      });
+
+      // Create Paymob order for extension
+      const paymobOrder = paymobUtil.createPaymobOrderObject(
+        "extension",
+        req.account,
+        rideGroup,
+        planDetails,
+        seatsTaken,
+        totalDays,
+        overallPrice,
+        toPayPrice,
+        {
+          subscription_id: existingSubscription.id,
+          extension_months: planDetails.months_count,
+        }
+      );
+
+      const { clientSecret, orderId } = await paymobUtil.requestPaymentToken(paymobOrder);
+
+      const orderDetails = {
+        orderId,
+        planType: plan_type,
+        seats: seatsTaken,
+        total_days: totalDays,
+        distance,
+        overallPrice: Number(overallPrice),
+        toPayPrice: Number(toPayPrice),
+        extensionMonths: planDetails.months_count,
+      };
+
+      let paymentRedirectParams = `?publicKey=${process.env.PAYMOB_PUBLIC_KEY}`;
+      paymentRedirectParams += `&clientSecret=${clientSecret}`;
+
+      return res.success("Extension payment details fetched successfully", {
+        paymentRedirectUrl: `${process.env.PAYMOB_CHECKOUT_URI}${paymentRedirectParams}`,
+        orderDetails,
+      });
+    } catch (error) {
+      logger.error("Error creating subscription extension", {
         error: error.message,
         stack: error.stack,
       });
@@ -359,24 +342,28 @@ const RideGroupController = {
       return next(error);
     }
   },
-  
+
   getRideGroupById: async (req, res, next) => {
     const { rideGroupId } = req.params;
     try {
-      if (!req.account.is_verified  || !req.account.parent) {
+      if (!req.account.is_verified || !req.account.parent) {
         throw new ForbiddenError(
           "Account email must be verified before creating a group"
         );
       }
 
-      const rideGroup = await RideGroupRepository.findByIdIfParent(req.account.parent.id, rideGroupId);
+      const rideGroup = await RideGroupRepository.findByIdIfParent(
+        req.account.parent.id,
+        rideGroupId
+      );
 
       if (!rideGroup) {
         throw new NotFoundError("Ride group not found");
       }
 
       // Get all details for a ride group
-      const rideGroupWithDetails = await RideGroupRepository.getRideGroupDetails(rideGroupId);
+      const rideGroupWithDetails =
+        await RideGroupRepository.getRideGroupDetails(rideGroupId);
 
       return res.success("Ride group details fetched successfully", {
         rideGroup: rideGroupWithDetails,
@@ -392,15 +379,27 @@ const RideGroupController = {
 
   getRideGroups: async (req, res, next) => {
     try {
-      const { parentId } = req.params;
-
-      // Check if parent profile exists
-      const parentProfile = await ParentRepository.findById(parentId);
-      if (!parentProfile) {
-        throw new NotFoundError("Parent profile not found");
+      // Verify account exists and is verified
+      const account = await AccountRepository.findById(req.userId);
+      if (!account) {
+        throw new NotFoundError("Account not found");
       }
 
-      const rideGroups = await RideGroupRepository.findAllIfParent(parentProfile.id);
+      if (!account.is_verified) {
+        throw new ForbiddenError(
+          "Account email must be verified before accessing ride groups"
+        );
+      }
+
+      // Check if parent profile exists
+      const parentProfile = await ParentRepository.findByAccountId(req.userId);
+      if (!parentProfile) {
+        throw new BadRequestError("Parent profile not exists for this account");
+      }
+
+      const rideGroups = await RideGroupRepository.findAllIfParent(
+        parentProfile.id
+      );
 
       if (!rideGroups) {
         throw new NotFoundError("Ride group not found");
@@ -451,7 +450,7 @@ const RideGroupController = {
           group_name: req.body.group_name,
           school_id: req.body.school_id,
           current_seats_taken: req.body.seats,
-          invite_code: inviteCode
+          invite_code: inviteCode,
         },
         parentGroupPayload: {
           parent_id: parentProfile.id,
@@ -461,7 +460,13 @@ const RideGroupController = {
         },
         children: req.body.children || [],
         days: req.body.days || [],
-        
+        subscriptionPayload: {
+          parent_id: parentProfile.id,
+          ride_group_id: rideGroup.id,
+          current_seats_taken: req.body.seats,
+          pickup_days_count: req.body.days.length,
+          status: "new",
+        },
       };
 
       const rideGroup = await RideGroupRepository.createNewRideGroup(payload);
@@ -470,7 +475,7 @@ const RideGroupController = {
 
       // Return success with parent profile
       return res.success("A new ride group has been created successfully", {
-        rideGroup
+        rideGroup,
       });
     } catch (error) {
       logger.error("Unable to create a new ride group ", {
@@ -487,7 +492,6 @@ const RideGroupController = {
     const { group_id, home } = req.body;
 
     try {
-
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
       if (!account) {
@@ -507,7 +511,9 @@ const RideGroupController = {
         throw new BadRequestError("Parent profile not exists for this account");
       }
 
-      const rideGroup = await RideGroupRepository.findByInviteCode(invitation_code);
+      const rideGroup = await RideGroupRepository.findByInviteCode(
+        invitation_code
+      );
 
       if (!rideGroup) {
         throw new NotFoundError("Invalid invitation");
@@ -531,7 +537,9 @@ const RideGroupController = {
         home_lng: home.home_lng,
       };
 
-      const newParentGroup = await ParentGroupRepository.create(newParentGroupPayload);
+      const newParentGroup = await ParentGroupRepository.create(
+        newParentGroupPayload
+      );
 
       if (!newParentGroup) {
         throw new BadRequestError("Unable to create a new parent group");
@@ -540,10 +548,9 @@ const RideGroupController = {
       return res.success("You have been added to the ride group successfully", {
         rideGroup: {
           ...rideGroup,
-          parentGroup: newParentGroup
-        }
+          parentGroup: newParentGroup,
+        },
       });
-
     } catch (error) {
       logger.error("Unable to create a new ride group", {
         error: error.message,
@@ -555,7 +562,9 @@ const RideGroupController = {
 
   addChildToGroup: async (req, res, next) => {
     try {
-      logger.info("Parent attempting to add children to group", { accountId: req.userId });
+      logger.info("Parent attempting to add children to group", {
+        accountId: req.userId,
+      });
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -582,33 +591,49 @@ const RideGroupController = {
       }
 
       // Check if the parent is part of this group
-      const parentGroup = await ParentGroupRepository.findByGroupAndParentId(rideGroup.id, parentProfile.id);
+      const parentGroup = await ParentGroupRepository.findByGroupAndParentId(
+        rideGroup.id,
+        parentProfile.id
+      );
 
       if (!parentGroup) {
         throw new ForbiddenError("You are not a member of this group");
       }
 
       // Check if there are enough seats available
-      const childrenInGroup = await ChildrenGroupDetailsRepository.findByParentGroupId(parentGroup.id);
-      if (childrenInGroup.length + req.body.children.length > rideGroup.current_seats_taken) {
-        throw new BadRequestError(`Not enough seats available. You can add up to ${rideGroup.current_seats_taken - childrenInGroup.length} more children`);
+      const childrenInGroup =
+        await ChildrenGroupDetailsRepository.findByParentGroupId(
+          parentGroup.id
+        );
+      if (
+        childrenInGroup.length + req.body.children.length >
+        rideGroup.current_seats_taken
+      ) {
+        throw new BadRequestError(
+          `Not enough seats available. You can add up to ${
+            rideGroup.current_seats_taken - childrenInGroup.length
+          } more children`
+        );
       }
 
       // Add the children to the group
-      const childrenAdded = await ChildrenGroupDetailsRepository.addChildrenToParentGroup(
-        parentProfile.id, 
-        parentGroup.id, 
-        req.body.children
-      );
+      const childrenAdded =
+        await ChildrenGroupDetailsRepository.addChildrenToParentGroup(
+          parentProfile.id,
+          parentGroup.id,
+          req.body.children
+        );
 
       if (!childrenAdded || childrenAdded.length === 0) {
-        throw new BadRequestError('Unable to add children to the group');
+        throw new BadRequestError("Unable to add children to the group");
       }
 
-      logger.info(`${childrenAdded.length} children successfully added to the group`);
+      logger.info(
+        `${childrenAdded.length} children successfully added to the group`
+      );
 
       return res.success("Children have been added to the group successfully", {
-        children: childrenAdded
+        children: childrenAdded,
       });
     } catch (error) {
       logger.error("Unable to add children to the group", {
@@ -617,7 +642,23 @@ const RideGroupController = {
       });
       next(error);
     }
-  }
+  },
+
+  getAllPlans: async (req, res, next) => {
+    try {
+      const plans = await PlanRepository.getAllPlans();
+      
+      return res.success("Plans fetched successfully", {
+        plans
+      });
+    } catch (error) {
+      logger.error("Error fetching plans", {
+        error: error.message,
+        stack: error.stack,
+      });
+      return next(error);
+    }
+  },
 };
 
 module.exports = RideGroupController;

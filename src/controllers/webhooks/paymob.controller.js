@@ -34,15 +34,11 @@ const paymobController = {
                     status:              'active'
                 };
     
-                const next_payment_due = extra.installment_plan ? new Date().setMonth(new Date().getMonth() + 1) : null;
-                const next_payment_amount = extra.installment_plan ? extra.total_price / extra.months_count : null;
                 // add payment details
                 const paymentData = {
                     paymob_receipt_id:   req.body.obj.id,
                     paid_at:             new Date(),
-                    amount:              req.body.obj.amount_cents / 100,
-                    next_payment_due:    next_payment_due,
-                    next_payment_amount: next_payment_amount
+                    amount:              req.body.obj.amount_cents / 100
                 };
     
                 const payload = {
@@ -56,27 +52,23 @@ const paymobController = {
                 console.log('New subscription is created');
 
                 return res.success('Payment processed successfully');
-            } else if (extra.order_type === 'existing/installment') {
-                const next_payment_due = extra.remaining_months ? new Date().setMonth(new Date().getMonth() + 1) : null;
-                const next_payment_amount = extra.remaining_months ? extra.total_price / extra.months_count : null;
+            } else if (extra.order_type === 'extension') {
                 // add payment details
                 const paymentData = {
                     paymob_receipt_id:   req.body.obj.id,
                     paid_at:             new Date(),
-                    amount:              req.body.obj.amount_cents / 100,
-                    next_payment_due:    next_payment_due,
-                    next_payment_amount: next_payment_amount
+                    amount:              req.body.obj.amount_cents / 100
                 };
     
-                const payload = {
-                    subscription_id: extra.subscription_id,
-                    payment:         paymentData
-                };
-    
-                await ParentGroupSubscriptionRepository.addNewPaymentHistory(payload);
+                // Extend the subscription
+                await ParentGroupSubscriptionRepository.extendSubscription(
+                    extra.subscription_id,
+                    extra.extension_months,
+                    paymentData
+                );
 
                 redisService.set(req.body.obj.order.id, 'true');
-                console.log('Subscription is updated');
+                console.log('Subscription extended successfully');
 
                 return res.success('Payment processed successfully');
 

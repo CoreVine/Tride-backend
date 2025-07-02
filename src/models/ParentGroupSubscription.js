@@ -39,7 +39,7 @@ class ParentGroupSubscription extends Model {
       },
       started_at: {
         type: DataTypes.DATE,
-        allowNull: false
+       allowNull: true,
       },
       valid_until: {
         type: DataTypes.DATE,
@@ -47,7 +47,7 @@ class ParentGroupSubscription extends Model {
       },
       plan_id: {
         type: DataTypes.BIGINT.UNSIGNED,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: 'plan',
           key: 'id'
@@ -57,12 +57,12 @@ class ParentGroupSubscription extends Model {
       },
       total_amount: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: false
+        allowNull: true,
       },
       status: {
-        type: DataTypes.ENUM('active', 'expired', 'inactive', 'cancelled'),
+        type: DataTypes.ENUM('new','remove','pending','paid'),
         allowNull: false,
-        defaultValue: 'active'
+        defaultValue: 'new'
       }
     }, {
       sequelize,

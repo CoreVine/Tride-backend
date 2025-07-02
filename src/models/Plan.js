@@ -13,10 +13,7 @@ class Plan extends Model {
         type: DataTypes.STRING(20),
         allowNull: false
       },
-      installment_plan: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false
-      },
+
       discount_percentage: {
         type: DataTypes.FLOAT,
         allowNull: false,

@@ -23,7 +23,7 @@ async function getDistanceForRide(points) {
     
         const { distances } = result.data;
     
-        return distances[0][1]; // Return the distance from house to school
+        return distances[0][1]; // Return one-way distance from house to school (will be doubled for round trip)
     }  catch (error) {
         console.error('Error fetching distance from Open Routes Service:', error.response.data.error.message);
         if (

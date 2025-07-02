@@ -2,7 +2,7 @@ const ParentGroupRepository = require('../../data-access/parentGroup');
 const GroupDaysRepository = require('../../data-access/dayDatesGroup');
 const openRouteUtil = require("../../utils/openRoutesService");
 const { BadRequestError } = require('../../utils/errors/types/Api.error');
-const RIDE_PRICE_PER_KM = 10; // Example price per km, adjust as needed
+const RIDE_PRICE_PER_KM = 25; // Example price per km, adjust as needed
 
 // TODO: Figure out where to store the ride price per km
 const calculateOverallPrice = async (details) => {
@@ -16,21 +16,16 @@ const calculateOverallPrice = async (details) => {
     let overAllPrice = distance * RIDE_PRICE_PER_KM * seatsTaken * totalDays;
   
     overAllPrice *= planDetails.months_count;
-  
-    const afterDiscountPrice = overAllPrice * (1 - planDetails.discount_percentage);
 
     if (isNaN(overAllPrice) || overAllPrice < 0) {
       throw new BadRequestError("Invalid calculation for overall price");
     }
   
-    let to_pay_price = afterDiscountPrice;
-    if(planDetails.installment_plan) {
-      to_pay_price = afterDiscountPrice / planDetails.months_count;
-    }
+    // No discount applied - pay full amount
+    const to_pay_price = overAllPrice;
   
     return {
       overallPrice: Number(overAllPrice.toFixed(2)),
-      afterDiscountPrice: Number(afterDiscountPrice.toFixed(2)),
       toPayPrice: Number(to_pay_price.toFixed(2))
     };
   } catch (error) {
@@ -65,11 +60,14 @@ const getPriceFactors = async (details) => {
           parseFloat(schoolLng),
         ],
       };
-      const distance = await openRouteUtil.getDistanceForRide(points);
+      const oneWayDistance = await openRouteUtil.getDistanceForRide(points);
 
-      if (isNaN(distance) || distance <= 0) {
+      if (isNaN(oneWayDistance) || oneWayDistance <= 0) {
         throw new BadRequestError("Invalid distance calculated for the ride");
       }
+
+      // Calculate round trip distance (home to school and back)
+      const distance = oneWayDistance * 2;
 
       return {
         seatsTaken,
