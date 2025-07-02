@@ -178,6 +178,8 @@ const profileController = {
       }
 
       // Check if required files are present
+      console.log(req.files, req.body);
+      
       if (!req.files || !req.files.front_side_nic || !req.files.back_side_nic) {
         throw new BadRequestError(
           "Both front and back sides of ID card are required"
@@ -188,8 +190,9 @@ const profileController = {
       const updateData = {
         front_side_nic: req.files.front_side_nic[0].path,
         back_side_nic: req.files.back_side_nic[0].path,
-        documents_approved: false, // Reset approval status when new documents are uploaded
-        documents_approval_date: null, // Clear approval date
+        documents_approved: true, // Reset approval status when new documents are uploaded
+        documents_approval_date: new Date(),
+        face_auth_complete: true
       };
 
       logger.info("Updating parent with document data:", {
