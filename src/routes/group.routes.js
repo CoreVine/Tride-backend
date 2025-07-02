@@ -44,6 +44,11 @@ const createGroupSchema = Yup.object().shape({
     .required()
 });
 
+const paramsOrderId = {
+  params: Yup.object().shape({
+    rideGroupId: Yup.string().required()
+  })
+};
 
 const addParentToGroupSchema = Yup.object().shape({
   group_id: Yup.string().required(),
@@ -143,9 +148,11 @@ groupRoutes.post('/ride/group/subscribe/confirm',
   RideGroupController.confirmNewSubscription
 );
 
-groupRoutes.post('/ride/group/:rideGroupId/extend', 
+groupRoutes.post('/ride/group/:rideGroupId/extend',
   validate(subscribeSchema),
   RideGroupController.extendSubscription
 );
+
+groupRoutes.get('/ride/group/:rideGroupId/plans', validate(paramsOrderId), RideGroupController.getAvailablePlans);
 
 module.exports = groupRoutes;

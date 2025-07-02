@@ -659,6 +659,79 @@ const RideGroupController = {
       return next(error);
     }
   },
+
+  getAvailablePlans: async (req, res, next) => {
+    const { rideGroupId } = req.params;
+
+    try {
+      if (!req.account.parent) {
+        throw new ForbiddenError(
+          "Account email must be verified, have a valid parent profile"
+        );
+      }
+
+      // Get the ride group details
+      const rideGroup = await RideGroupRepository
+      .findOneByIdWithSchoolAndParent(req.account.parent.id, rideGroupId);
+      
+      if (!rideGroup) {
+        throw new NotFoundError("Ride group not found");
+      }
+
+      // create a new subscription for the parent in this ride group
+      const { distance, seatsTaken, totalDays } = await subscriptionDomain.getPriceFactors({
+        rideGroupId: rideGroup.id,
+        parentId: req.account.parent.id,
+        homeLocation: {
+          homeLat: rideGroup.parentGroups[0].home_lat,
+          homeLng: rideGroup.parentGroups[0].home_lng
+        },
+        schoolLocation: {
+          schoolLat: rideGroup.school.lat,
+          schoolLng: rideGroup.school.lng
+        }
+      });
+
+      const planDetails = await PlanRepository.getAllPlans();
+  
+      if (!planDetails) {
+        throw new NotFoundError("Plan not found for the specified type");
+      }
+
+      const plans = [];
+      for (const plan of planDetails) {
+        // calculate the overall price based on the plan type        
+        const { overallPrice, toPayPrice } = await subscriptionDomain.calculateOverallPrice({
+          distance,
+          seatsTaken,
+          totalDays,
+          planDetails: plan
+        });
+
+        plans.push({
+          totalDistance:`${distance * plan.months_count * totalDays} km`,
+          totalDays: totalDays * plan.months_count * 4,
+          ...plan.dataValues,
+          overallPrice: Number(overallPrice.toFixed(2)),
+          toPayPrice: Number(toPayPrice.toFixed(2))
+        });
+      }
+
+      return res.success("Available plans fetched successfully", {
+        factors: {
+          seatsTaken,
+          daysPerWeek: totalDays,
+        },
+        plans
+      });
+    } catch (error) {
+      logger.error("Error fetching next payment details", {
+        error: error.message,
+        stack: error.stack,
+      });
+      return next(error);
+    }
+  }
 };
 
 module.exports = RideGroupController;

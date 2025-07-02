@@ -13,7 +13,7 @@ const calculateOverallPrice = async (details) => {
       seatsTaken,
       totalDays,
     } = details;
-    let overAllPrice = distance * RIDE_PRICE_PER_KM * seatsTaken * totalDays;
+    let overAllPrice = distance * 2 * RIDE_PRICE_PER_KM * seatsTaken * totalDays;
   
     overAllPrice *= planDetails.months_count;
 
