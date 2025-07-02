@@ -462,9 +462,9 @@ const RideGroupController = {
         days: req.body.days || [],
         subscriptionPayload: {
           parent_id: parentProfile.id,
-          ride_group_id: rideGroup.id,
           current_seats_taken: req.body.seats,
           pickup_days_count: req.body.days.length,
+          started_at: new Date(),
           status: "new",
         },
       };

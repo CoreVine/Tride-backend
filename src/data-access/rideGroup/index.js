@@ -176,7 +176,10 @@ class RideGroupRepository extends BaseRepository {
       }
 
       // step-5: add subscription
-      const subscription = await ParentGroupSubscriptionRepository.create(subscriptionPayload, { transaction: t });
+      const subscription = await ParentGroupSubscriptionRepository.create({
+        ...payload.subscriptionPayload,
+        ride_group_id: rideGroup.id,
+      }, { transaction: t });
 
       if (!subscription) {
         throw new DatabaseError("Failed to create a new subscription!");

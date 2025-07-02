@@ -31,7 +31,7 @@ const paymobController = {
                     valid_until:         new Date().setMonth(new Date().getMonth() + extra.months_count),
                     plan_id:             extra.plan_id,
                     total_amount:        extra.total_price,
-                    status:              'active'
+                    status:              'paid'
                 };
     
                 // add payment details
@@ -74,7 +74,6 @@ const paymobController = {
 
             }
         } catch (error) {
-            await t.rollback();
             console.error('Error processing Paymob webhook:', error);
             return res.error('Failed to process payment', error.message, 500);
         }

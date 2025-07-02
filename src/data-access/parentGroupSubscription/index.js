@@ -86,10 +86,11 @@ class ParentGroupSubscriptionRepository extends BaseRepository {
                 limit: 1
             });
 
-            if (subscription) {
+            if (subscription && subscription.plan) {
                 // Add payment history count to the subscription object
                 subscription.dataValues.months_paid_done = 
                     subscription.payment_history ? subscription.payment_history.length : 0;
+                console.log(subscription);
                 
                 subscription.dataValues.remaining_months = 
                     Number(subscription.plan.months_count) - subscription.dataValues.months_paid_done;

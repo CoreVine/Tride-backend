@@ -43,7 +43,7 @@ class ParentGroupSubscription extends Model {
       },
       valid_until: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: true
       },
       plan_id: {
         type: DataTypes.BIGINT.UNSIGNED,
