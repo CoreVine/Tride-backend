@@ -75,9 +75,7 @@ class RideGroupRepository extends BaseRepository {
                 {
                     association: 'school'
                 },
-                {
-                    association: 'plan'
-                },
+
                 {
                     association: 'parentGroups',
                     include: [

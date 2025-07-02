@@ -97,9 +97,9 @@ const paramsOrderId = {
   })
 };
 
-groupRoutes.use('/ride/group', authMiddleware, verifiedEmailRequired, isParent);
+groupRoutes.use('/ride', authMiddleware, verifiedEmailRequired, isParent);
 groupRoutes.get('/ride/group/:rideGroupId', RideGroupController.getRideGroupById);
-groupRoutes.get('/ride/groups/', RideGroupController.getRideGroups);
+groupRoutes.get('/ride/groups/:parentId', RideGroupController.getRideGroups);
 groupRoutes.post('/ride/group/create',
   validate(createGroupSchema),
   RideGroupController.createRideGroup

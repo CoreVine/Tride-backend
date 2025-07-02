@@ -392,22 +392,12 @@ const RideGroupController = {
 
   getRideGroups: async (req, res, next) => {
     try {
-      // Verify account exists and is verified
-      const account = await AccountRepository.findById(req.userId);
-      if (!account) {
-        throw new NotFoundError("Account not found");
-      }
-
-      if (!account.is_verified) {
-        throw new ForbiddenError(
-          "Account email must be verified before creating a group"
-        );
-      }
+      const { parentId } = req.params;
 
       // Check if parent profile exists
-      const parentProfile = await ParentRepository.findByAccountId(req.userId);
+      const parentProfile = await ParentRepository.findById(parentId);
       if (!parentProfile) {
-        throw new BadRequestError("Parent profile not exists for this account");
+        throw new NotFoundError("Parent profile not found");
       }
 
       const rideGroups = await RideGroupRepository.findAllIfParent(parentProfile.id);
