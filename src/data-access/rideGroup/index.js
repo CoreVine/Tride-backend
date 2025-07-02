@@ -22,7 +22,6 @@ class RideGroupRepository extends BaseRepository {
           },
           {
             association: "parent_group_subscription",
-            attributes: { exclude: ["id", "parent_id", "ride_group_id", "current_seats_taken", "pickup_days_count", "started_at", "valid_until", "plan_id", "total_amount"] },
           },
           {
             association: "driver",
