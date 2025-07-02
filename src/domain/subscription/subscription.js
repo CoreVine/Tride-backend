@@ -1,6 +1,7 @@
 const ParentGroupRepository = require('../../data-access/parentGroup');
 const GroupDaysRepository = require('../../data-access/dayDatesGroup');
 const openRouteUtil = require("../../utils/openRoutesService");
+const { BadRequestError } = require('../../utils/errors/types/Api.error');
 const RIDE_PRICE_PER_KM = 10; // Example price per km, adjust as needed
 
 // TODO: Figure out where to store the ride price per km
@@ -15,19 +16,21 @@ const calculateOverallPrice = async (details) => {
     let overAllPrice = distance * RIDE_PRICE_PER_KM * seatsTaken * totalDays;
   
     overAllPrice *= planDetails.months_count;
-    overAllPrice -= overAllPrice * planDetails.discount_percentage;
   
+    const afterDiscountPrice = overAllPrice * (1 - planDetails.discount_percentage);
+
     if (isNaN(overAllPrice) || overAllPrice < 0) {
       throw new BadRequestError("Invalid calculation for overall price");
     }
   
-    let to_pay_price = overAllPrice;
+    let to_pay_price = afterDiscountPrice;
     if(planDetails.installment_plan) {
-      to_pay_price = overAllPrice / planDetails.months_count;
-    } 
+      to_pay_price = afterDiscountPrice / planDetails.months_count;
+    }
   
     return {
       overallPrice: Number(overAllPrice.toFixed(2)),
+      afterDiscountPrice: Number(afterDiscountPrice.toFixed(2)),
       toPayPrice: Number(to_pay_price.toFixed(2))
     };
   } catch (error) {

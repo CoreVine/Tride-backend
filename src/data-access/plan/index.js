@@ -19,6 +19,14 @@ class PlanRepository extends BaseRepository {
             throw new DatabaseError(error);
         }
     }
+
+    async getAllPlans() {
+        return await this.model.findAll({
+            where: {
+                installment_plan: false
+            }
+        });
+    }
 }
 
 module.exports = new PlanRepository();
