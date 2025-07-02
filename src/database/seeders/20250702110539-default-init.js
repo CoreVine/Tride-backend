@@ -48,7 +48,7 @@ module.exports = {
         id: 1,
         account_id: 1,
         name: 'Ahmed Ali',
-        profile_pic: 'https://example.com/profile1.jpg',
+        profile_pic: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg',
         phone: '+201234567890',
         google_place_id: 'ChIJd8BlQ2BZwokRAFUEcm_qrcA',
         lat: 30.0444,
@@ -70,8 +70,8 @@ module.exports = {
       {
         id: 1,
         account_id: 2,
-        name: 'Mohamed Ali',
-        profile_pic: 'https://example.com/profile2.jpg',
+        name: 'Seham Ahmed',
+        profile_pic: 'https://images.pexels.com/photos/712513/pexels-photo-712513.jpeg',
         phone: '+201234567890',
         license_number: '1234567890',
         lat: 30.0444,
@@ -88,7 +88,7 @@ module.exports = {
       {
         id: 1,
         name: 'Ali',
-        profile_pic: 'https://example.com/child1.jpg',
+        profile_pic: 'https://images.pexels.com/photos/35537/child-children-girl-happy.jpg',
         grade: '1st',
         gender: 'male',
         parent_id: 1
@@ -96,7 +96,7 @@ module.exports = {
       {
         id: 2,
         name: 'Omar',
-        profile_pic: 'https://example.com/child2.jpg',
+        profile_pic: 'https://images.pexels.com/photos/1104007/pexels-photo-1104007.jpeg',
         grade: '2nd',
         gender: 'male',
         parent_id: 1
@@ -104,8 +104,32 @@ module.exports = {
       {
         id: 3,
         name: 'Fatima',
-        profile_pic: 'https://example.com/child3.jpg',
+        profile_pic: 'https://images.pexels.com/photos/1462636/pexels-photo-1462636.jpeg',
         grade: '3rd',
+        gender: 'female',
+        parent_id: 1
+      },
+      {
+        id: 4,
+        name: 'Layla',
+        profile_pic: 'https://images.pexels.com/photos/1416736/pexels-photo-1416736.jpeg',
+        grade: '1st',
+        gender: 'female',
+        parent_id: 1
+      },
+      {
+        id: 5,
+        name: 'Khaled',
+        profile_pic: 'https://images.pexels.com/photos/1624496/pexels-photo-1624496.jpeg',
+        grade: '4th',
+        gender: 'male',
+        parent_id: 1
+      },
+      {
+        id: 6,
+        name: 'Sara',
+        profile_pic: 'https://images.pexels.com/photos/1001914/pexels-photo-1001914.jpeg',
+        grade: '2nd',
         gender: 'female',
         parent_id: 1
       }
@@ -123,6 +147,30 @@ module.exports = {
         current_seats_taken: 0,
         invite_code: 'ABC12345',
         group_type: 'regular'
+      },
+      {
+        id: 2,
+        parent_creator_id: 1,
+        group_name: 'Afternoon Activity Ride',
+        created_at: now,
+        updated_at: now,
+        driver_id: 1,
+        school_id: 2,
+        current_seats_taken: 0,
+        invite_code: 'DEF67890',
+        group_type: 'regular'
+      },
+      {
+        id: 3,
+        parent_creator_id: 1,
+        group_name: 'Weekend Study Group',
+        created_at: now,
+        updated_at: now,
+        driver_id: 1,
+        school_id: 3,
+        current_seats_taken: 0,
+        invite_code: 'GHI12345',
+        group_type: 'regular'
       }
     ];
 
@@ -134,6 +182,22 @@ module.exports = {
         home_lat: 30.0444,
         home_lng: 31.2357,
         current_seats_taken: 3
+      },
+      {
+        id: 2,
+        group_id: 2,
+        parent_id: 1,
+        home_lat: 30.0444,
+        home_lng: 31.2357,
+        current_seats_taken: 2
+      },
+      {
+        id: 3,
+        group_id: 3,
+        parent_id: 1,
+        home_lat: 30.0444,
+        home_lng: 31.2357,
+        current_seats_taken: 1
       }
     ];
 
@@ -153,10 +217,31 @@ module.exports = {
       {
         ride_group_detailsid: 1,
         date_day: 'Wednesday'
+      },
+      {
+        ride_group_detailsid: 2,
+        date_day: 'Monday'
+      },
+      {
+        ride_group_detailsid: 2,
+        date_day: 'Wednesday'
+      },
+      {
+        ride_group_detailsid: 2,
+        date_day: 'Thursday'
+      },
+      {
+        ride_group_detailsid: 3,
+        date_day: 'Friday'
+      },
+      {
+        ride_group_detailsid: 3,
+        date_day: 'Saturday'
       }
     ];
 
     const defaultChildrenGroups = [
+      // Group 1 children (Ali, Omar, Fatima)
       {
         parent_group_id: 1,
         child_id: 1,
@@ -174,10 +259,95 @@ module.exports = {
         child_id: 3,
         timing_from: '08:30:00',
         timing_to: '14:30:00'
+      },
+      
+      // Group 2 children (Layla, Khaled)
+      {
+        parent_group_id: 2,
+        child_id: 4,
+        timing_from: '15:00:00',
+        timing_to: '17:00:00'
+      },
+      {
+        parent_group_id: 2,
+        child_id: 5,
+        timing_from: '15:15:00',
+        timing_to: '17:15:00'
+      },
+      
+      // Group 3 child (Sara)
+      {
+        parent_group_id: 3,
+        child_id: 6,
+        timing_from: '10:00:00',
+        timing_to: '13:00:00'
+      }
+    ];
+
+    // Set up subscriptions with different plans for each group
+    const defaultSubscriptions = [
+      {
+        id: 1,
+        parent_id: 1,
+        ride_group_id: 1,
+        current_seats_taken: 3,
+        pickup_days_count: 4, // Sunday, Monday, Tuesday, Wednesday
+        started_at: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 15), // 15 days ago
+        valid_until: new Date(now.getFullYear(), now.getMonth() + 1, now.getDate() - 15), // Monthly plan
+        plan_id: 1, // Monthly plan
+        total_amount: 1250.00, // Cost for monthly plan
+        status: 'new'  // Changed from 'paid' to 'new'
+      },
+      {
+        id: 2,
+        parent_id: 1,
+        ride_group_id: 2,
+        current_seats_taken: 2,
+        pickup_days_count: 3, // Monday, Wednesday, Thursday
+        started_at: new Date(now.getFullYear(), now.getMonth() - 1, 1), // 1st of last month
+        valid_until: new Date(now.getFullYear(), now.getMonth() + 3, 1), // Term plan (4 months)
+        plan_id: 2, // Term plan
+        total_amount: 3600.00, // Cost for term plan
+        status: 'pending'  // Changed from 'paid' to 'pending'
+      },
+      {
+        id: 3,
+        parent_id: 1,
+        ride_group_id: 3,
+        current_seats_taken: 1,
+        pickup_days_count: 2, // Friday, Saturday
+        started_at: new Date(now.getFullYear(), now.getMonth() - 2, 15), // 15th of 2 months ago
+        valid_until: new Date(now.getFullYear(), now.getMonth() + 6, 15), // Double-terms plan (8 months)
+        plan_id: 3, // Double-terms plan
+        total_amount: 4800.00, // Cost for double-terms plan
+        status: 'paid'  // Kept as 'paid'
+      }
+    ];
+
+    // Payment history for each subscription
+    const defaultPayments = [
+      {
+        paymob_receipt_id: 'PMB' + Math.floor(10000000 + Math.random() * 90000000),
+        paid_at: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 15), // Same as started_at
+        amount: 1250.00,
+        parent_subscription_id: 1
+      },
+      {
+        paymob_receipt_id: 'PMB' + Math.floor(10000000 + Math.random() * 90000000),
+        paid_at: new Date(now.getFullYear(), now.getMonth() - 1, 1), // Same as started_at
+        amount: 3600.00,
+        parent_subscription_id: 2
+      },
+      {
+        paymob_receipt_id: 'PMB' + Math.floor(10000000 + Math.random() * 90000000),
+        paid_at: new Date(now.getFullYear(), now.getMonth() - 2, 15), // Same as started_at
+        amount: 4800.00,
+        parent_subscription_id: 3
       }
     ];
 
     // Delete data in reverse dependency order (child tables first)
+    await queryInterface.bulkDelete('payment_history', null, {});
     await queryInterface.bulkDelete('child_group_details', null, {});
     await queryInterface.bulkDelete('day_dates_group', null, {});
     await queryInterface.bulkDelete('parent_group_subscription', null, {});
@@ -208,7 +378,8 @@ module.exports = {
     await queryInterface.bulkInsert('parent_group', defaultParentGroup, {});
     await queryInterface.bulkInsert('day_dates_group', defaultGroupDays, {});
     await queryInterface.bulkInsert('child_group_details', defaultChildrenGroups, {});
-
+    await queryInterface.bulkInsert('parent_group_subscription', defaultSubscriptions, {});
+    await queryInterface.bulkInsert('payment_history', defaultPayments, {});
   },
 
   async down (queryInterface, Sequelize) {
