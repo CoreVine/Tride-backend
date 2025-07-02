@@ -63,7 +63,7 @@ module.exports = {
         months_count: 8
       }
     ];
-    
+    await queryInterface.bulkDelete('plan', null, {});
     await queryInterface.bulkInsert('plan', defaultPlans);
   },
 
