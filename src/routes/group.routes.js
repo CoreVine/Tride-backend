@@ -91,6 +91,12 @@ const confirmNewSubscriptionSchema = Yup.object().shape({
   order_id: Yup.string().required(),
 });
 
+const paramsOrderId = {
+  params: Yup.object().shape({
+    rideGroupId: Yup.string().required()
+  })
+};
+
 groupRoutes.use('/ride/group', authMiddleware, verifiedEmailRequired, isParent);
 groupRoutes.get('/ride/group/:rideGroupId', RideGroupController.getRideGroupById);
 groupRoutes.get('/ride/groups/', RideGroupController.getRideGroups);
@@ -116,11 +122,7 @@ groupRoutes.post('/ride/group/add-parent/:invitation_code',
 );
 
 groupRoutes.get('/ride/group/:rideGroupId/subscription', 
-  validate({
-    params: Yup.object().shape({
-      rideGroupId: Yup.string().required()
-    })
-  }),
+  validate(paramsOrderId),
   RideGroupController.getCurrentSubscriptionStatus
 );
 
@@ -139,5 +141,7 @@ groupRoutes.post('/ride/group/:rideGroupId/subscribe/installment',
   validate(subscribeSchema),
   RideGroupController.payInstallments
 );
+
+groupRoutes.get('/ride/group/:rideGroupId/plans', validate(paramsOrderId), RideGroupController.getAvailablePlans);
 
 module.exports = groupRoutes;
