@@ -18,6 +18,39 @@ const subscriptionDomain = require("../domain/subscription/subscription");
 const logger = loggingService.getLogger();
 
 const RideGroupController = {
+  updateSubscriptionStatus: async (req, res, next) => {
+    const { subscriptionStatusId } = req.params;
+    const { status } = req.body;
+
+    try {
+      if (!req.account.parent) {
+        throw new ForbiddenError(
+          "Account email must be verified, have a valid parent profile"
+        );
+      }
+
+      // Get the subscription details
+      const subscription =
+        await ParentGroupSubscriptionRepository.findById(subscriptionStatusId);
+
+      if (!subscription) {
+        throw new NotFoundError("Subscription not found");
+      }
+
+      // Update the subscription status
+      await ParentGroupSubscriptionRepository.update(subscription.id, {
+          status,
+        });
+
+      return res.success("Subscription status updated successfully", {});
+    } catch (error) {
+      logger.error("Error updating subscription status", {
+        error: error.message,
+        stack: error.stack,
+      });
+      return next(error);
+    }
+  },
   createNewSubscribeRequest: async (req, res, next) => {
     const { rideGroupId } = req.params;
     const { plan_type } = req.body;

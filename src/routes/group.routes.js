@@ -154,5 +154,13 @@ groupRoutes.post('/ride/group/:rideGroupId/extend',
 );
 
 groupRoutes.get('/ride/group/:rideGroupId/plans', validate(paramsOrderId), RideGroupController.getAvailablePlans);
+groupRoutes.put('/ride/group/subscription-status/:subscriptionStatusId', validate({
+  params: Yup.object().shape({
+    subscriptionStatusId: Yup.string().required()
+  }),
+  body: Yup.object().shape({
+    status: Yup.string().oneOf(['new', 'remove', 'pending', 'paid']).required()
+  })
+}), RideGroupController.updateSubscriptionStatus);
 
 module.exports = groupRoutes;
