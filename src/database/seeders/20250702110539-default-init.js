@@ -19,9 +19,7 @@ module.exports = {
     ];
 
     const defaultSchools = [
-      { id: 1, school_name: 'Cairo International School', city_id: 1, lat: 30.0444, lng: 31.2357 },
-      { id: 2, school_name: 'Alexandria Modern School', city_id: 2, lat: 31.2156, lng: 29.9553 },
-      { id: 3, school_name: 'Giza Comprehensive School', city_id: 3, lat: 29.9765, lng: 31.1313 },
+      { id: 1, school_name: 'Cairo International School', city_id: 1, lat: 29.984552576032932, lng: 31.326064307422747 },
     ];
 
     const defaultAccounts = [
