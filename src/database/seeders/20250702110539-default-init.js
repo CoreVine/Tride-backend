@@ -345,6 +345,9 @@ module.exports = {
     ];
 
     // Delete data in reverse dependency order (child tables first)
+    await queryInterface.bulkDelete('governorate', null, {});
+    await queryInterface.bulkDelete('city', null, {});
+    await queryInterface.bulkDelete('schools', null, {});
     await queryInterface.bulkDelete('payment_history', null, {});
     await queryInterface.bulkDelete('child_group_details', null, {});
     await queryInterface.bulkDelete('day_dates_group', null, {});
@@ -360,9 +363,6 @@ module.exports = {
     await queryInterface.bulkDelete('driver', null, {});
     await queryInterface.bulkDelete('parent', null, {});
     await queryInterface.bulkDelete('account', null, {});
-    await queryInterface.bulkDelete('schools', null, {});
-    await queryInterface.bulkDelete('city', null, {});
-    await queryInterface.bulkDelete('governorate', null, {});
 
     // Insert data in dependency order
     await queryInterface.bulkInsert('governorate', defaultGovernments, {});
