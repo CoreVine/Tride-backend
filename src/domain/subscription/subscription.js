@@ -53,12 +53,12 @@ const getPriceFactors = async (details) => {
       const totalDays = await GroupDaysRepository.countDaysInGroup(rideGroupId);
       const points = {
         lat_lng_house: [
-          parseFloat(homeLat),
           parseFloat(homeLng),
+          parseFloat(homeLat),
         ],
         lat_lng_school: [
-          parseFloat(schoolLat),
           parseFloat(schoolLng),
+          parseFloat(schoolLat),
         ],
       };
       const oneWayDistance = await openRouteUtil.getDistanceForRide(points);
