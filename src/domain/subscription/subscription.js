@@ -23,7 +23,7 @@ const calculateOverallPrice = async (details) => {
     }
   
     // No discount applied - pay full amount
-    const to_pay_price = overAllPrice;
+    const to_pay_price = overAllPrice * (1 - planDetails.discount_percentage);
   
     return {
       overallPrice: Number(overAllPrice.toFixed(2)),
