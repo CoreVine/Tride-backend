@@ -153,7 +153,7 @@ module.exports = {
         created_at: now,
         updated_at: now,
         driver_id: 1,
-        school_id: 2,
+        school_id: 1,
         current_seats_taken: 0,
         invite_code: 'DEF67890',
         group_type: 'regular'
@@ -165,7 +165,7 @@ module.exports = {
         created_at: now,
         updated_at: now,
         driver_id: 1,
-        school_id: 3,
+        school_id: 1,
         current_seats_taken: 0,
         invite_code: 'GHI12345',
         group_type: 'regular'
