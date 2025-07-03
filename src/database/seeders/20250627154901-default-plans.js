@@ -24,14 +24,14 @@ module.exports = {
       {
         id: 2,
         range: 'term',
-        discount_percentage: 0.0,
+        discount_percentage: 0.05,
         pay_every_n_months: 4,
         months_count: 4
       },
       {
         id: 3,
         range: 'double-terms',
-        discount_percentage: 0.0,
+        discount_percentage: 0.1,
         pay_every_n_months: 8,
         months_count: 8
       }
