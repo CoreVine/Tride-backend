@@ -67,7 +67,7 @@ class ParentGroupSubscription extends Model {
     }, {
       sequelize,
       modelName: 'ParentGroupSubscription',
-      tableName: 'parent_group_subscription',
+      tableName: 'group_subscription',
       timestamps: false
     });
   }

@@ -34,8 +34,8 @@ class AdminRoles extends Model {
   }
 
   static associate(models) {
-    this.belongsToMany(models.RolesPermissions, {
-      through: models.AdminPermission,
+    this.belongsToMany(models.AdminPermission, {
+      through: models.RolePermission,
       foreignKey: 'role_id',
       otherKey: 'permission_id',
       as: 'permissions'

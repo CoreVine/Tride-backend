@@ -64,7 +64,7 @@ const schoolUpdateSchema = Yup.object().shape({
 });
 const schoolRoutes = Router();
 
-schoolRoutes.use("/school", authMiddleware, verifiedEmailRequired, isParent);
+schoolRoutes.use("/school", authMiddleware, verifiedEmailRequired);
 schoolRoutes
   .route("/school")
   .get(schoolController.getschoolForCity)

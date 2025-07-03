@@ -65,9 +65,9 @@ class Account extends Model {
       onUpdate: 'CASCADE'
     });
     
-    this.hasMany(models.AdminPermission, {
+    this.hasOne(models.Admin, {
       foreignKey: 'account_id',
-      as: 'adminPermissions',
+      as: 'admin',
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE'
     });

@@ -71,17 +71,7 @@ const authController = {
         // Generate a verification code
         const code = emailService.generateVerificationCode();
         const expiresAt = getEmailVerificationExpiration();
-console.log(
-  {
-    email,
-    code,
-    expires_at: expiresAt,
-    account_type: userAccountType, // Use the same account type
-    type: "email_verification",
-    verified: false,
-    attempt_count: 0,
-  }
-);
+
         // Save the verification code
         await VerificationCodeRepository.create({
           email,
@@ -101,6 +91,13 @@ console.log(
         });
 
         logger.info(`Email verification code sent to ${email}`);
+
+        if (req.fromAdminCreation) {
+          req.account = {
+            id: account.id
+          };
+          return next();
+        }
 
         return res.success(
           "Registration successful. Please verify your email address.",

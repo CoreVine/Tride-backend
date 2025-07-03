@@ -2,11 +2,19 @@ const AccountModel = require('../../models/Account');
 const BaseRepository = require('../base.repository');
 const { DatabaseError, Op } = require("sequelize");
 
+/**
+ * Repository for account-related database operations
+ */
 class AccountRepository extends BaseRepository {
     constructor() {
         super(AccountModel);
     }
 
+    /**
+     * Find account by email
+     * @param {string} email - Account email
+     * @returns {Promise<Account>} Account object
+     */
     async findOneByEmail(email) {
         try {
             return await this.model.findOne({
@@ -17,6 +25,12 @@ class AccountRepository extends BaseRepository {
         }
     }
 
+    /**
+     * Find account by ID excluding specified properties
+     * @param {number} id - Account ID
+     * @param {string[]} excludeProps - Properties to exclude
+     * @returns {Promise<Account>} Account object
+     */
     async findByIdExcludeProps(id, excludeProps = []) {
         try {
             return await this.model.findByPk(id, {
@@ -29,6 +43,12 @@ class AccountRepository extends BaseRepository {
         }
     }
 
+    /**
+     * Get paginated accounts with password excluded
+     * @param {number} page - Page number
+     * @param {number} limit - Items per page
+     * @returns {Promise<Object>} Paginated accounts
+     */
     async findAllPaginatedAccounts(page = 1, limit = 10) {
         try {
             return await this.findAllPaginated(page, limit, {
@@ -40,27 +60,41 @@ class AccountRepository extends BaseRepository {
         }
     }
 
-    async findByIdIncludeDetails(id) {
+    /**
+     * Find account by ID including related profile details
+     * @param {number} id - Account ID
+     * @param {string} requiredType - Required account type (parent, driver, admin)
+     * @returns {Promise<Account>} Account with related profiles
+     */
+    async findByIdIncludeDetails(id, requiredType) {
         try {
-            return await this.model.findByPk(id, {
-                include: [
-                    {
-                        model: this.model.sequelize.models.Parent,
-                        as: 'parent',
-                        required: false
-                    },
-                    {
-                        model: this.model.sequelize.models.Driver,
-                        as: 'driver',
-                        required: false
-                    },
-                    {
-                        model: this.model.sequelize.models.Admin,
-                        as: 'admin',
-                        required: false
-                    }
-                ]
-            });
+            const includeOptions = [
+                {
+                    model: this.model.sequelize.models.Parent,
+                    as: 'parent',
+                    required: requiredType === 'parent'
+                },
+                {
+                    model: this.model.sequelize.models.Driver,
+                    as: 'driver',
+                    required: requiredType === 'driver'
+                },
+                {
+                    model: this.model.sequelize.models.Admin,
+                    as: 'admin',
+                    required: requiredType === 'admin',
+                    include: requiredType === 'admin' ? [{
+                        model: this.model.sequelize.models.AdminRoles,
+                        as: 'role',
+                        include: [{
+                            model: this.model.sequelize.models.AdminPermission,
+                            as: 'permissions'
+                        }]
+                    }] : []
+                }
+            ];
+
+            return await this.model.findByPk(id, { include: includeOptions });
         } catch (error) {
             throw new DatabaseError(error);
         }
@@ -74,34 +108,34 @@ class AccountRepository extends BaseRepository {
     async deleteAccountWithRelations(accountId) {
         let transaction;
         try {
-            // Start a transaction
             transaction = await this.model.sequelize.transaction();
             const sequelize = this.model.sequelize;
             
-            // Delete Parent record if exists
-            await sequelize.models.Parent.destroy({
-                where: { account_id: accountId },
-                transaction
-            });
+            // Delete associated records
+            await Promise.all([
+                sequelize.models.Parent.destroy({
+                    where: { account_id: accountId },
+                    transaction
+                }),
+                sequelize.models.Driver.destroy({
+                    where: { account_id: accountId },
+                    transaction
+                }),
+                sequelize.models.Admin.destroy({
+                    where: { account_id: accountId },
+                    transaction
+                })
+            ]);
             
-            // Delete Driver record if exists
-            await sequelize.models.Driver.destroy({
-                where: { account_id: accountId },
-                transaction
-            });
-            
-            // Delete Account
+            // Delete the account itself
             await this.model.destroy({
                 where: { id: accountId },
                 transaction
             });
             
-            // Commit the transaction
             await transaction.commit();
-            
             return true;
         } catch (error) {
-            // Rollback the transaction on error
             if (transaction) await transaction.rollback();
             console.error('Error deleting account with relations:', error);
             throw new DatabaseError(error);

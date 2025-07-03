@@ -1,0 +1,12 @@
+const ADMIN_ROLE_BASIC_ADMIN = 'basic admin';
+const ADMIN_ROLE_SUPPORT_ADMIN = 'support admin';
+const ADMIN_ROLE_OPERATIONS_MANAGER = 'operations manager';
+const ADMIN_ROLE_SUPER_ADMIN = 'super admin';
+
+
+module.exports = {
+  ADMIN_ROLE_BASIC_ADMIN,
+  ADMIN_ROLE_SUPPORT_ADMIN,
+  ADMIN_ROLE_OPERATIONS_MANAGER,
+  ADMIN_ROLE_SUPER_ADMIN,
+};

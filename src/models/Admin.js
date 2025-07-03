@@ -32,6 +32,16 @@ class Admin extends Model {
         allowNull: false,
         defaultValue: 'en'
       },
+      role_id: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: false,
+        references: {
+          model: 'admin_roles',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'RESTRICT'
+      },
       profile_pic: {
         type: DataTypes.STRING(2048),
         allowNull: true
@@ -60,6 +70,11 @@ class Admin extends Model {
     this.belongsTo(models.Account, {
       foreignKey: 'account_id',
       as: 'account'
+    });
+
+    this.belongsTo(models.AdminRoles, {
+      foreignKey: 'role_id',
+      as: 'role'
     });
   }
 }

@@ -1,21 +1,29 @@
 const { Model, DataTypes, Sequelize } = require('sequelize');
 
-class RolesPermissions extends Model {
+class RolePermission extends Model {
   static init(sequelize) {
     return super.init({
       id: {
-        type: DataTypes.SMALLINT.UNSIGNED,
+        type: DataTypes.BIGINT.UNSIGNED,
         primaryKey: true,
         autoIncrement: true,
         allowNull: false
       },
-      role_permission_group: {
-        type: DataTypes.STRING(50),
+      role_id: {
+        type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
+        references: {
+          model: 'admin_roles',
+          key: 'id'
+        }
       },
-      role_permission_name: {
-        type: DataTypes.STRING(50),
-        allowNull: true,
+      permission_id: {
+        type: DataTypes.SMALLINT.UNSIGNED,
+        allowNull: false,
+        references: {
+          model: 'admin_permission',
+          key: 'id'
+        }
       },
       created_at: {
         type: DataTypes.DATE,
@@ -29,8 +37,8 @@ class RolesPermissions extends Model {
       }
     }, {
       sequelize,
-      modelName: 'RolesPermissions',
-      tableName: 'roles_permissions',
+      modelName: 'RolePermission',
+      tableName: 'role_permission',
       timestamps: true,
       createdAt: 'created_at',
       updatedAt: 'updated_at'
@@ -38,13 +46,16 @@ class RolesPermissions extends Model {
   }
 
   static associate(models) {
-    this.belongsToMany(models.AdminRoles, {
-      through: models.AdminPermission,
+    this.belongsTo(models.AdminRoles, {
+      foreignKey: 'role_id',
+      as: 'role'
+    });
+    
+    this.belongsTo(models.AdminPermission, {
       foreignKey: 'permission_id',
-      otherKey: 'role_id',
-      as: 'adminRoles'
+      as: 'permission'
     });
   }
 }
 
-module.exports = RolesPermissions;
+module.exports = RolePermission;

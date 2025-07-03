@@ -4,34 +4,18 @@ class AdminPermission extends Model {
   static init(sequelize) {
     return super.init({
       id: {
-        type: DataTypes.BIGINT.UNSIGNED,
+        type: DataTypes.SMALLINT.UNSIGNED,
         primaryKey: true,
         autoIncrement: true,
         allowNull: false
       },
-      account_id: {
-        type: DataTypes.BIGINT.UNSIGNED,
+      role_permission_group: {
+        type: DataTypes.STRING(50),
         allowNull: false,
-        references: {
-          model: 'account',
-          key: 'id'
-        }
       },
-      role_id: {
-        type: DataTypes.BIGINT.UNSIGNED,
-        allowNull: false,
-        references: {
-          model: 'admin_roles',
-          key: 'id'
-        }
-      },
-      permission_id: {
-        type: DataTypes.SMALLINT.UNSIGNED,
-        allowNull: false,
-        references: {
-          model: 'roles_permissions',
-          key: 'id'
-        }
+      role_permission_name: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
       },
       created_at: {
         type: DataTypes.DATE,
@@ -46,7 +30,7 @@ class AdminPermission extends Model {
     }, {
       sequelize,
       modelName: 'AdminPermission',
-      tableName: 'admin_permissions',
+      tableName: 'admin_permission',
       timestamps: true,
       createdAt: 'created_at',
       updatedAt: 'updated_at'
@@ -54,19 +38,11 @@ class AdminPermission extends Model {
   }
 
   static associate(models) {
-    this.belongsTo(models.Account, {
-      foreignKey: 'account_id',
-      as: 'account'
-    });
-    
-    this.belongsTo(models.AdminRoles, {
-      foreignKey: 'role_id',
-      as: 'role'
-    });
-    
-    this.belongsTo(models.RolesPermissions, {
+    this.belongsToMany(models.AdminRoles, {
+      through: models.RolePermission,
       foreignKey: 'permission_id',
-      as: 'permission'
+      otherKey: 'role_id',
+      as: 'roles'
     });
   }
 }
