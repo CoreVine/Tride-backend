@@ -3,6 +3,7 @@ const GroupDaysRepository = require('../../data-access/dayDatesGroup');
 const openRouteUtil = require("../../utils/openRoutesService");
 const { BadRequestError } = require('../../utils/errors/types/Api.error');
 const RIDE_PRICE_PER_KM = 25; // Example price per km, adjust as needed
+const MAXIMUM_SEATS = 5;
 
 // TODO: Figure out where to store the ride price per km
 const calculateOverallPrice = async (details) => {
@@ -13,9 +14,9 @@ const calculateOverallPrice = async (details) => {
       seatsTaken,
       totalDays,
     } = details;
-    let overAllPrice = distance * 2 * RIDE_PRICE_PER_KM * seatsTaken * totalDays;
+    let overAllPrice = (distance * 2 * RIDE_PRICE_PER_KM / MAXIMUM_SEATS) * seatsTaken;
   
-    overAllPrice *= planDetails.months_count;
+    overAllPrice *= totalDays * planDetails.months_count;
 
     if (isNaN(overAllPrice) || overAllPrice < 0) {
       throw new BadRequestError("Invalid calculation for overall price");
