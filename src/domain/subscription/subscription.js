@@ -21,7 +21,7 @@ const calculateOverallPrice = async (details) => {
     if (isNaN(overAllPrice) || overAllPrice < 0) {
       throw new BadRequestError("Invalid calculation for overall price");
     }
-  
+    overAllPrice = overAllPrice *2;
     // No discount applied - pay full amount
     const to_pay_price = overAllPrice * (1 - planDetails.discount_percentage);
   
