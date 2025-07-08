@@ -1,4 +1,7 @@
 const AdminRepository = require("../data-access/admin");
+const { BadRequestError } = require("../utils/errors");
+const loggingService = require("../services/logging.service");
+const logger = loggingService.getLogger(); 
 
 const adminController = {
     getAllAdminsExceptMe: async (req, res) => {
@@ -49,6 +52,25 @@ const adminController = {
             console.error("Error creating admin:", error);
             res.error("Failed to create admin", 500);
         }
+    },
+
+    updateAdminRole: async (req, res, next) => {
+        const { adminId } = req.params;
+        const { role_id } = req.body;
+
+        try {
+            if (req.account.admin.id === Number(adminId)){
+                throw new BadRequestError("Cannot update your own rules!");
+            }
+    
+            await AdminRepository.updateAdminRole(req.account.admin.id, Number(adminId), role_id);
+
+            return res.success("Updated successfully");
+        } catch (error) {
+            logger.error(error);
+            next(error);
+        }
+
     }
 }
 

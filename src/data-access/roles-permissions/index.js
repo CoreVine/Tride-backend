@@ -1,5 +1,4 @@
 const AdminRoles = require('../../models/AdminRoles');
-const PlanModel = require('../../models/Plan');
 const { ADMIN_ROLE_SUPER_ADMIN } = require('../../utils/constants/admin-roles');
 const { NotFoundError, BadRequestError } = require('../../utils/errors');
 const BaseRepository = require('../base.repository');

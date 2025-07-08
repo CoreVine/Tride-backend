@@ -37,6 +37,15 @@ const createNewAdminSchema = Yup.object().shape({
     language: Yup.string().oneOf(["en", "ar"]).default("en")
 });
 
+const updateAdminRoleSchema = {
+    params: Yup.object().shape({
+        adminId: Yup.number().required().positive().integer(),
+    }),
+    body: Yup.object().shape({
+        role_id: Yup.number().required().positive().integer(),
+    })
+};
+
 const adminRouter = Router();
 
 // TODO: ALLOW ONLY SUPER ADMIN TO CREATE NEW ADMINS
@@ -64,6 +73,13 @@ adminRouter.get('/admins/me',
     authMiddleware, 
     isAdmin,
     adminController.me
+);
+
+adminRouter.patch('/admins/:adminId/role', 
+    authMiddleware,
+    isAdminWithRole(ADMIN_ROLE_SUPER_ADMIN),
+    validate(updateAdminRoleSchema),
+    adminController.updateAdminRole
 );
 
 module.exports = adminRouter;

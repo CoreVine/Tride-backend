@@ -4,6 +4,8 @@ const RolePermissionModel = require("../../models/RolePermission");
 const AdminPermissionModel = require("../../models/AdminPermission");
 const BaseRepository = require("../base.repository");
 const { DatabaseError, Op } = require("sequelize");
+const { BadRequestError, NotFoundError } = require("../../utils/errors");
+const { ADMIN_ROLE_SUPER_ADMIN } = require("../../utils/constants/admin-roles");
 
 class AdminRepository extends BaseRepository {
   constructor() {
@@ -67,7 +69,7 @@ class AdminRepository extends BaseRepository {
     }    
   }
 
-  async findByIdIncludeDetails(selfAdminId) {
+  async findByIdIncludeDetails(selfAdminId, options = {}) {
     try {
       const admins = await this.model.findOne({
         where: {
@@ -88,12 +90,44 @@ class AdminRepository extends BaseRepository {
             attributes: ['id', 'role_name']
           }
         ],
-        order: [['created_at', 'DESC']]
+        order: [['created_at', 'DESC']],
+        ...options
       });
       return admins;
     } catch (error) {
       throw new DatabaseError(error);
     }    
+  }
+
+  async updateAdminRole(selfAdminId, adminId, roleId) {
+    console.log(selfAdminId, adminId);
+    
+    const t = await this.model.sequelize.transaction();
+
+    try {
+      const adminToUpdate = await this.findByIdIncludeDetails(adminId, { transaction: t });
+
+      if (!adminToUpdate || adminToUpdate.role.role_name === ADMIN_ROLE_SUPER_ADMIN){
+        throw new BadRequestError('cannot update role of this admin!');
+      }
+
+      const role = await this.model.sequelize.models.AdminRoles.findByPk(roleId);
+
+      if (!role || role.role_name === ADMIN_ROLE_SUPER_ADMIN) {
+        throw new NotFoundError("Cannot find or update to this role");
+      }
+
+      await this.model.update({
+        role_id: roleId
+      }, {
+        where: {id: adminId}
+      });
+
+    } catch (error) {
+      await t.rollback();
+
+      throw error;
+    }
   }
 
 }
