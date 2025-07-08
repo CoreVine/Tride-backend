@@ -1,4 +1,5 @@
-const fs = require('fs');
+const loggingService = require("../../services/logging.service");
+const logger = loggingService.getLogger();
 /**
  * File filters for upload configuration
  */
@@ -12,7 +13,7 @@ const filters = {
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
     
     // Debug logging to see what MIME type is being received
-    console.log('File upload debug:', {
+    logger.debug('File upload debug:', {
       originalname: file.originalname,
       mimetype: file.mimetype,
       fieldname: file.fieldname,

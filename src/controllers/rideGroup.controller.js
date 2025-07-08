@@ -185,9 +185,6 @@ const RideGroupController = {
       if (!existingSubscription) {
         throw new BadRequestError("You do not have an active subscription for this ride group");
       }
-
-      console.log(existingSubscription.plan.range, plan_type);
-      console.log(existingSubscription.plan.installment_plan, installment_plan);
       
       // TODO: Implement logic to handle existing subscription
       if (

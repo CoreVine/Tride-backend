@@ -26,12 +26,6 @@ const isAccountType = (requiredType) => {
         logger.warn("Account not found", { accountId });
         throw new UnauthorizedError("Account not found");
       }
-      // console.log(
-      //   "Account:",
-      //   account.account_type,
-      //   "Required Type:",
-      //   requiredType
-      // );
 
       // Check if account type matches required type
       if (account.account_type !== requiredType) {
@@ -72,15 +66,13 @@ const isAdminWithRole = (role) => {
 
       // Get account from database
       const account = await AccountRepository.findByIdIncludeDetails(accountId, "admin");
-      if (!account || !account.admin) {
+      if (!account || !account.admin || !account.is_verified) {
         logger.warn("Admin account not found", { accountId });
         throw new UnauthorizedError("Admin account not found");
       }
-      console.log(account.admin.role.role_name, role);
-      console.log(`hi ${account.admin.role.role_name} hi`, `hi ${role} hi`);
       
       // Check if admin has the required role
-      if (!account.admin.role.role_name !== role) {
+      if (account.admin.role.role_name !== role) {
         logger.warn("Unauthorized access attempt - insufficient admin role", {
           accountId,
           roles: account.admin.roles,
@@ -104,10 +96,58 @@ const isAdminWithRole = (role) => {
   };
 }
 
+// TODO: TEST, NOT USED YET
+const isAdminWithPermissions = (permissions) => {
+  return async (req, res, next) => {
+    try {
+      // Get account ID from auth middleware
+      const accountId = req.userId;
+
+      if (!accountId) {
+        throw new UnauthorizedError("Authentication required");
+      }
+
+      // Get account from database
+      const account = await AccountRepository.findByIdIncludeDetails(accountId, "admin");
+      if (!account || !account.admin) {
+        logger.warn("Admin account not found", { accountId });
+        throw new UnauthorizedError("Admin account not found");
+      }
+
+      // Check if admin has the required permissions
+      const hasPermissions = permissions.every(permission =>
+        account.admin.role.permissions.some(p => p.role_permission_name === permission)
+      );
+
+      if (!hasPermissions) {
+        logger.warn("Unauthorized access attempt - insufficient admin permissions", {
+          accountId,
+          permissions: account.admin.role.permissions.map(p => p.role_permission_name),
+          requiredPermissions: permissions,
+        });
+        throw new UnauthorizedError(`Access denied. This resource requires ${permissions.join(", ")} permissions.`);
+      }
+
+      req.account = {
+        id: account.id,
+        email: account.email,
+        account_type: "admin",
+        is_verified: account.is_verified,
+        admin: account.admin,
+      };
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
 module.exports = {
   isParent: isAccountType("parent"),
   isDriver: isAccountType("driver"),
   isAdmin: isAccountType("admin"),
   isAdminWithRole,
+  isAdminWithPermissions,
   isAccountType,
 };

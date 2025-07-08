@@ -26,7 +26,6 @@ class ParentGroupRepository extends BaseRepository {
             if (!parentGroup) {
                 return 0; // No seats taken if no parent group found
             }
-            console.log(parentGroup);
             
             return parentGroup.current_seats_taken || 0;
         } catch (error) {

@@ -88,13 +88,17 @@ class AccountRepository extends BaseRepository {
                         as: 'role',
                         include: [{
                             model: this.model.sequelize.models.AdminPermission,
-                            as: 'permissions'
-                        }]
+                            as: 'permissions',
+                            attributes: ['id', 'role_permission_group', 'role_permission_name']
+                        }],
+                        attributes: ['id', 'role_name']
                     }] : []
                 }
             ];
 
-            return await this.model.findByPk(id, { include: includeOptions });
+            const result = await this.model.findByPk(id, { include: includeOptions });
+
+            return result ? result.toJSON() : null;
         } catch (error) {
             throw new DatabaseError(error);
         }

@@ -3,7 +3,7 @@ const AdminRolesModel = require("../../models/AdminRoles");
 const RolePermissionModel = require("../../models/RolePermission");
 const AdminPermissionModel = require("../../models/AdminPermission");
 const BaseRepository = require("../base.repository");
-const { DatabaseError } = require("sequelize");
+const { DatabaseError, Op } = require("sequelize");
 
 class AdminRepository extends BaseRepository {
   constructor() {
@@ -34,6 +34,66 @@ class AdminRepository extends BaseRepository {
       await t.rollback();
       throw new DatabaseError(error);
     }
+  }
+
+  async findAllExceptSelf(selfAdminId) {
+    try {
+      const admins = await this.model.findAll({
+        where: {
+          id: {
+            [Op.ne]: selfAdminId // Exclude self admin
+          }
+        },
+        attributes: {
+          exclude: ['role_id', 'account_id', 'created_at', 'updated_at']
+        },
+        include: [
+          {
+            model: this.model.sequelize.models.Account,
+            as: 'account',
+            attributes: ['id', 'email', 'is_verified']
+          },
+          {
+            model: AdminRolesModel,
+            as: 'role',
+            attributes: ['id', 'role_name']
+          }
+        ],
+        order: [['created_at', 'DESC']]
+      });
+      return admins;
+    } catch (error) {
+      throw new DatabaseError(error);
+    }    
+  }
+
+  async findByIdIncludeDetails(selfAdminId) {
+    try {
+      const admins = await this.model.findOne({
+        where: {
+          id: selfAdminId
+        },
+        attributes: {
+          exclude: ['role_id', 'account_id', 'created_at', 'updated_at']
+        },
+        include: [
+          {
+            model: this.model.sequelize.models.Account,
+            as: 'account',
+            attributes: ['id', 'email', 'is_verified']
+          },
+          {
+            model: AdminRolesModel,
+            as: 'role',
+            attributes: ['id', 'role_name']
+          }
+        ],
+        order: [['created_at', 'DESC']]
+      });
+      return admins;
+    } catch (error) {
+      throw new DatabaseError(error);
+    }    
   }
 
 }
