@@ -1,6 +1,5 @@
 const { Router } = require("express");
 const authMiddleware = require("../../middlewares/auth.middleware");
-const verifiedEmailRequired = require("../../middlewares/verifiedEmailRequired.middleware");
 const validate = require("../../middlewares/validation.middleware");
 const Yup = require("yup");
 const { isAdminWithRole, isAdmin } = require("../../middlewares/isAccount.middleware");
@@ -12,7 +11,6 @@ const {
     cloudinaryPurposeTypes,
   } = require("../../config/upload");
 
-const AdminRepository = require("../../data-access/admin");
 const {  ADMIN_ROLE_SUPER_ADMIN } = require("../../utils/constants/admin-roles");
 const adminController = require("../../controllers/admins.controller");
 
