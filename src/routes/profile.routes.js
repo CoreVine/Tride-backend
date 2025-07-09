@@ -2,7 +2,7 @@ const { Router } = require("express");
 const profileController = require("../controllers/profile.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 const verifiedEmailRequired = require("../middlewares/verifiedEmailRequired.middleware");
-const { isParent, isDriver } = require("../middlewares/isAccount.middleware");
+const { isParent, isDriver, isOneOf, isAdmin } = require("../middlewares/isAccount.middleware");
 const validate = require("../middlewares/validation.middleware");
 const {
   createUploader,
@@ -199,7 +199,6 @@ profileRoutes
   .route("/profile/driver")
   .post(
     authMiddleware,
-    verifiedEmailRequired,
     isDriver,
     ...driverProfileUploader.single("profile_pic"),
     validate(driverProfileSchema),
@@ -207,9 +206,12 @@ profileRoutes
   )
   .get(
     authMiddleware,
-    verifiedEmailRequired,
-    isDriver,
-    profileController.getDriverProfile
+    isAdmin,
+    validate(Yup.object().shape({
+      page: Yup.number().integer().positive().default(1),
+      limit: Yup.number().integer().positive().default(10),
+    })),
+    profileController.getAllDriverProfiles
   )
   .put(
     authMiddleware,
@@ -219,6 +221,18 @@ profileRoutes
     validate(driverProfileUpdateSchema),
     profileController.updateDriverProfile
   );
+
+profileRoutes.route("/profile/driver/:account_id")
+.get(
+  authMiddleware,
+  isOneOf("driver", "admin"),
+  validate({
+    params: Yup.object().shape({
+      account_id: Yup.number().integer().positive(),
+    }),
+  }),
+  profileController.getDriverProfile
+);
 
 // Step 2 for drivers: Upload papers - all document validation happens BEFORE upload
 profileRoutes.post(
