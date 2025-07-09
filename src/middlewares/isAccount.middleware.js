@@ -22,7 +22,8 @@ const isAccountType = (requiredType) => {
 
       // Get account from database
       const account = await AccountRepository.findByIdIncludeDetails(accountId, requiredType);
-      if (!account) {
+
+      if (!account || !account.is_verified) {
         logger.warn("Account not found", { accountId });
         throw new UnauthorizedError("Account not found");
       }
@@ -143,10 +144,64 @@ const isAdminWithPermissions = (permissions) => {
   }
 }
 
+const isOneOf = (...userTypes) => {
+  if (userTypes.length === 0) {
+    throw new Error("At least one user type must be specified");
+  }
+
+  return async (req, res, next) => {
+    try {
+          // Get account ID from auth middleware
+          const accountId = req.userId;
+  
+          if (!accountId) {
+            throw new UnauthorizedError("Authentication required");
+          }
+      
+          // Get account from database
+          const account = await AccountRepository.findById(accountId);
+          if (!account || !account.is_verified) {
+            logger.info("Account not found", { accountId });
+            throw new UnauthorizedError("Account not found");
+          }
+      
+          if (!userTypes.includes(account.account_type)) {
+            logger.warn("Unauthorized access attempt - incorrect account type", {
+              accountId,
+              accountType: account.account_type,
+              requiredTypes: userTypes,
+            });
+            throw new UnauthorizedError(`Access denied.`);
+          }
+      
+          const details = await AccountRepository.findByIdIncludeDetails(accountId, account.account_type);
+  
+          if (!details) {
+            logger.info("Account details not found", { accountId });
+            throw new UnauthorizedError("Account details not found");
+          }
+  
+          req.account = {
+            id: details.id,
+            email: details.email,
+            account_type: details.account_type,
+            is_verified: details.is_verified,
+            is_admin: details.account_type === "admin",
+            [details.account_type]: details[details.account_type] || null,
+          };
+  
+          next();
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
 module.exports = {
   isParent: isAccountType("parent"),
   isDriver: isAccountType("driver"),
   isAdmin: isAccountType("admin"),
+  isOneOf,
   isAdminWithRole,
   isAdminWithPermissions,
   isAccountType,
