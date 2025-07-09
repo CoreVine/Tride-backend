@@ -72,17 +72,17 @@ class AccountRepository extends BaseRepository {
                 {
                     model: this.model.sequelize.models.Parent,
                     as: 'parent',
-                    required: requiredType === 'parent'
+                    required: false
                 },
                 {
                     model: this.model.sequelize.models.Driver,
                     as: 'driver',
-                    required: requiredType === 'driver'
+                    required: false
                 },
                 {
                     model: this.model.sequelize.models.Admin,
                     as: 'admin',
-                    required: requiredType === 'admin',
+                    required: false,
                     include: requiredType === 'admin' ? [{
                         model: this.model.sequelize.models.AdminRoles,
                         as: 'role',
