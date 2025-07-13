@@ -13,6 +13,7 @@ module.exports = {
       { id: 2, name: "6 Of Oct", governorate_id: 1 },
       { id: 3, name: "Oct Gardens", governorate_id: 1 },
     ];
+
     const defaultSchools = [
       {
         id: 1,
@@ -307,6 +308,14 @@ module.exports = {
     const defaultAccounts = [
       {
         id: 1,
+        email: 'admin@tride.com',
+        password: await bcrypt.hash("admin123", 8),
+        account_type: 'admin',
+        is_verified: true,
+        auth_method: 'email'
+      },
+      {
+        id: 2,
         email: "ah250296@gmail.com",
         password: await bcrypt.hash("password", 8),
         account_type: "parent",
@@ -314,7 +323,7 @@ module.exports = {
         auth_method: "email",
       },
       {
-        id: 2,
+        id: 3,
         email: "driver@example.com",
         password: await bcrypt.hash("password", 8),
         account_type: "driver",
@@ -326,7 +335,7 @@ module.exports = {
     const defaultParents = [
       {
         id: 1,
-        account_id: 1,
+        account_id: 2,
         name: "Ahmed Ali",
         profile_pic:
           "https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg",
@@ -350,7 +359,7 @@ module.exports = {
     const defaultDrivers = [
       {
         id: 1,
-        account_id: 2,
+        account_id: 3,
         name: "Seham Ahmed",
         profile_pic:
           "https://images.pexels.com/photos/712513/pexels-photo-712513.jpeg",
@@ -425,7 +434,7 @@ module.exports = {
 
     const defaultGroups = [
       {
-        id: 1, // Add explicit ID
+        id: 1,
         parent_creator_id: 1,
         group_name: "Morning School Ride",
         created_at: now,
@@ -529,7 +538,6 @@ module.exports = {
     ];
 
     const defaultChildrenGroups = [
-      // Group 1 children (Ali, Omar, Fatima)
       {
         parent_group_id: 1,
         child_id: 1,
@@ -548,8 +556,6 @@ module.exports = {
         timing_from: "08:30:00",
         timing_to: "14:30:00",
       },
-
-      // Group 2 children (Layla, Khaled)
       {
         parent_group_id: 2,
         child_id: 4,
@@ -562,8 +568,6 @@ module.exports = {
         timing_from: "15:15:00",
         timing_to: "17:15:00",
       },
-
-      // Group 3 child (Sara)
       {
         parent_group_id: 3,
         child_id: 6,
@@ -579,48 +583,47 @@ module.exports = {
         parent_id: 1,
         ride_group_id: 1,
         current_seats_taken: 3,
-        pickup_days_count: 4, // Sunday, Monday, Tuesday, Wednesday
+        pickup_days_count: 4,
         started_at: new Date(
           now.getFullYear(),
           now.getMonth(),
           now.getDate() - 15
-        ), // 15 days ago
+        ),
         valid_until: new Date(
           now.getFullYear(),
           now.getMonth() + 1,
           now.getDate() - 15
-        ), // Monthly plan
-        plan_id: 1, // Monthly plan
-        total_amount: 1250.0, // Cost for monthly plan
-        status: "new", // Changed from 'paid' to 'new'
+        ),
+        plan_id: 1,
+        total_amount: 1250.0,
+        status: "new",
       },
       {
         id: 2,
         parent_id: 1,
         ride_group_id: 2,
         current_seats_taken: 2,
-        pickup_days_count: 3, // Monday, Wednesday, Thursday
-        started_at: new Date(now.getFullYear(), now.getMonth() - 1, 1), // 1st of last month
-        valid_until: new Date(now.getFullYear(), now.getMonth() + 3, 1), // Term plan (4 months)
-        plan_id: 2, // Term plan
-        total_amount: 3600.0, // Cost for term plan
-        status: "pending", // Changed from 'paid' to 'pending'
+        pickup_days_count: 3,
+        started_at: new Date(now.getFullYear(), now.getMonth() - 1, 1),
+        valid_until: new Date(now.getFullYear(), now.getMonth() + 3, 1),
+        plan_id: 2,
+        total_amount: 3600.0,
+        status: "pending",
       },
       {
         id: 3,
         parent_id: 1,
         ride_group_id: 3,
         current_seats_taken: 1,
-        pickup_days_count: 2, // Friday, Saturday
-        started_at: new Date(now.getFullYear(), now.getMonth() - 2, 15), // 15th of 2 months ago
-        valid_until: new Date(now.getFullYear(), now.getMonth() + 6, 15), // Double-terms plan (8 months)
-        plan_id: 3, // Double-terms plan
-        total_amount: 4800.0, // Cost for double-terms plan
-        status: "paid", // Kept as 'paid'
+        pickup_days_count: 2,
+        started_at: new Date(now.getFullYear(), now.getMonth() - 2, 15),
+        valid_until: new Date(now.getFullYear(), now.getMonth() + 6, 15),
+        plan_id: 3,
+        total_amount: 4800.0,
+        status: "paid",
       },
     ];
 
-    // Payment history for each subscription
     const defaultPayments = [
       {
         paymob_receipt_id:
@@ -629,34 +632,120 @@ module.exports = {
           now.getFullYear(),
           now.getMonth(),
           now.getDate() - 15
-        ), // Same as started_at
+        ),
         amount: 1250.0,
         parent_subscription_id: 1,
       },
       {
         paymob_receipt_id:
           "PMB" + Math.floor(10000000 + Math.random() * 90000000),
-        paid_at: new Date(now.getFullYear(), now.getMonth() - 1, 1), // Same as started_at
+        paid_at: new Date(now.getFullYear(), now.getMonth() - 1, 1),
         amount: 3600.0,
         parent_subscription_id: 2,
       },
       {
         paymob_receipt_id:
           "PMB" + Math.floor(10000000 + Math.random() * 90000000),
-        paid_at: new Date(now.getFullYear(), now.getMonth() - 2, 15), // Same as started_at
+        paid_at: new Date(now.getFullYear(), now.getMonth() - 2, 15),
         amount: 4800.0,
         parent_subscription_id: 3,
       },
     ];
 
-    // Delete data in reverse dependency order (child tables first)
-    await queryInterface.bulkDelete("governorate", null, {});
-    await queryInterface.bulkDelete("city", null, {});
-    await queryInterface.bulkDelete("schools", null, {});
+    const transaction = await queryInterface.sequelize.transaction();
+
+    try {
+      await queryInterface.bulkDelete("payment_history", null, { transaction });
+      await queryInterface.bulkDelete("parent_group_subscription", null, {
+        transaction,
+      });
+      await queryInterface.bulkDelete("child_group_details", null, {
+        transaction,
+      });
+      await queryInterface.bulkDelete("day_dates_group", null, { transaction });
+      await queryInterface.bulkDelete("parent_group", null, { transaction });
+      await queryInterface.bulkDelete("ride_child_delivered", null, {
+        transaction,
+      });
+      await queryInterface.bulkDelete("ride_history", null, { transaction });
+      await queryInterface.bulkDelete("ride_instance", null, { transaction });
+      await queryInterface.bulkDelete("ride_group", null, { transaction });
+      await queryInterface.bulkDelete("child", null, { transaction });
+      await queryInterface.bulkDelete("driver_papers", null, { transaction });
+      await queryInterface.bulkDelete("driver_payment", null, { transaction });
+      await queryInterface.bulkDelete("driver", null, { transaction });
+      await queryInterface.bulkDelete("parent", null, { transaction });
+      await queryInterface.bulkDelete("account", null, { transaction });
+      await queryInterface.bulkDelete("schools", null, { transaction });
+      await queryInterface.bulkDelete("city", null, { transaction });
+      await queryInterface.bulkDelete("governorate", null, { transaction });
+      await queryInterface.bulkDelete('admin', null, {transaction});
+
+      await queryInterface.bulkInsert("governorate", defaultGovernments, {
+        transaction,
+      });
+      await queryInterface.bulkInsert("city", defaultCities, { transaction });
+      await queryInterface.bulkInsert("schools", defaultSchools, {
+        transaction,
+      });
+      await queryInterface.bulkInsert("account", defaultAccounts, {
+        transaction,
+      });
+      // Insert admin profile linked to the account
+      await queryInterface.bulkInsert('admin', [{
+        account_id: 1,
+        first_name: 'Super',
+        last_name: 'Admin',
+        language: 'en',
+        role_id: 1, // super admin role
+        created_at: Sequelize.fn('NOW'),
+        updated_at: Sequelize.fn('NOW')
+      }], { transaction });
+      await queryInterface.bulkInsert("parent", defaultParents, {
+        transaction,
+      });
+      await queryInterface.bulkInsert("driver", defaultDrivers, {
+        transaction,
+      });
+      await queryInterface.bulkInsert("child", defaultChildren, {
+        transaction,
+      });
+      await queryInterface.bulkInsert("ride_group", defaultGroups, {
+        transaction,
+      });
+      await queryInterface.bulkInsert("parent_group", defaultParentGroup, {
+        transaction,
+      });
+      await queryInterface.bulkInsert("day_dates_group", defaultGroupDays, {
+        transaction,
+      });
+      await queryInterface.bulkInsert(
+        "child_group_details",
+        defaultChildrenGroups,
+        { transaction }
+      );
+      await queryInterface.bulkInsert(
+        "parent_group_subscription",
+        defaultSubscriptions,
+        { transaction }
+      );
+      await queryInterface.bulkInsert("payment_history", defaultPayments, {
+        transaction,
+      });
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Seeder error:", error);
+      throw error;
+    }
+  },
+
+  async down(queryInterface, Sequelize) {
     await queryInterface.bulkDelete("payment_history", null, {});
+    await queryInterface.bulkDelete("parent_group_subscription", null, {});
     await queryInterface.bulkDelete("child_group_details", null, {});
     await queryInterface.bulkDelete("day_dates_group", null, {});
-    await queryInterface.bulkDelete("parent_group_subscription", null, {});
     await queryInterface.bulkDelete("parent_group", null, {});
     await queryInterface.bulkDelete("ride_child_delivered", null, {});
     await queryInterface.bulkDelete("ride_history", null, {});
@@ -667,38 +756,10 @@ module.exports = {
     await queryInterface.bulkDelete("driver_payment", null, {});
     await queryInterface.bulkDelete("driver", null, {});
     await queryInterface.bulkDelete("parent", null, {});
+    await queryInterface.bulkDelete("admin", null, {});
     await queryInterface.bulkDelete("account", null, {});
-
-    // Insert data in dependency order
-    await queryInterface.bulkInsert("governorate", defaultGovernments, {});
-    await queryInterface.bulkInsert("city", defaultCities, {});
-    await queryInterface.bulkInsert("schools", defaultSchools, {});
-    await queryInterface.bulkInsert("account", defaultAccounts, {});
-    await queryInterface.bulkInsert("parent", defaultParents, {});
-    await queryInterface.bulkInsert("driver", defaultDrivers, {});
-    await queryInterface.bulkInsert("child", defaultChildren, {});
-    await queryInterface.bulkInsert("ride_group", defaultGroups, {});
-    await queryInterface.bulkInsert("parent_group", defaultParentGroup, {});
-    await queryInterface.bulkInsert("day_dates_group", defaultGroupDays, {});
-    await queryInterface.bulkInsert(
-      "child_group_details",
-      defaultChildrenGroups,
-      {}
-    );
-    await queryInterface.bulkInsert(
-      "parent_group_subscription",
-      defaultSubscriptions,
-      {}
-    );
-    await queryInterface.bulkInsert("payment_history", defaultPayments, {});
-  },
-
-  async down(queryInterface, Sequelize) {
-    /**
-     * Add commands to revert seed here.
-     *
-     * Example:
-     * await queryInterface.bulkDelete('People', null, {});
-     */
+    await queryInterface.bulkDelete("schools", null, {});
+    await queryInterface.bulkDelete("city", null, {});
+    await queryInterface.bulkDelete("governorate", null, {});
   },
 };

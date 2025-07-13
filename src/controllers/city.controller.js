@@ -63,7 +63,7 @@ const cityController = {
       const cities = await CityRepository.findAll({
         where: { governorate_id: governorateId },
       });
-      console.log(cities);
+
       return res.success("Cities fetched successfully", {
         cities,
         governorate,

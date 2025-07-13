@@ -11,13 +11,13 @@ const Yup = require("yup");
 const loginSchema = Yup.object().shape({
   email: Yup.string().email().required(),
   password: Yup.string().required(),
-  account_type: Yup.string().oneOf(["parent", "driver"]).default("parent"),
+  account_type: Yup.string().oneOf(["parent", "driver", "admin"]).default("parent"),
 });
 
 const registerSchema = Yup.object().shape({
   email: Yup.string().email().required(),
   password: Yup.string().min(6).required(),
-  account_type: Yup.string().oneOf(["parent", "driver"]).default("parent"),
+  account_type: Yup.string().oneOf(["parent", "driver", "admin"]).default("parent"),
 });
 
 const passwordResetRequestSchema = Yup.object().shape({

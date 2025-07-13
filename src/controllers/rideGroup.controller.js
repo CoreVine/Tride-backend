@@ -279,7 +279,6 @@ const RideGroupController = {
       if (!existingSubscription) {
         throw new BadRequestError("No subscription found for this ride group. Please create a new subscription.");
       }
-
       // Get plan details for extension
       const planDetails = await PlanRepository.getPlanByType(plan_type);
       if (!planDetails) {

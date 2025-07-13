@@ -15,17 +15,27 @@ router.get('/', (req, res) => {
   res.status(200).json({ message: 'Welcome to the API' });
 });
 
-// Dynamically load all route files in this directory
-fs.readdirSync(__dirname)
-  .filter(file => {
-    return file.indexOf('.') !== 0 && 
-           file !== path.basename(__filename) && 
-           file.slice(-3) === '.js';
-  })
-  .forEach(file => {
-    const route = require(path.join(__dirname, file));
-    // When 'route' is an Express Router instance, this is perfectly valid!
-    router.use(route); 
+// Recursively load all route files from all subdirectories
+const loadRoutesRecursively = (dir) => {
+  fs.readdirSync(dir).forEach(file => {
+    const fullPath = path.join(dir, file);
+    
+    if (fs.statSync(fullPath).isDirectory()) {
+      // If it's a directory, recursively load routes from it
+      loadRoutesRecursively(fullPath);
+    } else if (
+      file.indexOf('.') !== 0 && 
+      file !== path.basename(__filename) && 
+      file.slice(-3) === '.js'
+    ) {
+      // If it's a valid route file, load it
+      const route = require(fullPath);
+      router.use(route);
+    }
   });
+};
+
+// Start loading routes from the current directory
+loadRoutesRecursively(__dirname);
 
 module.exports = router;

@@ -11,6 +11,7 @@ const DriverPapersRepository = require("../data-access/driverPapers");
 const CityRepository = require("../data-access/city");
 const JwtService = require("../services/jwt.service");
 const { deleteUploadedFile } = require("../config/upload");
+const { createPagination } = require("../utils/responseHandler");
 
 const logger = loggingService.getLogger();
 
@@ -823,16 +824,54 @@ const profileController = {
       next(error);
     }
   },
-  getDriverProfile: async (req, res, next) => {
-    try {
-      logger.info("Parent profile Retrived attempt", { accountId: req.userId });
+  getAllDriverProfiles: async (req, res, next) => {
+    const { page = 1, limit = 10 } = req.query;
 
-      // Verify account exists and is verified
-      const account = await AccountRepository.findById(req.userId);
-      if (!account) {
-        throw new NotFoundError("Account not found");
+    try {
+      logger.info("Retrieving all driver profiles", {
+        page,
+        limit,
+        accountId: req.userId,
+      });
+
+      // Fetch all driver profiles with pagination
+      const { count, rows: drivers } = await DriverRepository.findAllPaginatedWithDetails(page, limit);
+
+      if (!drivers || drivers.length === 0) {
+        return res.success("No driver profiles found", { drivers: [] });
       }
 
+      const pagination = createPagination(page, limit, count);
+
+      logger.info("Driver profiles retrieved successfully", {
+        count: drivers.length,
+      });
+
+      // Return success with driver profiles
+      return res.success("Driver profiles retrieved successfully", {
+        pagination,
+        drivers
+      });
+    } catch (error) {
+      logger.error("Error retrieving driver profiles", {
+        error: error.message,
+        stack: error.stack,
+      });
+      next(error);
+    }
+  },
+  getDriverProfile: async (req, res, next) => {
+    try {
+      const { account_id } = req.params;
+      logger.info(`Driver profile Retrived attempt: ${ account_id }`);
+
+      // Verify account exists and is verified
+      const account = await AccountRepository.findById(account_id);
+      
+      if (!account || (account.id !== req.userId && !req.account.is_admin)) {
+        throw new NotFoundError("Account not found");
+      }
+      
       if (!account.is_verified) {
         throw new ForbiddenError(
           "Account email must be verified before Retrived a profile"
@@ -840,7 +879,7 @@ const profileController = {
       }
 
       // Check if parent profile already exists BEFORE processing files
-      const driver = await DriverRepository.findByAccountId(req.userId);
+      const driver = await DriverRepository.findByAccountId(account_id);
 
       if (!driver) {
         throw new NotFoundError(
@@ -849,22 +888,20 @@ const profileController = {
       }
 
       logger.info("driver profile retrived successfully", {
-        accountId: req.userId,
+        account_id,
         driverid: driver.id,
-      });
-
-      // Update JWT with new profile info
-      const newToken = JwtService.jwtSign(req.userId, {
-        accountType: "driver",
-        profileComplete: true,
-        accountTypeId: driver.id,
       });
 
       // Return success with parent profile
       return res.success("driver profile retrived successfully", {
-        data: driver,
-        token: newToken.token,
-        refreshToken: newToken.refreshToken,
+        account: {
+          id: account.id,
+          email: account.email,
+          account_type: account.account_type,
+          is_verified: account.is_verified,
+          auth_method: account.auth_method,
+          driver
+        }
       });
     } catch (error) {
       logger.error("driver profile retrived error", {

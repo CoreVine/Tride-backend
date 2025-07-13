@@ -5,9 +5,6 @@ const redisService = require("../../services/redis.service");
 const paymobController = {
     handlePaymobWebhook: async (req, res) => {
         try {
-            // Log the entire request body with better formatting
-            console.log('Full webhook payload:', JSON.stringify(req.body, null, 2));
-
             // HMAC verification
             const is_valid = verifyPaymentSignature(req.body.obj, req.query.hmac);
             if (!is_valid) {

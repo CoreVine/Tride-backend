@@ -60,7 +60,7 @@ class ParentGroupSubscription extends Model {
         allowNull: true,
       },
       status: {
-        type: DataTypes.ENUM('new','remove','pending','paid'),
+        type: DataTypes.ENUM('new', 'pending', 'paid'),
         allowNull: false,
         defaultValue: 'new'
       }

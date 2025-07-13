@@ -46,7 +46,7 @@ class VerificationCode extends Model {
           allowNull: false,
         },
         account_type: {
-          type: DataTypes.ENUM("driver", "parent"),
+          type: DataTypes.ENUM("driver", "parent", "admin"),
           allowNull: false,
         },
         created_at: {

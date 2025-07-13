@@ -10,7 +10,21 @@ class DriverRepository extends BaseRepository {
     async findByAccountId(accountId) {
         try {
             return await this.model.findOne({
-                where: { account_id: accountId }
+                where: { account_id: accountId },
+                include: [
+                    {
+                        association: 'papers',
+                        attributes: { exclude: ['created_at', 'updated_at'] }
+                    },
+                    {
+                        association: 'payments',
+                        attributes: { exclude: ['created_at', 'updated_at'] }
+                    },
+                    {
+                        association: 'paymentMethods',
+                        attributes: { exclude: ['created_at', 'updated_at'] }
+                    }
+                ],
             });
         } catch (error) {
             throw new DatabaseError(error);
@@ -46,6 +60,32 @@ class DriverRepository extends BaseRepository {
         } catch (error) {
             throw new DatabaseError(error);
         }
+    }
+
+    async findAllPaginatedWithDetails(page = 1, limit = 10) {
+        const offset = (page - 1) * limit;
+        
+        const { count, rows } = await this.model.findAndCountAll({
+            include: [
+                {
+                    association: 'papers',
+                    attributes: { exclude: ['created_at', 'updated_at'] }
+                },
+                {
+                    association: 'payments',
+                    attributes: { exclude: ['created_at', 'updated_at'] }
+                },
+                {
+                    association: 'paymentMethods',
+                    attributes: { exclude: ['created_at', 'updated_at'] }
+                }
+            ],
+            limit,
+            offset,
+            distinct: true
+        });
+        
+        return { count, rows };
     }
 }
 

@@ -102,6 +102,110 @@ class ParentGroupSubscriptionRepository extends BaseRepository {
         }
     }
 
+    async findAllPaginatedDetailed(page = 1, limit = 10) {
+        const offset = (page - 1) * limit;
+        
+        const { count, rows } = await this.model.findAndCountAll({
+            include: [
+                {
+                    association: 'parent',
+                    attributes: [
+                        'id', 'name', 'phone', 'profile_pic', 'lat', 'lng'
+                    ],
+                    include: [
+                        {
+                            association: 'account',
+                            attributes: ['id', 'email', 'account_type']
+                        }
+                    ]
+                },
+                {
+                    association: 'rideGroup',
+                    attributes: [
+                        'id', 'group_name', 'current_seats_taken', 'group_type'
+                    ],
+                    include: [
+                        {
+                            association: 'school',
+                            attributes: ['id', 'school_name']
+                        }
+                    ]
+                },
+                {
+                    association: 'plan',
+                    attributes: ['id', 'range', 'months_count']
+                },
+                {
+                    association: 'payment_history',
+                    order: [['paid_at', 'DESC']],
+                    limit: 1
+                }
+            ],
+            limit,
+            offset,
+            distinct: true
+        });
+        
+        return { count, rows };
+    }
+
+    async findByIdDetailed(id) {
+        try {
+            const subscription = await this.model.findByPk(id, {
+                include: [
+                    {
+                        association: 'parent',
+                        attributes: [
+                            'id', 'name', 'phone', 'profile_pic', 'lat', 'lng'
+                        ],
+                        include: [
+                            {
+                                association: 'account',
+                                attributes: ['id', 'email', 'account_type']
+                            }
+                        ]
+                    },
+                    {
+                        association: 'rideGroup',
+                        attributes: [
+                            'id', 'group_name', 'current_seats_taken', 'group_type'
+                        ],
+                        include: [
+                            {
+                                association: 'school',
+                                attributes: ['id', 'school_name']
+                            }
+                        ]
+                    },
+                    {
+                        association: 'plan',
+                        attributes: ['id', 'range', 'months_count']
+                    },
+                    {
+                        association: 'payment_history',
+                        order: [['paid_at', 'DESC']],
+                        limit: 1
+                    }
+                ]
+            });
+
+            if (subscription) {
+                // Add payment history count to the subscription object
+                subscription.dataValues.months_paid_done = 
+                    subscription.payment_history ? subscription.payment_history.length : 0;
+                
+                subscription.dataValues.remaining_months = 
+                    Number(subscription.plan.months_count) - subscription.dataValues.months_paid_done;
+                subscription.dataValues.next_payment_due = subscription.payment_history[0].next_payment_due;
+                subscription.dataValues.next_payment_amount = Number(subscription.payment_history[0].next_payment_amount);
+            }
+
+            return subscription;
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
+    
     async extendSubscription(subscriptionId, extensionMonths, paymentData) {
         const t = await this.model.sequelize.transaction();
         

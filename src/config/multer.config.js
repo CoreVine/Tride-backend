@@ -102,7 +102,7 @@ const deleteUploadedFile = async (filePath) => {
       
       if (fs.existsSync(fullPath)) {
         await fs.promises.unlink(fullPath);
-        console.log(`File deleted successfully: ${fullPath}`);
+        logger.debug(`File deleted successfully: ${fullPath}`);
       }
     }
     // AWS S3
@@ -122,7 +122,7 @@ const deleteUploadedFile = async (filePath) => {
         : '';
       
       await awsService.deleteFile(fileUUID, extension, bucketPath);
-      console.log(`File deleted from S3: ${filename}`);
+      logger.debug(`File deleted from S3: ${filename}`);
     }
     // Cloudinary
     else if (filePath.includes('cloudinary.com/') || filePath.includes('res.cloudinary.com/')) {
