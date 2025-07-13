@@ -60,14 +60,14 @@ class ParentGroupSubscription extends Model {
         allowNull: false
       },
       status: {
-        type: DataTypes.ENUM('active', 'expired', 'inactive', 'cancelled'),
+        type: DataTypes.ENUM('new', 'pending', 'paid'),
         allowNull: false,
-        defaultValue: 'active'
+        defaultValue: 'new'
       }
     }, {
       sequelize,
       modelName: 'ParentGroupSubscription',
-      tableName: 'group_subscription',
+      tableName: 'parent_group_subscription',
       timestamps: false
     });
   }
