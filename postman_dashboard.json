@@ -67,7 +67,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"faded.lover.shadows@gmail.com\",\n    \"password\": \"password\",\n    \"account_type\":\"admin\"\n}"
+							"raw": "{\n    \"email\": \"x@x.com\",\n    \"password\": \"password\",\n    \"account_type\":\"parent\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/login",
@@ -200,7 +200,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"faded.lover.shadows@gmail.com\",\n    \"code\": \"328373\"\n}"
+							"raw": "{\n    \"email\": \"ezz.professional@gmail.com\",\n    \"code\": \"809696\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/email/verify",
@@ -229,7 +229,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"ezz.professional@gmail.com\"\n}"
+							"raw": "{\n    \"email\": \"faded.lover.shadows@gmail.com\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/email/verify/resend",
@@ -265,7 +265,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"jilike7518@daxiake.com\"\n}"
+							"raw": "{\n    \"email\": \"faded.lover.shadows@gmail.com\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/password/request",
@@ -410,42 +410,50 @@
 										{
 											"key": "name",
 											"value": "jack",
-											"type": "text"
+											"type": "text",
+											"disabled": true
 										},
 										{
 											"key": "phone",
 											"value": "465456456",
-											"type": "text"
+											"type": "text",
+											"disabled": true
 										},
 										{
 											"key": "gender",
 											"value": "male",
-											"type": "text"
+											"type": "text",
+											"disabled": true
 										},
 										{
 											"key": "city_id",
-											"value": "1",
-											"type": "text"
+											"value": "3",
+											"type": "text",
+											"disabled": true
 										},
 										{
 											"key": "lng",
 											"value": "39",
-											"type": "text"
+											"type": "text",
+											"disabled": true
 										},
 										{
 											"key": "lat",
 											"value": "31",
-											"type": "text"
+											"type": "text",
+											"disabled": true
 										},
 										{
 											"key": "profile_pic",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/logo.png",
+											"disabled": true
 										},
 										{
 											"key": "google_place_id",
 											"value": "1",
-											"type": "text"
+											"type": "text",
+											"disabled": true
 										}
 									]
 								},
@@ -620,7 +628,7 @@
 										{
 											"key": "back_side_nic",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/logo.png"
 										},
 										{
 											"key": "front_side_nic",
@@ -769,7 +777,7 @@
 										{
 											"key": "profile_pic",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/tire.jpeg"
 										},
 										{
 											"key": "formatted_address",
@@ -807,64 +815,18 @@
 									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
-										"type": "text",
-										"disabled": true
+										"type": "text"
 									},
 									{
 										"key": "Authorization",
 										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7ImlkIjo3LCJhY2NvdW50VHlwZSI6ImRyaXZlciIsInByb2ZpbGVDb21wbGV0ZSI6dHJ1ZSwiYWNjb3VudFR5cGVJZCI6MX0sImlhdCI6MTc0ODEwOTQ2MiwianRpIjoiMGJmZjM5N2EtNmJhNi00ZjUzLWEzNmYtN2MyN2M5MWY1OTVmIn0._sPViQNF6A03qIMfbfiMynUmWVZ-46UJ1be766DW3wE",
-										"type": "text"
+										"type": "text",
+										"disabled": true
 									}
 								],
 								"body": {
-									"mode": "formdata",
-									"formdata": [
-										{
-											"key": "name",
-											"value": "jack",
-											"type": "text"
-										},
-										{
-											"key": "phone",
-											"value": "465456456",
-											"type": "text"
-										},
-										{
-											"key": "gender",
-											"value": "male",
-											"type": "text"
-										},
-										{
-											"key": "city_id",
-											"value": "1",
-											"type": "text"
-										},
-										{
-											"key": "lng",
-											"value": "30",
-											"type": "text"
-										},
-										{
-											"key": "lat",
-											"value": "31",
-											"type": "text"
-										},
-										{
-											"key": "profile_pic",
-											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
-										},
-										{
-											"key": "formatted_address",
-											"value": "sdf",
-											"type": "text"
-										},
-										{
-											"key": "license_number",
-											"value": "34",
-											"type": "text"
-										}
-									]
+									"mode": "raw",
+									"raw": ""
 								},
 								"url": {
 									"raw": "{{base_url}}/profile/driver",
@@ -896,22 +858,22 @@
 										{
 											"key": "back_side_national",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/tire.jpeg"
 										},
 										{
 											"key": "driver_license",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/tire.jpeg"
 										},
 										{
 											"key": "front_side_national",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/tire.jpeg"
 										},
 										{
 											"key": "car_license",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/tire.jpeg"
 										},
 										{
 											"key": "car_model",
@@ -2668,6 +2630,47 @@
 			"name": "Subscriptions",
 			"item": [
 				{
+					"name": "Admin",
+					"item": [
+						{
+							"name": "Admin get all payments",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/payments/2",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"payments",
+										"2"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "Test paymob",
 					"request": {
 						"method": "POST",
@@ -2803,15 +2806,15 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/ride/group/20/subscription",
+							"raw": "{{base_url}}/ride/group/2/plans",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"ride",
 								"group",
-								"20",
-								"subscription"
+								"2",
+								"plans"
 							]
 						}
 					},
@@ -2852,6 +2855,79 @@
 			"name": "Admin",
 			"item": [
 				{
+					"name": "Permissions & Roles",
+					"item": [
+						{
+							"name": "Set new permissions",
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"permissions\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/roles/1/permissions",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"roles",
+										"1",
+										"permissions"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update admin role",
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n\t\"role_id\": 4\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/admins/12/role",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admins",
+										"12",
+										"role"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "Get admins",
 					"protocolProfileBehavior": {
 						"disableBodyPruning": true
@@ -2870,13 +2946,12 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{base_url}}/admins/me",
+							"raw": "{{base_url}}/admins",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
-								"admins",
-								"me"
+								"admins"
 							]
 						}
 					},
@@ -2938,6 +3013,33 @@
 							]
 						},
 						"description": "Register a new user account"
+					},
+					"response": []
+				},
+				{
+					"name": "Admin login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"admin@tride.com\",\r\n    \"password\": \"admin123\",\r\n    \"account_type\":\"admin\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
 					},
 					"response": []
 				}
