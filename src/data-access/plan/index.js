@@ -7,17 +7,20 @@ class PlanRepository extends BaseRepository {
         super(PlanModel);
     }
 
-    async getPlanByType(planType, installmentPlan = false) {
+    async getPlanByType(planType) {
         try {
             return await this.model.findOne({
                 where: {
-                    range: planType,
-                    installment_plan: installmentPlan
+                    range: planType
                 }
             });
         } catch (error) {
             throw new DatabaseError(error);
         }
+    }
+
+    async getAllPlans() {
+        return await this.model.findAll();
     }
 }
 
