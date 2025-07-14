@@ -7,14 +7,14 @@ const sequelizeService = require("./services/sequelize.service");
 const awsService = require("./services/aws.service");
 const emailService = require("./services/email.service");
 const redisService = require("./services/redis.service");
-//const mongodbService = require("./config/monogodb");
+const mongodbService = require("./config/monogodb");
 const socketioService = require("./services/socketio.service");
 
 require("dotenv").config(); // Ensure dotenv is loaded early
 
 // This array holds services that can be initialized without special dependencies
 const coreServices = [
- // mongodbService,
+  mongodbService,
   sequelizeService,
   awsService,
   emailService,
