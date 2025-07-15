@@ -161,21 +161,25 @@ const redisService = {
   },
 
   /**
-   * Store user connection information
+   * Store user connection information with support for multiple sockets
    * @param {string} userId - User ID
    * @param {string} socketId - Socket ID
-   * @param {string} userType - User type (driver/rider)
+   * @param {string} userType - User type (driver/rider/parent)
    */
   storeUserConnection: async (userId, socketId, userType) => {
     try {
-      const key = `user:${userId}`;
-      await redisClient.hset(key, {
-        socketId,
+      const key = `user:${userId}:sockets`;
+      await redisClient.hset(key, socketId, JSON.stringify({
         userType,
+        connectedAt: Date.now(),
         lastSeen: Date.now(),
-      });
+      }));
       // Set TTL for user connection (1 day)
       await redisClient.expire(key, 86400);
+      
+      // Also store a reverse mapping for quick lookup
+      const reverseKey = `socket:${socketId}`;
+      await redisService.set(reverseKey, { userId, userType }, 86400);
     } catch (error) {
       logger.error(`[REDIS] Error storing user connection for userId ${userId}:`, error);
       throw error;
@@ -183,15 +187,46 @@ const redisService = {
   },
 
   /**
-   * Get user connection info
+   * Get all socket connections for a user
+   * @param {string} userId - User ID
+   * @returns {Promise<object|null>} User socket connections
+   */
+  getUserConnections: async (userId) => {
+    try {
+      const key = `user:${userId}:sockets`;
+      const data = await redisClient.hgetall(key);
+      if (!data || Object.keys(data).length === 0) return null;
+      
+      // Parse the JSON values
+      const connections = {};
+      for (const [socketId, value] of Object.entries(data)) {
+        connections[socketId] = JSON.parse(value);
+      }
+      return connections;
+    } catch (error) {
+      logger.error(`[REDIS] Error getting user connections for userId ${userId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get user connection info (legacy method - returns first connection found)
    * @param {string} userId - User ID
    * @returns {Promise<object|null>} User connection info
    */
   getUserConnection: async (userId) => {
     try {
-      const key = `user:${userId}`;
-      const data = await redisClient.hgetall(key);
-      return data || null;
+      const connections = await redisService.getUserConnections(userId);
+      if (!connections) return null;
+      
+      // Return the first connection found
+      const socketIds = Object.keys(connections);
+      if (socketIds.length === 0) return null;
+      
+      return {
+        socketId: socketIds[0],
+        ...connections[socketIds[0]]
+      };
     } catch (error) {
       logger.error(`[REDIS] Error getting user connection for userId ${userId}:`, error);
       throw error;
@@ -199,15 +234,68 @@ const redisService = {
   },
 
   /**
-   * Remove user connection
+   * Remove a specific socket connection for a user
+   * @param {string} userId - User ID
+   * @param {string} socketId - Socket ID to remove
+   */
+  removeUserSocketConnection: async (userId, socketId) => {
+    try {
+      const key = `user:${userId}:sockets`;
+      await redisClient.hdel(key, socketId);
+      
+      // Remove reverse mapping
+      const reverseKey = `socket:${socketId}`;
+      await redisClient.del(reverseKey);
+      
+      // Check if user has any remaining connections
+      const remainingConnections = await redisClient.hlen(key);
+      if (remainingConnections === 0) {
+        await redisClient.del(key);
+      }
+    } catch (error) {
+      logger.error(`[REDIS] Error removing socket connection for userId ${userId}, socketId ${socketId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Remove user connection (all sockets)
    * @param {string} userId - User ID
    */
   removeUserConnection: async (userId) => {
     try {
-      const key = `user:${userId}`;
+      const key = `user:${userId}:sockets`;
+      
+      // Get all socket IDs first to clean up reverse mappings
+      const socketData = await redisClient.hgetall(key);
+      const socketIds = Object.keys(socketData);
+      
+      // Remove reverse mappings
+      for (const socketId of socketIds) {
+        const reverseKey = `socket:${socketId}`;
+        await redisClient.del(reverseKey);
+      }
+      
+      // Remove the main key
       await redisClient.del(key);
     } catch (error) {
       logger.error(`[REDIS] Error removing user connection for userId ${userId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get user ID from socket ID
+   * @param {string} socketId - Socket ID
+   * @returns {Promise<string|null>} User ID
+   */
+  getUserIdFromSocket: async (socketId) => {
+    try {
+      const reverseKey = `socket:${socketId}`;
+      const data = await redisService.get(reverseKey);
+      return data ? data.userId : null;
+    } catch (error) {
+      logger.error(`[REDIS] Error getting userId from socketId ${socketId}:`, error);
       throw error;
     }
   },

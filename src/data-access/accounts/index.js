@@ -77,7 +77,14 @@ class AccountRepository extends BaseRepository {
                 {
                     model: this.model.sequelize.models.Driver,
                     as: 'driver',
-                    required: false
+                    required: false,
+                    include: [
+                        {
+                            model: this.model.sequelize.models.DriverPapers,
+                            as: 'papers',
+                            attributes: ['approved']
+                        }
+                    ]
                 },
                 {
                     model: this.model.sequelize.models.Admin,

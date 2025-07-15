@@ -254,6 +254,42 @@ class RideGroupRepository extends BaseRepository {
     }
   }
 
+  async findIfAccountIdInsideGroup(rideGroupId, accountId, accountType) {
+    try {
+      const whereClause = {
+        id: rideGroupId
+      };
+
+      const includeOptions = [
+        {
+          association: "parentGroups",
+          required: true,
+          include: [
+            {
+              association: "parent",
+              required: true,
+              where: { account_id: accountId },
+            },
+          ],
+        },
+      ];
+
+      if (accountType === "parent") {
+        whereClause["$parentGroups.parent.account_id$"] = accountId;
+      } else if (accountType === "driver") {
+        whereClause["$driver.account_id$"] = accountId;
+      } else {
+        throw new DatabaseError("Invalid account type provided");
+      }
+
+      return await this.model.findOne({
+        where: whereClause,
+        include: includeOptions,
+      });
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
   /**
    * Generates a unique invite code for a ride group
    * @param {number} length - Length of the invite code

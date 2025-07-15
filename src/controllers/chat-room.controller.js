@@ -1,14 +1,11 @@
-const express = require("express");
-const router = express.Router();
-const authMiddleware = require("../middlewares/auth.middleware"); // Ensure authMiddleware is correctly exported here
 const { ChatMessage, messageTypes } = require("../mongo-model/ChatMessage");
 const ChatRoom = require("../mongo-model/ChatRoom");
 const Notification = require("../mongo-model/Notification");
 const {
   getIo,
   NOTIFICATION_TYPES,
-  getUserSocketMap,
 } = require("../services/socketio.service");
+const redisService = require("../services/redis.service");
 const logger = require("../services/logging.service").getLogger();
 const AccountRepository = require("../data-access/accounts");
 const ParentRepository = require("../data-access/parent");
@@ -561,13 +558,20 @@ const chatController = {
       await notification.save();
 
       // Send real-time notification if recipient is online
-      const io = getIo();
-      const recipientSocketId = getUserSocketMap().get(recipientId);
-      if (recipientSocketId) {
-        io.to(recipientSocketId).emit("new_notification", notification);
+      try {
+        const io = getIo();
+        const recipientConnection = await redisService.getUserConnection(recipientId);
+        if (recipientConnection && recipientConnection.socketId) {
+          io.to(recipientConnection.socketId).emit("new_notification", notification);
+          logger.info(`[Chat] Notification sent to user ${recipientId} via socket ${recipientConnection.socketId}`);
+        } else {
+          logger.info(`[Chat] User ${recipientId} not connected - notification saved for later delivery`);
+        }
+      } catch (socketError) {
+        logger.error(`[Chat] Error sending real-time notification: ${socketError.message}`);
+        // Notification is still saved in database even if real-time delivery fails
       }
 
-      // return notification;
       return res.success("Notification created successfully", notification);
     } catch (error) {
       logger.error("Error creating notification:", error.message);
