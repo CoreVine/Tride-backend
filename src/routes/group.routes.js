@@ -44,6 +44,11 @@ const createGroupSchema = Yup.object().shape({
     .required()
 });
 
+const paramsOrderId = {
+  params: Yup.object().shape({
+    rideGroupId: Yup.string().required()
+  })
+};
 
 const addParentToGroupSchema = Yup.object().shape({
   group_id: Yup.string().required(),
@@ -79,8 +84,7 @@ const addChildToGroupSchema = Yup.object().shape({
 
 const subscribeSchema = {
   body: Yup.object().shape({
-    plan_type: Yup.string().oneOf(["monthly", "term", "double-terms"]).required(),
-    installment_plan: Yup.boolean().required()
+    plan_type: Yup.string().oneOf(["monthly", "term", "double-terms"]).required()
   }), 
   params: Yup.object().shape({
     rideGroupId: Yup.string().required()
@@ -91,9 +95,10 @@ const confirmNewSubscriptionSchema = Yup.object().shape({
   order_id: Yup.string().required(),
 });
 
-groupRoutes.use('/ride/group', authMiddleware, verifiedEmailRequired, isParent);
-groupRoutes.get('/ride/group/:rideGroupId', RideGroupController.getRideGroupById);
-groupRoutes.get('/ride/groups/', RideGroupController.getRideGroups);
+groupRoutes.use('/ride', authMiddleware, verifiedEmailRequired, isParent);
+groupRoutes.get('/ride/plans', RideGroupController.getAllPlans);
+groupRoutes.get('/ride/group/:rideGroupId', RideGroupController.getRideGroupById); //send stats
+groupRoutes.get('/ride/groups/:parentId', RideGroupController.getRideGroups);
 groupRoutes.post('/ride/group/create',
   validate(createGroupSchema),
   RideGroupController.createRideGroup
@@ -125,6 +130,14 @@ groupRoutes.get('/ride/group/:rideGroupId/subscription',
   }),
   RideGroupController.getCurrentSubscriptionStatus
 );
+groupRoutes.put('/ride/group/:rideGroupId/subscription', 
+  validate({
+    params: Yup.object().shape({
+      status: Yup.string().oneOf(['remove',]).required()
+    })
+  }),
+  RideGroupController.updateCurrentSubscriptionStatus
+);
 
 groupRoutes.post('/ride/group/:rideGroupId/subscribe',
   validate(subscribeSchema),
@@ -137,9 +150,19 @@ groupRoutes.post('/ride/group/subscribe/confirm',
   RideGroupController.confirmNewSubscription
 );
 
-groupRoutes.post('/ride/group/:rideGroupId/subscribe/installment', 
+groupRoutes.post('/ride/group/:rideGroupId/extend',
   validate(subscribeSchema),
-  RideGroupController.payInstallments
+  RideGroupController.extendSubscription
 );
+
+groupRoutes.get('/ride/group/:rideGroupId/plans', validate(paramsOrderId), RideGroupController.getAvailablePlans);
+groupRoutes.put('/ride/group/subscription-status/:subscriptionStatusId', validate({
+  params: Yup.object().shape({
+    subscriptionStatusId: Yup.string().required()
+  }),
+  body: Yup.object().shape({
+    status: Yup.string().oneOf(['new', 'remove', 'pending', 'paid']).required()
+  })
+}), RideGroupController.updateSubscriptionStatus);
 
 module.exports = groupRoutes;

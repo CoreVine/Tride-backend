@@ -104,7 +104,7 @@ class RideGroup extends Model {
       as: 'parentGroups'
     });
     
-    this.hasMany(models.ParentGroupSubscription, {
+    this.hasOne(models.ParentGroupSubscription, {
       foreignKey: 'ride_group_id',
       as: 'parent_group_subscription'
     });

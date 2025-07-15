@@ -139,10 +139,10 @@ const profileRoutes = Router();
 profileRoutes
   .route("/profile/parent")
   .post(
+    ...parentProfileUploader.single("profile_pic"),
     authMiddleware,
     verifiedEmailRequired,
     isParent,
-    ...parentProfileUploader.single("profile_pic"),
     validate(parentProfileSchema),
     profileController.createParentProfile
   )
@@ -153,10 +153,10 @@ profileRoutes
     profileController.getParentProfile
   )
   .put(
+    ...parentProfileUploader.single("profile_pic"),
     authMiddleware,
     verifiedEmailRequired,
     isParent,
-    ...parentProfileUploader.single("profile_pic"),
     validate(parentProfileUpdateSchema),
     profileController.updateParentProfile
   );
@@ -164,13 +164,13 @@ profileRoutes
 // Upload parent ID documents
 profileRoutes.post(
   "/profile/parent/papers",
-  authMiddleware,
-  verifiedEmailRequired,
-  isParent,
   ...parentIdUploader.fields([
     { name: "front_side_nic", maxCount: 1 },
     { name: "back_side_nic", maxCount: 1 },
   ]),
+  authMiddleware,
+  verifiedEmailRequired,
+  isParent,
   profileController.uploadParentIdDocuments
 );
 
@@ -198,9 +198,9 @@ profileRoutes.put(
 profileRoutes
   .route("/profile/driver")
   .post(
+    ...driverProfileUploader.single("profile_pic"),
     authMiddleware,
     isDriver,
-    ...driverProfileUploader.single("profile_pic"),
     validate(driverProfileSchema),
     profileController.createDriverProfile
   )
@@ -214,10 +214,10 @@ profileRoutes
     profileController.getAllDriverProfiles
   )
   .put(
+    ...driverProfileUploader.single("profile_pic"),
     authMiddleware,
     verifiedEmailRequired,
     isDriver,
-    ...driverProfileUploader.single("profile_pic"),
     validate(driverProfileUpdateSchema),
     profileController.updateDriverProfile
   );
@@ -237,15 +237,15 @@ profileRoutes.route("/profile/driver/:account_id")
 // Step 2 for drivers: Upload papers - all document validation happens BEFORE upload
 profileRoutes.post(
   "/profile/driver/papers",
-  authMiddleware,
-  verifiedEmailRequired,
-  isDriver,
   ...driverDocumentsUploader.fields([
     { name: "front_side_national", maxCount: 1 },
     { name: "back_side_national", maxCount: 1 },
     { name: "driver_license", maxCount: 1 },
     { name: "car_license", maxCount: 1 },
   ]),
+  authMiddleware,
+  verifiedEmailRequired,
+  isDriver,
   validate(driverPapersSchema),
   profileController.uploadDriverPapers
 );

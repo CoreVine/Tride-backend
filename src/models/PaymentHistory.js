@@ -21,14 +21,7 @@ class PaymentHistory extends Model {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
       },
-      next_payment_due: {
-        type: DataTypes.DATE,
-        allowNull: true
-      },
-      next_payment_amount: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: true
-      },
+
       parent_subscription_id: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
