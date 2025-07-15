@@ -3,6 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
+    await queryInterface.bulkDelete('admin', null, {});
     await queryInterface.bulkDelete('admin_permission', null, {});
     await queryInterface.bulkDelete('admin_roles', null, {});
     await queryInterface.bulkDelete('role_permission', null, {});
