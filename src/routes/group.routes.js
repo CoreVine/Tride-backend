@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const authMiddleware = require("../middlewares/auth.middleware");
 const verifiedEmailRequired = require("../middlewares/verifiedEmailRequired.middleware");
-const { isParent } = require("../middlewares/isAccount.middleware");
+const { isParent, arePapersVerified } = require("../middlewares/isAccount.middleware");
 const validate = require("../middlewares/validation.middleware");
 const Yup = require("yup");
 const RideGroupController = require("../controllers/rideGroup.controller");
@@ -112,6 +112,8 @@ groupRoutes.post('/ride/group/add-parent/:invitation_code',
       params: addParentToGroupParamsSchema
     }
   ),
+  authMiddleware,
+  arePapersVerified,
   RideGroupController.addNewParentGroup
 );
 

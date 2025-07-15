@@ -1,4 +1,3 @@
-const JwtService = require("../services/jwt.service");
 const AccountRepository = require("../data-access/accounts");
 const { UnauthorizedError } = require("../utils/errors/types/Api.error");
 const loggingService = require("../services/logging.service");
@@ -54,6 +53,36 @@ const isAccountType = (requiredType) => {
     }
   };
 };
+
+const arePapersVerified = async (req, res, next) => {
+  try {
+    // Get account ID from auth middleware
+    const accountId = req.userId;
+
+    if (!accountId) {
+      throw new UnauthorizedError("Authentication required");
+    }
+
+    // Get account from database
+    const account = await AccountRepository.findByIdIncludeDetails(accountId);
+    if (!account || !account.is_verified) {
+      logger.warn("Parent account not found or not verified", { accountId });
+      throw new UnauthorizedError("Parent account not found or not verified");
+    }
+
+    if (account.account_type === "parent" && (!account.parent || !account.parent.documents_approved)) {
+      logger.warn("Parent account documents not approved", { accountId });
+      throw new UnauthorizedError("Parent account documents not approved");
+    } else if (account.account_type === "driver" && (!account.driver_papers || !account.driver_papers.approved)) {
+      logger.warn("Driver account papers not approved", { accountId });
+      throw new UnauthorizedError("Driver account papers not approved");
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
 
 const isAdminWithRole = (role) => {
   return async (req, res, next) => {
@@ -205,4 +234,5 @@ module.exports = {
   isAdminWithRole,
   isAdminWithPermissions,
   isAccountType,
+  arePapersVerified
 };
