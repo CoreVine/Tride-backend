@@ -54,6 +54,7 @@ const TRANSFORMATIONS = {
   ]
 };
 
+const MAX_SEATS_CAR = 5;
 /**
  * Get a transformation configuration
  * @param {Array} customTransformation - Custom transformation array
@@ -77,5 +78,6 @@ module.exports = {
   ACCOUNT_TYPES,
   PURPOSE_TYPES,
   TRANSFORMATIONS,
+  MAX_SEATS_CAR,
   getTransformation
 };

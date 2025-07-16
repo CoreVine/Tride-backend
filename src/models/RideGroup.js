@@ -72,6 +72,12 @@ class RideGroup extends Model {
         type: DataTypes.ENUM('regular', 'premium'),
         allowNull: false,
         defaultValue: 'regular'
+      },
+      status: {
+        // Pending: not full, expired: needs payment, ready: full and requires a driver, active: full, has a driver, and payed
+        type: DataTypes.ENUM('pending', 'expired', 'ready', 'active'),
+        allowNull: false,
+        defaultValue: 'pending'
       }
     }, {
       sequelize,
@@ -104,7 +110,7 @@ class RideGroup extends Model {
       as: 'parentGroups'
     });
     
-    this.hasOne(models.ParentGroupSubscription, {
+    this.hasMany(models.ParentGroupSubscription, {
       foreignKey: 'ride_group_id',
       as: 'parent_group_subscription'
     });

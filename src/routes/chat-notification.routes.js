@@ -132,6 +132,7 @@ const notificationSchema = Yup.object().shape({
 });
 
 // Get or create chat room for a ride group
+// TODO: ADD AUTHORIZATION HERE
 router.get(
   "/ride-group/:rideGroupId/room",
   authMiddleware,

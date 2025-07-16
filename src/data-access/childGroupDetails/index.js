@@ -9,9 +9,18 @@ class ChildGroupDetailsRepository extends BaseRepository {
     }
 
 
-    async addChildrenToParentGroup(parentId, parentGroupId, children, options = {}) {
+    async addChildrenToParentGroup(parentId, parentGroupId, children, options = {}, { parentGroup, rideGroup } = {}) {
         if (!children || !children.length)
             return [];
+
+        let inner = false;
+        let newChildrenCounter = 0;
+
+        if (!options.transaction) {
+            options.transaction = await this.model.sequelize.transaction();
+            inner = true;
+        }
+
         try {
             let childDetailsPayload = {
                 parent_group_id: parentGroupId,
@@ -34,7 +43,7 @@ class ChildGroupDetailsRepository extends BaseRepository {
                 });
 
                 if (!childExists) {
-                    throw new NotFoundError(`Child with ID ${child.child_id} does not exist for this parent.`);
+                    throw new NotFoundError(`Unable to create a new ride group.`);
                 }
 
                 // Check for existing children before starting transaction
@@ -52,7 +61,8 @@ class ChildGroupDetailsRepository extends BaseRepository {
                     parentChildrenGroup.push(existingChild);
                     continue;
                 }
-        
+                
+                newChildrenCounter++;
                 childDetailsPayload.child_id = child.child_id;
                 childDetailsPayload.timing_from = child.timing_from;
                 childDetailsPayload.timing_to = child.timing_to;
@@ -61,8 +71,31 @@ class ChildGroupDetailsRepository extends BaseRepository {
                 parentChildrenGroup.push(newChildOnGroup);
             }
 
+            if (rideGroup && newChildrenCounter) {
+                // Update the ride group with the current seats taken
+                await rideGroup.update(
+                    { current_seats_taken: this.model.sequelize.literal('current_seats_taken + ' + newChildrenCounter) },
+                    options
+                );
+            }
+
+            if (parentGroup) {
+                // Update the parent group with the current seats taken
+                await parentGroup.update(
+                    { current_seats_taken: this.model.sequelize.literal('current_seats_taken + ' + newChildrenCounter) },
+                    options
+                );
+            }
+
+            if (inner) {
+                await options.transaction.commit();
+            }
+
             return parentChildrenGroup;
         } catch(error) {
+            if (inner) {
+                await options.transaction.rollback();
+            }
             if (error.name === 'SequelizeForeignKeyConstraintError')
                 throw new NotFoundError("Invalid child");
             
