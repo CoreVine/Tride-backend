@@ -57,6 +57,7 @@ function createPaymobOrderObject(orderType, userAccount, rideGroup, planDetails,
             seats_taken: seatsTaken,
             total_days: totalDays,
             months_count: planDetails.months_count,
+            group_type: rideGroup.group_type || 'regular',
             ...extraData
         },
         notification_url: process.env.BACKEND_PAYMOB_WEBHOOK_URL,

@@ -16,6 +16,7 @@ const {
 const paymobUtil = require("../utils/payment/paymob");
 const redisService = require("../services/redis.service");
 const subscriptionDomain = require("../domain/subscription/subscription");
+const { MAX_SEATS_CAR } = require("../config/upload/constants");
 const logger = loggingService.getLogger();
 
 const RideGroupController = {
@@ -87,6 +88,12 @@ const RideGroupController = {
         );
       }
 
+      if (rideGroup.group_type === "premium" && rideGroup.parent_creator_id !== req.account.parent.id) {
+        throw new ForbiddenError(
+          "Only the creator is allowed to pay for a premium ride group"
+        );
+      }
+
       // create a new subscription for the parent in this ride group
       const { distance, seatsTaken, totalDays } =
         await subscriptionDomain.getPriceFactors({
@@ -112,7 +119,7 @@ const RideGroupController = {
       const { overallPrice, toPayPrice } =
         await subscriptionDomain.calculateOverallPrice({
           distance,
-          seatsTaken,
+          seatsTaken: rideGroup.group_type === 'premium' ? MAX_SEATS_CAR : seatsTaken,
           totalDays,
           planDetails,
         });
@@ -508,6 +515,7 @@ const RideGroupController = {
           current_seats_taken: req.body.children.length || 0,
           invite_code: inviteCode || null,
           group_type: req.body.group_type || 'regular', // Default to 'regular' if not provided
+          status: "new"
         },
         parentGroupPayload: {
           parent_id: parentProfile.id,
@@ -657,13 +665,24 @@ const RideGroupController = {
         throw new ForbiddenError("You are not a member of this group");
       }
 
-      // Check if there are enough seats available
-      const childrenInGroup =
-        await ChildrenGroupDetailsRepository.findByParentGroupId(
-          parentGroup.id
+      let hasValidSubscription = false;
+      // this block is to ensure the parent has no new subscription for this ride group
+      try {
+        await subscriptionDomain.isParentSubscriptionValid(req.userId, rideGroup.id);
+
+        hasValidSubscription = true;
+      } catch (error) {
+      }
+
+      if (hasValidSubscription) {
+        throw new BadRequestError(
+          "You can't do that while having an active subscription"
         );
+      }
+
+      // Check if there are enough seats available
         
-      if (childrenInGroup.length + req.body.children.length > 5) {
+      if (rideGroup.current_seats_taken + req.body.children.length > MAX_SEATS_CAR) {
         throw new BadRequestError(
           `Not enough seats available. You can add up to ${
             rideGroup.current_seats_taken - childrenInGroup.length

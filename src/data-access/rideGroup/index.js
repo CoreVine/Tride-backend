@@ -8,10 +8,11 @@ const ChildGroupDetailsRepository = require("../childGroupDetails");
 const GroupDaysRepository = require("../dayDatesGroup");
 const { MAX_SEATS_CAR } = require("../../config/upload/constants");
 const { BadRequestError } = require("../../utils/errors/types/Api.error");
+const { isParentSubscriptionValid } = require("../../domain/subscription/subscription");
 
 class RideGroupRepository extends BaseRepository {
   constructor() {
-    super(RideGroupModel);
+    super(RideGroupModel, isParentSubscriptionValid, ["createNewRideGroup"]);
   }
 
   async getRideGroupDetails(rideGroupId) {

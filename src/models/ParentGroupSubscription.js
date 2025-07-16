@@ -45,6 +45,12 @@ class ParentGroupSubscription extends Model {
         type: DataTypes.DATE,
         allowNull: true
       },
+      // changes when setting ride group state for all parents, to valid_until - now
+      remaining_time: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: true,
+        defaultValue: 0
+      },
       plan_id: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: true,

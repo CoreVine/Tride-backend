@@ -328,6 +328,52 @@ class ParentGroupSubscriptionRepository extends BaseRepository {
             throw new DatabaseError(error);
         }
     }
+
+    async findByAccountIdAndGroupId(accountId, groupId) {
+        try {
+            return await this.model.findOne({
+                where: {
+                    ride_group_id: groupId,
+                    parent_id: {
+                        [Op.in]: this.model.sequelize.literal(`(SELECT id FROM parent WHERE account_id = ${accountId})`)
+                    }
+                },
+                include: [{
+                    association: 'parent',
+                    attributes: []
+                }],
+                order: [['started_at', 'DESC']],
+                limit: 1
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
+
+    async checkAllParentsPaid(rideGroupId) {
+        // must check if the number of parents on the group are the same number of parents with subsccription status paid
+        try {
+            const totalParentsPaid = await this.model.count({
+                where: {
+                    ride_group_id: rideGroupId,
+                    status: 'paid',
+                    valid_until: {
+                        [Op.gte]: new Date() // Check if subscription is still valid
+                    }
+                }
+            });
+
+            const totalParents = await this.model.count({
+                where: {
+                    ride_group_id: rideGroupId
+                }
+            });
+
+            return totalParents === totalParentsPaid;
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
 }
 
 module.exports = new ParentGroupSubscriptionRepository();

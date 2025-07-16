@@ -60,9 +60,6 @@ const paymobController = {
                 await ParentGroupSubscriptionRepository.createNewSubscriptionRecord(payload);
 
                 redisService.set(req.body.obj.order.id, 'true');
-                console.log('New subscription is created');
-
-                return res.success('Payment processed successfully');
             } else if (extra.order_type === 'extension') {
                 // add payment details
                 const paymentData = {
@@ -80,10 +77,27 @@ const paymobController = {
 
                 redisService.set(req.body.obj.order.id, 'true');
                 console.log('Subscription extended successfully');
-
-                return res.success('Payment processed successfully');
-
             }
+
+            let rideGroupStatus = 'pending';
+
+            if (rideGroup.group_type === 'regular') {
+                // check if all parents had paid
+                const allPaid = await ParentGroupSubscriptionRepository.checkAllParentsPaid(rideGroup.id);
+
+                // if all paid, set the ride group status to 'ready'
+                // otherwise, it remains 'pending'
+                if (allPaid) {
+                    rideGroupStatus = 'ready';
+                }
+            } else {
+                // For 'premium' owned car groups, we set the status to 'ready' immediately
+                rideGroupStatus = 'ready';
+            }
+            if (rideGroup.status !== rideGroupStatus) {
+                await RideGroupRepository.updateRideGroupStatus(rideGroup.id, rideGroupStatus);
+            }
+            return res.success('Payment processed successfully');
         } catch (error) {
             console.error('Error processing Paymob webhook:', error);
             return res.error('Failed to process payment', error.message, 500);

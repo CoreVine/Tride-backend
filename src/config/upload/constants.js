@@ -55,6 +55,7 @@ const TRANSFORMATIONS = {
 };
 
 const MAX_SEATS_CAR = 5;
+const RIDE_PRICE_PER_KM = 25; // Example price per km, adjust as needed
 /**
  * Get a transformation configuration
  * @param {Array} customTransformation - Custom transformation array
@@ -79,5 +80,6 @@ module.exports = {
   PURPOSE_TYPES,
   TRANSFORMATIONS,
   MAX_SEATS_CAR,
+  RIDE_PRICE_PER_KM,
   getTransformation
 };

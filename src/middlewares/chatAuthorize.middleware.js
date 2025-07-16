@@ -1,4 +1,4 @@
-const { NotFoundError } = require("../utils/errors/types/Api.error");
+const { NotFoundError, BadRequestError, ForbiddenError } = require("../utils/errors/types/Api.error");
 const RideGroupRepository = require("../data-access/rideGroup");
 const ChatRoom = require("../mongo-model/ChatRoom");
 
@@ -27,6 +27,31 @@ const isInsideChat = async (req, res, next) => {
     }
 }
 
+const isInsideRideGroup  = async (req, res, next) => {
+    try {
+        const userId = req.userId;
+    
+        const { rideGroupId } = req.params;
+
+        if (!rideGroupId) {
+            throw new BadRequestError("Ride group ID is required");
+        }
+
+        const group = await RideGroupRepository.findIfAccountIdInsideGroup(
+            rideGroupId, userId, req.accountType);
+
+        if (!group) {
+            throw new ForbiddenError("You are not authorized to access this ride group");
+        }
+
+        next();
+    } catch (error) {
+        console.error("Error in isInsideChat middleware:", error);
+        return next(error);
+    }
+}
+
 module.exports = {
-    isInsideChat
+    isInsideChat,
+    isInsideRideGroup
 };

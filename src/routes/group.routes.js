@@ -5,6 +5,8 @@ const { isParent, arePapersVerified, isAdminWithPermissions } = require("../midd
 const validate = require("../middlewares/validation.middleware");
 const Yup = require("yup");
 const RideGroupController = require("../controllers/rideGroup.controller");
+const { checkValidSubscription } = require("../middlewares/subscription.middleware");
+const { isInsideRideGroup } = require("../middlewares/chatAuthorize.middleware");
 
 const groupRoutes = Router();
 
@@ -96,7 +98,7 @@ const confirmNewSubscriptionSchema = Yup.object().shape({
 
 groupRoutes.use('/ride', authMiddleware, verifiedEmailRequired);
 groupRoutes.get('/ride/plans', isParent, RideGroupController.getAllPlans);
-groupRoutes.get('/ride/group/:rideGroupId', isParent, RideGroupController.getRideGroupById); //send stats
+groupRoutes.get('/ride/group/:rideGroupId', isParent, checkValidSubscription, RideGroupController.getRideGroupById); //send stats
 groupRoutes.get('/ride/groups/', isAdminWithPermissions([{type: "group", value: "Payments"}]), RideGroupController.getRideGroups);
 groupRoutes.get('/ride/groups/by-parent/:parentId', isParent, arePapersVerified, RideGroupController.getRideGroupsByParentId);
 groupRoutes.post('/ride/group/create',
@@ -141,6 +143,7 @@ groupRoutes.put('/ride/group/:rideGroupId/subscription',
     })
   }),
   isParent,
+  checkValidSubscription,
   RideGroupController.updateCurrentSubscriptionStatus
 );
 
@@ -163,7 +166,7 @@ groupRoutes.post('/ride/group/:rideGroupId/extend',
   RideGroupController.extendSubscription
 );
 
-groupRoutes.get('/ride/group/:rideGroupId/plans', validate(paramsOrderId), isParent, RideGroupController.getAvailablePlans);
+groupRoutes.get('/ride/group/:rideGroupId/plans', validate(paramsOrderId), isParent, isInsideRideGroup, RideGroupController.getAvailablePlans);
 groupRoutes.put('/ride/group/subscription-status/:subscriptionStatusId', validate({
   params: Yup.object().shape({
     subscriptionStatusId: Yup.string().required()

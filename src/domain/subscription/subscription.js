@@ -1,9 +1,9 @@
 const ParentGroupRepository = require('../../data-access/parentGroup');
 const GroupDaysRepository = require('../../data-access/dayDatesGroup');
 const openRouteUtil = require("../../utils/openRoutesService");
-const { BadRequestError } = require('../../utils/errors/types/Api.error');
-const RIDE_PRICE_PER_KM = 25; // Example price per km, adjust as needed
-const MAXIMUM_SEATS = 5;
+const { BadRequestError, ForbiddenError } = require('../../utils/errors/types/Api.error');
+const parentGroupSubscriptionRepository = require('../../data-access/parentGroupSubscription');
+const { RIDE_PRICE_PER_KM, MAX_SEATS_CAR } = require('../../config/upload/constants');
 
 // TODO: Figure out where to store the ride price per km
 const calculateOverallPrice = async (details) => {
@@ -14,7 +14,7 @@ const calculateOverallPrice = async (details) => {
       seatsTaken,
       totalDays,
     } = details;
-    let overAllPrice = (distance * 2 * RIDE_PRICE_PER_KM / MAXIMUM_SEATS) * seatsTaken;
+    let overAllPrice = (distance * 2 * RIDE_PRICE_PER_KM / MAX_SEATS_CAR) * seatsTaken;
   
     overAllPrice *= totalDays * planDetails.months_count;
 
@@ -81,7 +81,36 @@ const getPriceFactors = async (details) => {
   }
 }
 
+const isParentSubscriptionValid = async (accountId, rideGroupId) => {
+  try {
+    const subscription = await parentGroupSubscriptionRepository.findByAccountIdAndGroupId(accountId, rideGroupId);
+    console.log("wow", rideGroupId, subscription, subscription.valid_until);
+    if (!subscription || subscription.status !== 'paid') {
+      throw new ForbiddenError("Parent subscription is invalid or has expired");
+    }
+    
+    const currentDate = new Date();
+    if (!subscription.valid_until || new Date(subscription.valid_until) < currentDate) {
+      if (subscription.status !== 'expired') {
+        // invalidation subscription if it is not already
+        await subscription.update({
+          status: 'expired',
+          valid_until: null,
+          remaining_time: 0
+        });
+      }
+      throw new ForbiddenError("Parent subscription has expired");
+    }
+
+    return;
+  } catch (error) {
+    console.error("Error checking parent subscription validity:", error);
+    throw error;
+  }
+}
+
 module.exports = {
   calculateOverallPrice,
-  getPriceFactors
+  getPriceFactors,
+  isParentSubscriptionValid
 };
