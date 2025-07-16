@@ -265,6 +265,69 @@ class ParentGroupSubscriptionRepository extends BaseRepository {
             throw new DatabaseError(error);
         }
     }
+
+    async findAllInRange(from, to) {
+        try {
+            return await this.model.findAndCountAll({
+                where: {
+                    started_at: {
+                        [Op.gte]: from,
+                        [Op.lte]: to
+                    },
+                },
+                include: [
+                    {
+                        association: 'parent',
+                        attributes: [
+                            'name', 'phone', 'profile_pic', 'lat', 'lng'
+                        ],
+                        include: [
+                            {
+                                association: 'account',
+                                attributes: ['email'],
+                                where: {
+                                    account_type: 'parent'
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        association: 'rideGroup',
+                        attributes: [
+                            'group_name', 'current_seats_taken', 'group_type'
+                        ],
+                        include: [
+                            {
+                                association: 'school',
+                                attributes: ['school_name']
+                            }
+                        ]
+                    },
+                    {
+                        association: 'plan',
+                        attributes: ['range', 'months_count']
+                    },
+                    {
+                        association: 'payment_history',
+                        order: [['paid_at', 'DESC']],
+                        where: {
+                            paid_at: {
+                                [Op.gte]: new Date(from),
+                                [Op.lte]: new Date(to)
+                            }
+                        }
+                    }
+                ],
+                order: [
+                    [{ model: this.model.sequelize.models.Parent, as: 'parent' }, { model: this.model.sequelize.models.Account, as: 'account' }, 'email', 'ASC'],
+                    [{ model: this.model.sequelize.models.RideGroup, as: 'rideGroup' }, 'group_name', 'ASC'],
+                    ['started_at', 'DESC']
+                ]
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
 }
 
 module.exports = new ParentGroupSubscriptionRepository();
