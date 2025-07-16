@@ -6,6 +6,8 @@ const ParentGroupSubscriptionRepository = require("../parentGroupSubscription");
 const ParentGroupRepository = require("../parentGroup");
 const ChildGroupDetailsRepository = require("../childGroupDetails");
 const GroupDaysRepository = require("../dayDatesGroup");
+const { MAX_SEATS_CAR } = require("../../config/upload/constants");
+const { BadRequestError } = require("../../utils/errors/types/Api.error");
 
 class RideGroupRepository extends BaseRepository {
   constructor() {
@@ -284,6 +286,55 @@ class RideGroupRepository extends BaseRepository {
     }
   }
 
+  async findAllDetailedPaginated(page, limit) {
+    try {
+      const { count, rows } = await this.model.findAndCountAll({
+        include: [
+          {
+            association: "creator",
+            attributes: ["id"],
+          },
+          {
+            association: "parent_group_subscription",
+          },
+          {
+            association: "driver",
+            attributes: { exclude: ["created_at", "updated_at"] },
+          },
+          {
+            association: "school",
+          },
+          {
+            association: "parentGroups",
+            include: [
+              {
+                association: "parent",
+                attributes: { exclude: ["created_at", "updated_at"] },
+              },
+              {
+                association: "childDetails",
+                include: [
+                  {
+                    association: "child",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            association: "dayDates",
+          },
+        ],
+        offset: (page - 1) * limit,
+        limit,
+      });
+
+      return { count, rows };
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
   async findByInviteCode(inviteCode) {
     try {
       return await this.model.findOne({
@@ -293,6 +344,86 @@ class RideGroupRepository extends BaseRepository {
       });
     } catch (error) {
       throw new DatabaseError(error);
+    }
+  }
+
+  async updateRideGroupStatus(rideGroupId, status) {
+    try {
+      const rideGroup = await this.model.findByPk(rideGroupId);
+      if (!rideGroup) {
+        throw new DatabaseError("Ride group not found");
+      }
+
+      rideGroup.status = status;
+      await rideGroup.save();
+
+      return rideGroup;
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
+  async mergeRideGroups(groupSrcId, groupDestId) {
+    
+    try {
+      const t = await this.model.sequelize.transaction();
+      const groupSrc = await this.model.findByPk(groupSrcId, {
+        include: ['parentGroups', 'parent_group_subscription', 'dayDates', 'rideInstances'],
+        transaction: t
+      });
+      const groupDest = await this.model.findByPk(groupDestId);
+
+      if (!groupSrc || !groupDest || groupSrc.driver_id) {
+        throw new DatabaseError("Cannot merge groups: source or destination group not found or has a driver assigned");
+      }
+
+      if (groupSrc.group_type === 'premium' || groupDest.group_type === 'premium') {
+        throw new BadRequestError("Cannot merge premium groups");
+      }
+      
+      if (groupSrc.current_seats_taken + groupDest.current_seats_taken > MAX_SEATS_CAR) {
+        throw new DatabaseError("Unable to merge groups: total seats exceed maximum allowed");
+      }
+
+      // point source's parent group, subscriptions, and day dates to the destination ride group
+      for (const parentGroup of groupSrc.parentGroups) {
+        parentGroup.group_id = groupDest.id;
+        await parentGroup.save({ transaction: t });
+      }
+      for (const subscription of groupSrc.parent_group_subscription) {
+        subscription.ride_group_id = groupDest.id;
+        await subscription.save({ transaction: t });
+      }
+      for (const dayDate of groupSrc.dayDates) {
+        try {
+          dayDate.ride_group_detailsid = groupDest.id;
+          await dayDate.save({ transaction: t });
+        } catch (error) {
+          if (error.name === 'SequelizeUniqueConstraintError') {
+            // destroy the day date if it already exists in the destination group
+            dayDate.destroy({ transaction: t });
+          } else {
+            throw error;
+          }
+        }
+      }
+
+      for (const rideInstance of groupSrc.rideInstances) {
+        rideInstance.group_id = groupDest.id;
+        await rideInstance.save({ transaction: t });
+      }
+
+      // Update the current seats taken in the destination group
+      groupDest.current_seats_taken += groupSrc.current_seats_taken;
+      await groupDest.save({ transaction: t });
+
+      // remove the source group
+      await groupSrc.destroy({ transaction: t });
+
+      await t.commit();
+    } catch (error) {
+      await t.rollback();
+      throw error;
     }
   }
 }

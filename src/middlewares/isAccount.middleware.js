@@ -145,8 +145,8 @@ const isAdminWithPermissions = (permissions) => {
       }
 
       // Check if admin has the required permissions
-      const hasPermissions = permissions.every(permission =>
-        account.admin.role.permissions.some(p => p.role_permission_name === permission)
+      const hasPermissions = permissions.every(({ type, value }) =>
+        account.admin.role.permissions.some(p => type === "group" ?  p.role_permission_group === value : p.role_permission_name === value)
       );
 
       if (!hasPermissions) {

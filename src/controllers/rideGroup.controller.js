@@ -7,6 +7,7 @@ const ChildrenGroupDetailsRepository = require("../data-access/childGroupDetails
 const PlanRepository = require("../data-access/plan");
 const ParentGroupSubscriptionRepository = require("../data-access/parentGroupSubscription");
 const loggingService = require("../services/logging.service");
+const { createPagination } = require("../utils/responseHandler");
 const {
   BadRequestError,
   NotFoundError,
@@ -411,6 +412,27 @@ const RideGroupController = {
 
   getRideGroups: async (req, res, next) => {
     try {
+      const { page = 1, limit = 10 } = req.query;
+      const { count, rows: rideGroups } = await RideGroupRepository.findAllDetailedPaginated(parseInt(page), parseInt(limit));
+
+      if (!rideGroups || rideGroups.length === 0) {
+        return res.success("No ride groups found for this parent", { rideGroups: [] });
+      }
+      
+      const pagination = createPagination(page, limit, count);
+
+      return res.success("Ride groups fetched successfully", { pagination, rideGroups });
+    } catch (error) {
+      logger.error("Error fetching ride groups", {
+        error: error.message,
+        stack: error.stack,
+      });
+      return next(error);
+    }
+  },
+
+  getRideGroupsByParentId: async (req, res, next) => {
+    try {
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
       if (!account) {
@@ -451,7 +473,7 @@ const RideGroupController = {
 
   createRideGroup: async (req, res, next) => {
     try {
-      logger.info("Parent profile creation attempt", { accountId: req.userId });
+      logger.info("ride group creation attempt", { accountId: req.userId });
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -473,20 +495,23 @@ const RideGroupController = {
       }
 
       // Generate a unique invite code for the group
-      const inviteCode = await RideGroupRepository.generateUniqueInviteCode();
-
+      let inviteCode = "";
+      if (req.body.group_type === 'premium') {
+        inviteCode = await RideGroupRepository.generateUniqueInviteCode();
+      }
       // create a new ride group
       const payload = {
         rideGroupPayload: {
           parent_creator_id: parentProfile.id,
           group_name: req.body.group_name,
           school_id: req.body.school_id,
-          current_seats_taken: req.body.seats,
-          invite_code: inviteCode,
+          current_seats_taken: req.body.children.length || 0,
+          invite_code: inviteCode || null,
+          group_type: req.body.group_type || 'regular', // Default to 'regular' if not provided
         },
         parentGroupPayload: {
           parent_id: parentProfile.id,
-          current_seats_taken: req.body.seats,
+          current_seats_taken: req.body.children.length || 0,
           home_lat: req.body.home.home_lat,
           home_lng: req.body.home.home_lng,
         },
@@ -494,7 +519,7 @@ const RideGroupController = {
         days: req.body.days || [],
         subscriptionPayload: {
           parent_id: parentProfile.id,
-          current_seats_taken: req.body.seats,
+          current_seats_taken: req.body.children.length || 0,
           pickup_days_count: req.body.days.length,
           started_at: new Date(),
           status: "new",
@@ -637,10 +662,8 @@ const RideGroupController = {
         await ChildrenGroupDetailsRepository.findByParentGroupId(
           parentGroup.id
         );
-      if (
-        childrenInGroup.length + req.body.children.length >
-        rideGroup.current_seats_taken
-      ) {
+        
+      if (childrenInGroup.length + req.body.children.length > 5) {
         throw new BadRequestError(
           `Not enough seats available. You can add up to ${
             rideGroup.current_seats_taken - childrenInGroup.length
@@ -653,7 +676,12 @@ const RideGroupController = {
         await ChildrenGroupDetailsRepository.addChildrenToParentGroup(
           parentProfile.id,
           parentGroup.id,
-          req.body.children
+          req.body.children,
+          {},
+          { 
+            parentGroup,
+            rideGroup
+          }
         );
 
       if (!childrenAdded || childrenAdded.length === 0) {

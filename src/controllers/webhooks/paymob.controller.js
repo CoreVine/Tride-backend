@@ -1,5 +1,6 @@
 const { verifyPaymentSignature } = require("../../utils/payment/paymob");
 const ParentGroupSubscriptionRepository = require("../../data-access/parentGroupSubscription");
+const RideGroupRepository = require("../../data-access/rideGroup");
 const redisService = require("../../services/redis.service");
 
 const paymobController = {
@@ -16,6 +17,19 @@ const paymobController = {
     
             if(!extra)
                 throw new Error('Missing extra data in payment claims');
+
+            // Check if group is ready to accept a driver
+            const rideGroup = await RideGroupRepository.findById(extra.ride_group_id);
+
+            if (!rideGroup) {
+                return res.error('Ride group is full or does not exist', null, 400);
+            }
+
+            if (Number(rideGroup.current_seats_taken) === 5) {
+                // update the ride group status to 'ready'
+                await RideGroupRepository.updateRideGroupStatus(extra.ride_group_id, 'ready');
+            }
+
     
             if(extra.order_type === 'new') {
                 // create a new subscription for the parent in this ride group
