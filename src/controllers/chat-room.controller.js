@@ -100,14 +100,14 @@ const chatController = {
         messages.reverse()
       );
     } catch (error) {
-      logger.error("Error fetching messages:", error.message);
+      logger.error(`Error fetching messages: ${error.message}`);
       next(error);
     }
   },
   uploadFile: async (req, res, next) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
+        throw new BadRequestError("No file uploaded.");
       } // Call upload.processFile to get the enhanced details from Cloudinary
 
       const uploadedFileDetails = await upload.processFile(req.file); // Use the destructured getFileType function
@@ -303,31 +303,9 @@ const chatController = {
       // Emit to the specific chat room
       getIo().to(chatRoomId.toString()).emit("new_message", populatedMessage);
 
-      // 8. Send Notifications (Optional, based on your notification logic)
-      // You might want to send a push notification to other participants in the chat room
-      // who are not currently active in the chat.
-      const otherParticipants = chatRoom.participants.filter(
-        (p) => p.user_id !== userId || p.user_type !== userType
-      );
-      for (const participant of otherParticipants) {
-        // Example of creating a notification (adjust based on your Notification model)
-        const notification = new Notification({
-          recipient: participant.user_id,
-          type: NOTIFICATION_TYPES.NEW_CHAT_MESSAGE, // Define this in your constants
-          content: `New message from ${senderName} in your ride group chat.`,
-          link: `/chat/${chatRoomId}`, // Deep link to the chat
-          is_read: false,
-        });
-        await notification.save();
-        // You would then emit this notification to the specific user via socket.io if they are online
-        getIo()
-          .to(participant.user_id.toString())
-          .emit("new_notification", notification);
-      }
-
-      return res.status(201).json(populatedMessage);
+      return res.success("Message created successfully", populatedMessage);
     } catch (error) {
-      logger.error("Error creating message:", error.message);
+      logger.error(`Error creating message: ${error.message}`);
       next(error);
     }
   },

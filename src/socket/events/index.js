@@ -16,9 +16,9 @@ function setupConnection(io) {
     try {
       const token =
         socket.handshake.auth.token || socket.handshake.headers.authorization;
-
+      
       if (!token) {
-        throw new Error("No token provided");
+        throw new UnauthorizedError("No token provided");
       }
 
       const decoded = jwt.verify(

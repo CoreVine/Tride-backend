@@ -26,7 +26,9 @@ const authMiddleware = async (req, res, next) => {
 
     try {
       const decoded = await JwtService.jwtVerify(token);
+      
       req.userId = decoded.id;
+      req.accountType = decoded.accountType;
 
       return next();
     } catch (error) {

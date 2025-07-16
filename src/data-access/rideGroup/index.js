@@ -262,24 +262,27 @@ class RideGroupRepository extends BaseRepository {
         id: rideGroupId
       };
 
-      const includeOptions = [
-        {
-          association: "parentGroups",
-          required: true,
-          include: [
-            {
-              association: "parent",
-              required: true,
-              where: { account_id: accountId },
-            },
-          ],
-        },
-      ];
+      let includeOptions = [];
 
       if (accountType === "parent") {
         whereClause["$parentGroups.parent.account_id$"] = accountId;
+        includeOptions = [
+          {
+            association: "parentGroups",
+            required: true,
+            include: [
+              {
+                association: "parent",
+                required: true,
+                where: { account_id: accountId },
+              },
+            ],
+          },
+        ];
       } else if (accountType === "driver") {
         whereClause["$driver.account_id$"] = accountId;
+      } else if (accountType === "admin") {
+        return null;
       } else {
         throw new DatabaseError("Invalid account type provided");
       }

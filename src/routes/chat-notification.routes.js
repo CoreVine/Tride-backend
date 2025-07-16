@@ -7,6 +7,7 @@ const chatController = require("../controllers/chat-room.controller");
 const { upload, getFileType } = require("../services/file-upload.service");
 const validate = require("../middlewares/validation.middleware");
 const Yup = require("yup");
+const { isInsideChat } = require("../middlewares/chatAuthorize.middleware");
 
 const rideGroupIdSchema = Yup.object().shape({
   rideGroupId: Yup.string()
@@ -72,20 +73,6 @@ const chatMessageValidationSchema = Yup.object({
     then: (schema) => schema.required("media_url is required for media types"),
     otherwise: (schema) => schema.strip(),
   }),
-
-  // media_meta: Yup.object({
-  //   size: Yup.number().optional(),
-  //   duration: Yup.number().optional(),
-  //   width: Yup.number().optional(),
-  //   height: Yup.number().optional(),
-  //   mime_type: Yup.string().optional(),
-  // }).optional(),
-
-  // location: Yup.mixed().when("type", {
-  //   is: messageTypes.LOCATION,
-  //   then: locationSchema.required("Location is required for location messages"),
-  //   otherwise: Yup.mixed().notRequired(),
-  // }),
 
   is_system: Yup.boolean().default(false),
 
@@ -171,6 +158,7 @@ router.post(
 router.post(
   "/messages/:chatRoomId/message",
   authMiddleware,
+  isInsideChat,
   validate(chatRoomIdSchema, "params"),
   validate(chatMessageValidationSchema, "body"),
   chatController.createMessage

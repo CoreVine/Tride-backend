@@ -7,6 +7,7 @@ const verifyAndJoinRoom = async (socket, roomId) => {
 
     if (!chatRoom) {
         logger.error(`[Socket.IO] Room ${roomId} not found for join request.`);
+        socket.emit("ack", `Unauthorized!`);
         return;
     }
 
@@ -18,7 +19,7 @@ const verifyAndJoinRoom = async (socket, roomId) => {
         `[Socket.IO] User ${socket.userId} not authorized to join room ${roomId}.`
         );
 
-        socket.emit("ack", `User ${socket.userId} not authorized to join room ${roomId}.`);
+        socket.emit("ack", `Unauthorized!`);
         return;
     }
 
