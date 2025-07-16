@@ -330,6 +330,14 @@ module.exports = {
         is_verified: true,
         auth_method: "email",
       },
+      {
+        id: 4,
+        email: "parent2@example.com",
+        password: await bcrypt.hash("password", 8),
+        account_type: "parent",
+        is_verified: true,
+        auth_method: "email",
+      },
     ];
 
     const defaultParents = [
@@ -348,6 +356,27 @@ module.exports = {
         gender: "male",
         front_side_nic: "https://example.com/front_nic1.jpg",
         back_side_nic: "https://example.com/back_nic1.jpg",
+        face_auth_complete: true,
+        documents_approved: true,
+        documents_approval_date: new Date(),
+        created_at: now,
+        updated_at: now,
+      },
+      {
+        id: 2,
+        account_id: 4,
+        name: "Fatima Hassan",
+        profile_pic:
+          "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg",
+        phone: "+201234567891",
+        google_place_id: "ChIJd8BlQ2BZwokRAFUEcm_qrcB",
+        lat: 30.0534,
+        lng: 31.2447,
+        formatted_address: "456 Cairo St, Giza, Egypt",
+        city_id: 2,
+        gender: "female",
+        front_side_nic: "https://example.com/front_nic2.jpg",
+        back_side_nic: "https://example.com/back_nic2.jpg",
         face_auth_complete: true,
         documents_approved: true,
         documents_approval_date: new Date(),
@@ -430,6 +459,33 @@ module.exports = {
         gender: "female",
         parent_id: 1,
       },
+      {
+        id: 7,
+        name: "Yasmin",
+        profile_pic:
+          "https://images.pexels.com/photos/1462636/pexels-photo-1462636.jpeg",
+        grade: "1st",
+        gender: "female",
+        parent_id: 2,
+      },
+      {
+        id: 8,
+        name: "Mahmoud",
+        profile_pic:
+          "https://images.pexels.com/photos/1624496/pexels-photo-1624496.jpeg",
+        grade: "3rd",
+        gender: "male",
+        parent_id: 2,
+      },
+      {
+        id: 9,
+        name: "Nour",
+        profile_pic:
+          "https://images.pexels.com/photos/1001914/pexels-photo-1001914.jpeg",
+        grade: "2nd",
+        gender: "female",
+        parent_id: 2,
+      },
     ];
 
     const defaultGroups = [
@@ -469,6 +525,30 @@ module.exports = {
         invite_code: "GHI12345",
         group_type: "regular",
       },
+      {
+        id: 4,
+        parent_creator_id: 1,
+        group_name: "Evening Extra Classes",
+        created_at: now,
+        updated_at: now,
+        driver_id: null,
+        school_id: 1,
+        current_seats_taken: 2,
+        invite_code: null,
+        group_type: "regular",
+      },
+      {
+        id: 5,
+        parent_creator_id: 2,
+        group_name: "Morning School Transport",
+        created_at: now,
+        updated_at: now,
+        driver_id: null,
+        school_id: 1,
+        current_seats_taken: 2,
+        invite_code: null,
+        group_type: "regular",
+      },
     ];
 
     const defaultParentGroup = [
@@ -495,6 +575,22 @@ module.exports = {
         home_lat: 30.0444,
         home_lng: 31.2357,
         current_seats_taken: 1,
+      },
+      {
+        id: 4,
+        group_id: 4,
+        parent_id: 1,
+        home_lat: 30.0444,
+        home_lng: 31.2357,
+        current_seats_taken: 2,
+      },
+      {
+        id: 5,
+        group_id: 5,
+        parent_id: 2,
+        home_lat: 30.0534,
+        home_lng: 31.2447,
+        current_seats_taken: 2,
       },
     ];
 
@@ -535,6 +631,26 @@ module.exports = {
         ride_group_detailsid: 3,
         date_day: "Saturday",
       },
+      {
+        ride_group_detailsid: 4,
+        date_day: "Tuesday",
+      },
+      {
+        ride_group_detailsid: 4,
+        date_day: "Thursday",
+      },
+      {
+        ride_group_detailsid: 5,
+        date_day: "Sunday",
+      },
+      {
+        ride_group_detailsid: 5,
+        date_day: "Tuesday",
+      },
+      {
+        ride_group_detailsid: 5,
+        date_day: "Thursday",
+      },
     ];
 
     const defaultChildrenGroups = [
@@ -573,6 +689,30 @@ module.exports = {
         child_id: 6,
         timing_from: "10:00:00",
         timing_to: "13:00:00",
+      },
+      {
+        parent_group_id: 4,
+        child_id: 4,
+        timing_from: "16:00:00",
+        timing_to: "18:00:00",
+      },
+      {
+        parent_group_id: 4,
+        child_id: 5,
+        timing_from: "16:15:00",
+        timing_to: "18:15:00",
+      },
+      {
+        parent_group_id: 5,
+        child_id: 7,
+        timing_from: "07:30:00",
+        timing_to: "13:30:00",
+      },
+      {
+        parent_group_id: 5,
+        child_id: 8,
+        timing_from: "07:45:00",
+        timing_to: "13:45:00",
       },
     ];
 
@@ -621,6 +761,30 @@ module.exports = {
         plan_id: 3,
         total_amount: 4800.0,
         status: "paid",
+      },
+      {
+        id: 4,
+        parent_id: 1,
+        ride_group_id: 4,
+        current_seats_taken: 2,
+        pickup_days_count: 2,
+        started_at: now,
+        valid_until: null,
+        plan_id: 1,
+        total_amount: 0,
+        status: "new",
+      },
+      {
+        id: 5,
+        parent_id: 2,
+        ride_group_id: 5,
+        current_seats_taken: 2,
+        pickup_days_count: 3,
+        started_at: now,
+        valid_until: null,
+        plan_id: 1,
+        total_amount: 0,
+        status: "new",
       },
     ];
 
