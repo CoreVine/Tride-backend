@@ -77,7 +77,7 @@ class RideGroup extends Model {
         // New: did not pay, Pending: not full, expired: needs payment, ready: full and requires a driver, active: full, has a driver, and payed, incative: group is not currently being used, holding subscription
         type: DataTypes.ENUM('new', 'pending', 'expired', 'ready', 'active'),
         allowNull: false,
-        defaultValue: 'pending'
+        defaultValue: 'new'
       }
     }, {
       sequelize,
