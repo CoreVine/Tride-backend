@@ -182,10 +182,10 @@ const authController = {
         throw new BadRequestError("Account not found");
       }
 
-      // if (process.env.EMAIL_VERIFICATION_REQUIRED && !account.is_verified) {
-      //   logger.warn(`Login failed - email not verified: ${email}`);
-      //   throw new BadRequestError("Email not verified");
-      // }
+      if (process.env.EMAIL_VERIFICATION_REQUIRED && !account.is_verified) {
+        logger.warn(`Login failed - email not verified: ${email}`);
+        throw new BadRequestError("Email not verified");
+      }
 
       // Use Account model's checkPassword method
       const passwordMatch = await account.checkPassword(password);
