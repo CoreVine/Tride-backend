@@ -387,22 +387,6 @@ class RideGroupRepository extends BaseRepository {
     }
   }
 
-  async updateRideGroupStatus(rideGroupId, status) {
-    try {
-      const rideGroup = await this.model.findByPk(rideGroupId);
-      if (!rideGroup) {
-        throw new DatabaseError("Ride group not found");
-      }
-
-      rideGroup.status = status;
-      await rideGroup.save();
-
-      return rideGroup;
-    } catch (error) {
-      throw new DatabaseError(error);
-    }
-  }
-
   async mergeRideGroups(groupSrcId, groupDestId) {
     
     try {

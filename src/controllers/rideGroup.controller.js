@@ -132,7 +132,10 @@ const RideGroupController = {
         seatsTaken,
         totalDays,
         overallPrice,
-        toPayPrice
+        toPayPrice,
+        {
+          parent_group_id: rideGroup.parentGroups[0].id,
+        }
       );
 
       const { clientSecret, orderId } = await paymobUtil.requestPaymentToken(
