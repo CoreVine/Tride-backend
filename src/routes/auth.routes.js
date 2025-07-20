@@ -12,6 +12,7 @@ const loginSchema = Yup.object().shape({
   email: Yup.string().email().required(),
   password: Yup.string().required(),
   account_type: Yup.string().oneOf(["parent", "driver", "admin"]).default("parent"),
+  device_token: Yup.string().required(), // For notifications to work, a device has to register its device token
 });
 
 const registerSchema = Yup.object().shape({
@@ -68,7 +69,11 @@ authRoutes.post(
   authController.refreshToken
 );
 
-authRoutes.post("/auth/logout", authController.logout);
+authRoutes.post("/auth/logout", validate({
+  body: Yup.object().shape({
+    device_token: Yup.string().required("Device token is required for logout."),
+  }),
+}), authController.logout);
 
 // Get current user - requires verified email
 authRoutes.get(

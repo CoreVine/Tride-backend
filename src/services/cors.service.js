@@ -16,6 +16,11 @@ const corsService = {
         // Allow requests with no origin (like native mobile apps, curl, etc)
         if (!origin) return callback(null, true);
         
+        // Check if wildcard is configured
+        if (corsConfig.allowedOrigins.includes("*")) {
+          return callback(null, true);
+        }
+        
         if (corsConfig.allowedOrigins.indexOf(origin) !== -1) {
           callback(null, true);
         } else {

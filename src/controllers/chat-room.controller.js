@@ -1,21 +1,23 @@
-const { ChatMessage, messageTypes } = require("../mongo-model/ChatMessage");
-const ChatRoom = require("../mongo-model/ChatRoom");
-const Notification = require("../mongo-model/Notification");
-const {
-  getIo,
-  NOTIFICATION_TYPES,
-} = require("../services/socketio.service");
-const redisService = require("../services/redis.service");
-const logger = require("../services/logging.service").getLogger();
-const AccountRepository = require("../data-access/accounts");
-const ParentRepository = require("../data-access/parent");
-const DriverRepository = require("../data-access/driver");
-const { upload, getFileType } = require("../services/file-upload.service");
+const { sendNotificationTo } = require("../utils/generators/notification");
 const {
   NotFoundError,
   ForbiddenError,
   BadRequestError,
 } = require("../utils/errors/types/Api.error");
+const {
+  getIo,
+  NOTIFICATION_TYPES,
+} = require("../services/socketio.service");
+const logger = require("../services/logging.service").getLogger();
+const { upload, getFileType } = require("../services/file-upload.service");
+const redisService = require("../services/redis.service");
+const { ChatMessage, messageTypes } = require("../mongo-model/ChatMessage");
+const ChatRoom = require("../mongo-model/ChatRoom");
+const Notification = require("../mongo-model/Notification");
+const AccountRepository = require("../data-access/accounts");
+const ParentRepository = require("../data-access/parent");
+const DriverRepository = require("../data-access/driver");
+const { createPagination } = require("../utils/responseHandler");
 
 const chatController = {
   getChatRooms: async (req, res, next) => {
@@ -303,6 +305,23 @@ const chatController = {
       // Emit to the specific chat room
       getIo().to(chatRoomId.toString()).emit("new_message", populatedMessage);
 
+
+      // 8. Emit notifications to all users on a group
+      if (chatRoom.participants) {
+        const accountIds = chatRoom.participants.map(participant => participant.user_id);
+
+        sendNotificationTo({
+          accountIds,
+          type: "chat_message",
+          title: `New message from group: ${chatRoom.name}`,
+          message: message,
+          metadata: {
+            chat_room_id: chatRoomId,
+            sender_id: userId,
+          }
+        });
+      }
+
       return res.success("Message created successfully", populatedMessage);
     } catch (error) {
       logger.error(`Error creating message: ${error.message}`);
@@ -573,6 +592,68 @@ const chatController = {
       next(error);
     }
   },
+
+  sendTestNotification: async (req, res, next) => {
+    try {
+      const { type, title, message, related_entity_type, related_entity_id, metadata } = req.body;
+            
+      
+      sendNotificationTo({
+        accountIds: [req.userId],
+        type,
+        title,
+        message,
+        related_entity_type,
+        related_entity_id,
+        metadata
+      });
+
+      return res.success("Test notification sent successfully", {
+        type,
+        title,
+        message,
+        related_entity_type,
+        related_entity_id,
+        metadata,
+      });
+
+    } catch (error) {
+      logger.error("Test notification error", {
+        error: error.message,
+        stack: error.stack,
+      });
+      next(error);
+    }
+  },
+
+  getNotificationsPaginated: async (req, res, next) => {
+    try {
+      const { page = 1, limit = 10 } = req.body;
+
+      const { docs: notifications, total: count } = await Notification.paginate(
+        {},
+        {
+          limit,
+          page,
+          sort: { createdAt: -1 },
+        }
+      );
+
+      const pagination = createPagination(page, limit, count);
+
+      return res.success("Notifications fetched", {
+        pagination,
+        notifications
+      });
+
+    } catch (error) {
+      logger.error("Error getting notifications ", {
+        error: error.message,
+        stack: error.stack,
+      });
+      next(error);
+    }
+  }
 };
 
 module.exports = chatController;

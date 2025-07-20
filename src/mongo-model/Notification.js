@@ -1,19 +1,16 @@
 const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema({
-  recipient_id: {
-    type: mongoose.Schema.Types.Mixed, // Can be String or Number
+  accountId: {
+    type: mongoose.Schema.Types.String,
     required: true,
-    index: true,
-  },
-  sender_id: {
-    type: mongoose.Schema.Types.Mixed,
     index: true,
   },
   type: {
     type: String,
     required: true,
     index: true,
+    trim: true,
   },
   title: {
     type: String,
@@ -25,44 +22,34 @@ const notificationSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  related_entity_type: {
+  relatedEntityType: {
     type: String,
     index: true,
+    trim: true,
   },
-  related_entity_id: {
+  relatedEntityId: {
     type: mongoose.Schema.Types.Mixed,
     index: true,
   },
-  is_read: {
+  isRead: {
     type: Boolean,
     default: false,
     index: true,
   },
   metadata: {
-    type: mongoose.Schema.Types.Mixed,
-  },
-  created_at: {
-    type: Date,
-    default: Date.now,
-    index: true,
-  },
-  updated_at: {
-    type: Date,
-    default: Date.now,
-  },
+    type: Map,
+    of: mongoose.Schema.Types.Mixed,
+    default: {},
+  }
+}, {
+  timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' }
 });
 
-// Update the updated_at field on save
-notificationSchema.pre("save", function (next) {
-  this.updated_at = new Date();
-  next();
-});
-
-// Index for frequently used queries
+// Compound index for fast retrieval of unseen notifications
 notificationSchema.index({
-  recipient_id: 1,
-  is_read: 1,
-  created_at: -1,
+  accountId: 1,
+  isRead: 1,
+  createdAt: -1
 });
 
 module.exports = mongoose.model("Notification", notificationSchema);

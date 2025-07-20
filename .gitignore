@@ -6,3 +6,5 @@ logs
 uploads
 todo*
 pnpm-lock.yaml
+src/config/keys/*
+test/*

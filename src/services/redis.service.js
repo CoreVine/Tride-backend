@@ -383,6 +383,52 @@ const redisService = {
     }
   },
 
+  upsertDeviceTokens: async (accountId, deviceTokens) => {
+    const key = `account:${accountId}:flutterDeviceTokens`;
+    try {
+      if (!Array.isArray(deviceTokens) || deviceTokens.length === 0) {
+        logger.warn(`[REDIS] No device tokens provided for accountId ${accountId}`);
+        return;
+      }
+
+      // remove the old tokens
+      await redisClient.del(key);
+
+      // add the new tokens
+      await redisClient.sadd(key, ...deviceTokens);
+    } catch (error) {
+      logger.error(`[REDIS] Error setting device token for accountId ${accountId}: ${error.toString()}`);
+      throw error;
+    }
+  },
+
+  getDeviceTokens: async (accountId) => {
+    const key = `account:${accountId}:flutterDeviceTokens`;
+
+    try {
+      const tokens = await redisClient.smembers(key);
+      return tokens || [];
+    } catch (error) {
+      logger.error(`[REDIS] Error getting device tokens for accountId ${accountId}:`, error);
+      throw error;
+    }
+  },
+
+  removeDeviceTokens: async (accountId, deviceTokens) => {
+    const key = `account:${accountId}:flutterDeviceTokens`;
+    
+    try {
+      if (!Array.isArray(deviceTokens) || deviceTokens.length === 0) {
+        logger.warn(`[REDIS] No device tokens provided for accountId ${accountId}`);
+        return;
+      }
+      await redisClient.srem(key, ...deviceTokens);
+    } catch (error) {
+      logger.error(`[REDIS] Error removing device tokens for accountId ${accountId}:`, error);
+      throw error;
+    }
+  },
+
   /**
    * Checks if Redis client is connected
    * @returns {boolean} Whether Redis is connected

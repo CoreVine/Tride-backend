@@ -9,6 +9,7 @@ const emailService = require("./services/email.service");
 const redisService = require("./services/redis.service");
 const mongodbService = require("./config/monogodb");
 const socketioService = require("./services/socketio.service");
+const firebaseService = require("./services/firebase.service");
 
 require("dotenv").config(); // Ensure dotenv is loaded early
 
@@ -16,9 +17,10 @@ require("dotenv").config(); // Ensure dotenv is loaded early
 const coreServices = [
   mongodbService,
   sequelizeService,
-  awsService,
+  // awsService,
   emailService,
   redisService,
+  firebaseService
 ];
 
 (async () => {

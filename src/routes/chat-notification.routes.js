@@ -36,6 +36,13 @@ const messageIdIdSchema = Yup.object().shape({
       "Ride Group ID must be a valid Mongo ObjectId"
     ),
 });
+
+const notificationFetchSchema = {
+  params: Yup.object().shape({
+    page: Yup.number().positive().required(),
+    limit: Yup.number().positive().required()
+  })
+};
 // Base media types
 
 // Location Schema
@@ -126,7 +133,6 @@ router.get(
   authMiddleware,
   checkValidSubscription,
   validate(rideGroupIdSchema, "params"), // Validate rideGroupId in params
-
   chatController.getChatRooms
 );
 
@@ -136,7 +142,6 @@ router.get(
   authMiddleware,
   checkValidSubscription,
   validate(rideGroupIdSchema, "params"), // Validate rideGroupId in params
-
   chatController.getChatMessages
 );
 
@@ -179,39 +184,19 @@ router.delete(
 );
 
 // Notification Endpoints (same as before, but enhanced with socket integration)
-router.get("/notifications", authMiddleware, chatController.getNotifications);
+// Test notification endpoints
 router.post(
-  "/notifications/",
+  "/test/notification",
   authMiddleware,
   validate(notificationSchema, "body"),
-  chatController.createNotification
-);
-// Mark notifications as read in bulk
-router.patch(
-  "/notifications/mark-read",
-  authMiddleware,
-  chatController.markNotificationsRead
-);
-router.patch(
-  "/notifications/:id/read",
-  authMiddleware,
-  chatController.markAsRead
-);
-router.patch(
-  "/notifications/mark-all-read",
-  authMiddleware,
-  chatController.markAllAsRead
-);
-router.delete(
-  "/notifications/:id",
-  authMiddleware,
-  chatController.deleteNotification
+  chatController.sendTestNotification
 );
 
 router.get(
-  "/notifications/unread",
+  "/me/notification",
   authMiddleware,
-  chatController.getUnreadCount
+  validate(notificationFetchSchema),
+  chatController.getNotificationsPaginated
 );
 
 module.exports = router;
