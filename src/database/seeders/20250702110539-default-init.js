@@ -549,6 +549,30 @@ module.exports = {
         invite_code: null,
         group_type: "regular",
       },
+      {
+        id: 6,
+        parent_creator_id: 1,
+        group_name: "Past Morning Ride",
+        created_at: now,
+        updated_at: now,
+        driver_id: null,
+        school_id: 1,
+        current_seats_taken: 1,
+        invite_code: null,
+        group_type: "regular",
+      },
+      {
+        id: 7,
+        parent_creator_id: 1,
+        group_name: "Old Afternoon Ride",
+        created_at: now,
+        updated_at: now,
+        driver_id: null,
+        school_id: 1,
+        current_seats_taken: 1,
+        invite_code: null,
+        group_type: "regular",
+      },
     ];
 
     const defaultParentGroup = [
@@ -599,7 +623,7 @@ module.exports = {
       },
       {
         id: 6,
-        group_id: 1,
+        group_id: 6,
         parent_id: 1,
         home_lat: 30.0444,
         home_lng: 31.2357,
@@ -608,7 +632,7 @@ module.exports = {
       },
       {
         id: 7,
-        group_id: 2,
+        group_id: 7,
         parent_id: 1,
         home_lat: 30.0444,
         home_lng: 31.2357,
@@ -672,6 +696,22 @@ module.exports = {
       },
       {
         ride_group_detailsid: 5,
+        date_day: "Thursday",
+      },
+      {
+        ride_group_detailsid: 6,
+        date_day: "Monday",
+      },
+      {
+        ride_group_detailsid: 6,
+        date_day: "Wednesday",
+      },
+      {
+        ride_group_detailsid: 7,
+        date_day: "Tuesday",
+      },
+      {
+        ride_group_detailsid: 7,
         date_day: "Thursday",
       },
     ];
@@ -824,7 +864,7 @@ module.exports = {
       {
         id: 6,
         parent_id: 1,
-        ride_group_id: 1,
+        ride_group_id: 6,
         current_seats_taken: 1,
         pickup_days_count: 4,
         started_at: new Date(
@@ -844,7 +884,7 @@ module.exports = {
       {
         id: 7,
         parent_id: 1,
-        ride_group_id: 2,
+        ride_group_id: 7,
         current_seats_taken: 1,
         pickup_days_count: 3,
         started_at: new Date(
