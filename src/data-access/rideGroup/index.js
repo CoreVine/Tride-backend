@@ -73,6 +73,11 @@ class RideGroupRepository extends BaseRepository {
         include: [
           {
             association: "parentGroups",
+            where: {
+              status: {
+                [Op.ne]: "removed"
+              }
+            },
             required: true,
           },
           {
