@@ -131,7 +131,7 @@ const notificationSchema = Yup.object().shape({
 router.get(
   "/ride-group/:rideGroupId/room",
   authMiddleware,
-  checkValidSubscription,
+  // checkValidSubscription,
   validate(rideGroupIdSchema, "params"), // Validate rideGroupId in params
   chatController.getChatRooms
 );
@@ -140,7 +140,7 @@ router.get(
 router.get(
   "/ride-group/:rideGroupId/messages",
   authMiddleware,
-  checkValidSubscription,
+  // checkValidSubscription,
   validate(rideGroupIdSchema, "params"), // Validate rideGroupId in params
   chatController.getChatMessages
 );
@@ -149,7 +149,7 @@ router.get(
 router.post(
   "/messages/upload",
   authMiddleware,
-  checkValidSubscription,
+  // checkValidSubscription,
   upload.single("file"), // `upload` here is the Multer instance from destructuring
   chatController.uploadFile
 );
@@ -158,7 +158,7 @@ router.post(
 router.post(
   "/messages/:chatRoomId/media",
   authMiddleware,
-  checkValidSubscription,
+  // checkValidSubscription,
   validate(chatRoomIdSchema, "params"),
   upload.single("file"),
   chatController.asssginMediaMeta,
@@ -168,7 +168,7 @@ router.post(
 router.post(
   "/messages/:chatRoomId/message",
   authMiddleware,
-  checkValidSubscription,
+  // checkValidSubscription,
   isInsideChat,
   validate(chatRoomIdSchema, "params"),
   validate(chatMessageValidationSchema, "body"),
@@ -178,7 +178,7 @@ router.post(
 router.delete(
   "/messages/:messageId",
   validate(messageIdIdSchema, "params"),
-  checkValidSubscription,
+  // checkValidSubscription,
   authMiddleware,
   chatController.deleteMessage
 );

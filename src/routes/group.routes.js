@@ -98,7 +98,7 @@ const confirmNewSubscriptionSchema = Yup.object().shape({
 
 groupRoutes.use('/ride', authMiddleware, verifiedEmailRequired);
 groupRoutes.get('/ride/plans', isParent, RideGroupController.getAllPlans);
-groupRoutes.get('/ride/group/:rideGroupId', isParent, checkValidSubscription, RideGroupController.getRideGroupById); //send stats
+groupRoutes.get('/ride/group/:rideGroupId', isParent, RideGroupController.getRideGroupById); //send stats
 groupRoutes.get('/ride/groups/', isAdminWithPermissions([{type: "group", value: "Payments"}]), RideGroupController.getRideGroups);
 groupRoutes.get('/ride/groups/by-parent/:parentId', isParent, arePapersVerified, RideGroupController.getRideGroupsByParentId);
 groupRoutes.post('/ride/group/create',
@@ -143,7 +143,7 @@ groupRoutes.put('/ride/group/:rideGroupId/subscription',
     })
   }),
   isParent,
-  checkValidSubscription,
+  // checkValidSubscription,
   RideGroupController.updateCurrentSubscriptionStatus
 );
 
