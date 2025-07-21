@@ -20,6 +20,81 @@ const DriverRepository = require("../data-access/driver");
 const { createPagination } = require("../utils/responseHandler");
 
 const chatController = {
+  getCustomerSupportMessages: async (req, res, next) => {
+    try {
+      const { page = 1, limit = 10 } = req.query;
+      const userId = req.userId;
+      const chatRoom = await ChatRoom.findOne({
+        participants: { $elemMatch: { user_id: userId } },
+        room_type: "customer_support",
+      });
+
+      if (!chatRoom) {
+        throw new NotFoundError("Customer support chat room not found");
+      }
+
+      const messages = await ChatMessage.find({
+        chat_room_id: chatRoom._id,
+        is_deleted: false,
+      })
+        .sort({ created_at: -1 })
+        .skip((page - 1) * limit)
+        .limit(parseInt(limit))
+        .populate("reply_to")
+        .lean();
+
+      if (!messages || messages.length === 0) {
+        return res.success("No messages found in customer support chat room", []);
+      }
+
+      return res.success(
+        "Customer support messages retrieved successfully",
+        createPagination(messages, req.query)
+      );
+    } catch (error) {
+      logger.error("Error fetching customer support messages:", error.message);
+      next(error);
+    }
+  },
+  createCustomerServiceRoom: async (req, res, next) => {
+    try {
+      const userId = req.userId;
+    
+      let chatRoom = await ChatRoom.findOne({
+        participants: { $elemMatch: { user_id: userId } },
+        room_type: "customer_support",
+      });
+  
+      if (!chatRoom) {
+        const name = req.account[req.account.account_type].name;
+  
+        if (!name) {
+          throw new BadRequestError("User name is required to create a customer support chat room!");
+        }
+
+        // Create a new customer service chat room
+        chatRoom = new ChatRoom({
+          name: `Customer Support - ${name}`,
+          room_type: "customer_support",
+          participants: [
+            {
+              user_id: userId,
+              user_type: req.account.account_type,
+              name,
+            },
+          ],
+        });
+
+        await chatRoom.save();
+      }
+
+      return res.success("Customer service chat room created successfully", chatRoom);
+    } catch (error) {
+      logger.error("Error creating customer service chat room:", error.message);
+      next(error);
+    }
+  },
+
   getChatRooms: async (req, res, next) => {
     try {
       const { rideGroupId } = req.params;
@@ -188,13 +263,15 @@ const chatController = {
       }
 
       // 2. Validate Participant in Chat Room (Optional but good practice)
-      const isParticipant = chatRoom.participants.some(
-        (p) => p.user_id === userId && p.user_type === userType
-      );
-      if (!isParticipant) {
-        throw new ForbiddenError(
-          "You are not a participant of this chat room."
+      if (req.accountType !== "admin" || !req.admin.allowedToChatRoom || req.admin.allowedToChatRoom.chatRoomId !== chatRoomId) {
+        const isParticipant = chatRoom.participants.some(
+          (p) => p.user_id === userId && p.user_type === userType
         );
+        if (!isParticipant) {
+          throw new ForbiddenError(
+            "You are not a participant of this chat room."
+          );
+        }
       }
 
       // 3. Construct Message Object based on type

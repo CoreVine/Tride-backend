@@ -12,7 +12,11 @@ const loginSchema = Yup.object().shape({
   email: Yup.string().email().required(),
   password: Yup.string().required(),
   account_type: Yup.string().oneOf(["parent", "driver", "admin"]).default("parent"),
-  device_token: Yup.string().required(), // For notifications to work, a device has to register its device token
+  device_token: Yup.string().when("account_type", (account_type, schema) => {
+    return account_type[0] !== "admin"
+      ? schema.required("Device token is required for non-admin accounts.")
+      : schema.notRequired();
+  }),
 });
 
 const registerSchema = Yup.object().shape({

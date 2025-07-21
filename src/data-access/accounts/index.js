@@ -90,7 +90,7 @@ class AccountRepository extends BaseRepository {
                     model: this.model.sequelize.models.Admin,
                     as: 'admin',
                     required: false,
-                    include: requiredType === 'admin' ? [{
+                    include: [{
                         model: this.model.sequelize.models.AdminRoles,
                         as: 'role',
                         include: [{
@@ -99,7 +99,7 @@ class AccountRepository extends BaseRepository {
                             attributes: ['id', 'role_permission_group', 'role_permission_name']
                         }],
                         attributes: ['id', 'role_name']
-                    }] : []
+                    }]
                 }
             ];
 
@@ -149,6 +149,32 @@ class AccountRepository extends BaseRepository {
         } catch (error) {
             if (transaction) await transaction.rollback();
             console.error('Error deleting account with relations:', error);
+            throw new DatabaseError(error);
+        }
+    }
+
+    async getChatParticipantsProfilePictures(accountsDetails) {
+        try {
+            return await this.model.findAll({
+                where: {
+                    [Op.or]: accountsDetails
+                },
+                attributes: ['id'],
+                include: [
+                    {
+                        model: this.model.sequelize.models.Parent,
+                        as: 'parent',
+                        attributes: ['profile_pic']
+                    },
+                    {
+                        model: this.model.sequelize.models.Driver,
+                        as: 'driver',
+                        attributes: ['profile_pic']
+                    }
+                ]
+            });
+        } catch (error) {
+            console.error('Error fetching chat participants profile pictures:', error);
             throw new DatabaseError(error);
         }
     }

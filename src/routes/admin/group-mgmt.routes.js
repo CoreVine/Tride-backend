@@ -2,7 +2,7 @@ const { Router } = require("express");
 const authMiddleware = require("../../middlewares/auth.middleware");
 const validate = require("../../middlewares/validation.middleware");
 const Yup = require("yup");
-const { isAdminWithRole } = require("../../middlewares/isAccount.middleware");
+const { isAdminWithRole, isAdminWithPermissions } = require("../../middlewares/isAccount.middleware");
 const { ADMIN_ROLE_SUPER_ADMIN } = require("../../utils/constants/admin-roles");
 const rideGroupController = require("../../controllers/admins/rideGroup.controller");
 
@@ -18,5 +18,8 @@ groupRouter.put("/manage/ride/group/merge",
   })),
   rideGroupController.mergeRideGroups
 );
+groupRouter.get('manage/ride/groups/', 
+  isAdminWithPermissions([{type: "group", value: "Payments"}]), 
+  rideGroupController.getRideGroups);
 
 module.exports = groupRouter;

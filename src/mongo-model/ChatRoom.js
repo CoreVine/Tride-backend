@@ -1,11 +1,18 @@
 const mongoose = require("mongoose");
+const AccountRepository = require("../data-access/accounts");
 
 const chatRoomSchema = new mongoose.Schema({
   ride_group_id: {
     type: Number,
-    required: true,
+    required: false,
     unique: true,
     index: true,
+  },
+  room_type: {
+    type: String,
+    required: true,
+    enum: ["ride_group", "private", "customer_support"],
+    default: "ride_group",
   },
   name: {
     type: String,
@@ -77,6 +84,31 @@ chatRoomSchema.methods.addParticipant = function (
     });
   }
 };
+
+// Add a method to get the last message
+chatRoomSchema.methods.getLastMessage = async function () {
+  const message = await mongoose.model("ChatMessage")
+    .findOne({ chat_room_id: this._id })
+    .sort({ created_at: -1 });
+
+  return message || null;
+}
+
+// Add a method to get participants' profile pictures
+chatRoomSchema.methods.getParticipantsProfilePictures = async function () {
+  try {
+    const accountsDetails = this.participants.map(p => ({
+      id: Number(p.user_id),
+      account_type: p.user_type
+    }));
+    const result = await AccountRepository.getChatParticipantsProfilePictures(accountsDetails);
+  
+    return result;
+  } catch (error) {
+    console.error("Error fetching participants' profile pictures:", error);
+    throw new DatabaseError("Failed to fetch participants' profile pictures");
+  }
+}
 
 const ChatRoom = mongoose.model("ChatRoom", chatRoomSchema);
 

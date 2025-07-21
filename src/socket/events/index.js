@@ -42,10 +42,20 @@ function setupConnection(io) {
       logger.warn("Driver account papers not approved", { accountId: socket.userId });
       throw new UnauthorizedError("Unauthorized access");
     }
+    if (socket.accountType === "admin") {
+      socket.admin = {};
+      socket.admin.id = account.admin.id;
+      socket.admin.role = account.admin.role;
+      socket.admin.permissions = account.admin.role.permissions.map((permission) => ({
+        id: permission.id,
+        name: permission.role_permission_name,
+        group: permission.role_permission_group,
+      }));
+    }
 
     // Store user connection in Redis
     await redisService.storeUserConnection(socket.userId, socket.id, socket.accountType);
-    logger.info(`[Socket.IO] User connected and stored in Redis: ${socket.id} for user ${socket.userId}`);
+    logger.info(`[Socket.IO] User  connected and stored in Redis: ${socket.id} for user ${socket.userId}`);
 
     next();
     } catch (error) {

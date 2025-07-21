@@ -9,6 +9,7 @@ const validate = require("../middlewares/validation.middleware");
 const Yup = require("yup");
 const { isInsideChat } = require("../middlewares/chatAuthorize.middleware");
 const { checkValidSubscription } = require("../middlewares/subscription.middleware");
+const { isOneOf } = require("../middlewares/isAccount.middleware");
 
 const rideGroupIdSchema = Yup.object().shape({
   rideGroupId: Yup.string()
@@ -168,6 +169,12 @@ router.post(
 router.post(
   "/messages/:chatRoomId/message",
   authMiddleware,
+  (req, res, next) => {
+    req.resourceRequested = "chat";
+    req.resourceId = req.params.chatRoomId;
+
+    next();
+  },
   checkValidSubscription,
   isInsideChat,
   validate(chatRoomIdSchema, "params"),
@@ -197,6 +204,20 @@ router.get(
   authMiddleware,
   validate(notificationFetchSchema),
   chatController.getNotificationsPaginated
+);
+
+
+// Customer service
+router.get(
+  "/customer-support/room",
+  authMiddleware,
+  isOneOf("parent", "driver"),
+  chatController.createCustomerServiceRoom
+);
+router.get("/customer-support/messages", 
+  authMiddleware,
+  isOneOf("parent", "driver"),
+  chatController.getCustomerSupportMessages
 );
 
 module.exports = router;

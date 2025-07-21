@@ -127,9 +127,12 @@ const isAdminWithRole = (role) => {
 }
 
 // TODO: TEST, NOT USED YET
-const isAdminWithPermissions = (permissions) => {
+const isAdminWithPermissions = (permissions, type = "all") => {
   return async (req, res, next) => {
     try {
+      if (type !== "all" && type !== "some") {
+        throw new Error("Invalid type parameter. Use 'all' or 'some'.");
+      }
       // Get account ID from auth middleware
       const accountId = req.userId;
 
@@ -145,16 +148,13 @@ const isAdminWithPermissions = (permissions) => {
       }
 
       // Check if admin has the required permissions
-      const hasPermissions = permissions.every(({ type, value }) =>
+      const someOrAll = type === "all" ? "every" : "some";
+      const hasPermissions = permissions[someOrAll](({ type, value }) =>
         account.admin.role.permissions.some(p => type === "group" ?  p.role_permission_group === value : p.role_permission_name === value)
       );
 
       if (!hasPermissions) {
-        logger.warn("Unauthorized access attempt - insufficient admin permissions", {
-          accountId,
-          permissions: account.admin.role.permissions.map(p => p.role_permission_name),
-          requiredPermissions: permissions,
-        });
+        logger.warn("Unauthorized access attempt - insufficient admin permissions");
         throw new UnauthorizedError(`Access denied. This resource requires ${permissions.join(", ")} permissions.`);
       }
 
@@ -163,7 +163,7 @@ const isAdminWithPermissions = (permissions) => {
         email: account.email,
         account_type: "admin",
         is_verified: account.is_verified,
-        admin: account.admin,
+        admin: account.admin
       };
 
       next();

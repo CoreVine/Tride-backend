@@ -420,27 +420,6 @@ const RideGroupController = {
     }
   },
 
-  getRideGroups: async (req, res, next) => {
-    try {
-      const { page = 1, limit = 10 } = req.query;
-      const { count, rows: rideGroups } = await RideGroupRepository.findAllDetailedPaginated(parseInt(page), parseInt(limit));
-
-      if (!rideGroups || rideGroups.length === 0) {
-        return res.success("No ride groups found for this parent", { rideGroups: [] });
-      }
-      
-      const pagination = createPagination(page, limit, count);
-
-      return res.success("Ride groups fetched successfully", { pagination, rideGroups });
-    } catch (error) {
-      logger.error("Error fetching ride groups", {
-        error: error.message,
-        stack: error.stack,
-      });
-      return next(error);
-    }
-  },
-
   getRideGroupsByParentId: async (req, res, next) => {
     try {
       // Verify account exists and is verified
