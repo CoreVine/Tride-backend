@@ -559,6 +559,7 @@ module.exports = {
         home_lat: 30.0444,
         home_lng: 31.2357,
         current_seats_taken: 3,
+        status: "new",
       },
       {
         id: 2,
@@ -567,6 +568,7 @@ module.exports = {
         home_lat: 30.0444,
         home_lng: 31.2357,
         current_seats_taken: 2,
+        status: "pending"
       },
       {
         id: 3,
@@ -575,6 +577,7 @@ module.exports = {
         home_lat: 30.0444,
         home_lng: 31.2357,
         current_seats_taken: 1,
+        status: "ready"
       },
       {
         id: 4,
@@ -583,6 +586,7 @@ module.exports = {
         home_lat: 30.0444,
         home_lng: 31.2357,
         current_seats_taken: 2,
+        status: "active"
       },
       {
         id: 5,
@@ -591,6 +595,25 @@ module.exports = {
         home_lat: 30.0534,
         home_lng: 31.2447,
         current_seats_taken: 2,
+        status: "inactive"
+      },
+      {
+        id: 6,
+        group_id: 1,
+        parent_id: 2,
+        home_lat: 30.0534,
+        home_lng: 31.2447,
+        current_seats_taken: 1,
+        status: "removed"
+      },
+      {
+        id: 7,
+        group_id: 2,
+        parent_id: 2,
+        home_lat: 30.0534,
+        home_lng: 31.2447,
+        current_seats_taken: 1,
+        status: "expired"
       },
     ];
 
