@@ -10,14 +10,14 @@ const paymobController = {
             // HMAC verification
             const is_valid = verifyPaymentSignature(req.body.obj, req.query.hmac);
             if (!is_valid) {
-                throw new Error('Invalid HMAC signature');
+                return res.error('Invalid HMAC signature', null, 400);
             }
 
             // extract payment details
             const { payment_key_claims: { extra } } = req.body.obj;
     
             if(!extra)
-                throw new Error('Missing extra data in payment claims');
+                return res.error('Missing extra data in payment claims', null, 400);
 
             // Check if group is ready to accept a driver
             const parentGroup = await ParentGroupRepository.findById(extra.parent_group_id);
