@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "756f2bf5-1bce-4354-bb78-d5293a1715ef",
-		"name": "Tride",
+		"_postman_id": "2f661744-e0c9-469f-b4e1-dbe58dc90c67",
+		"name": "Tride Real",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "15043408"
 	},
@@ -21,7 +21,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"vekiti5651@betzenn.com\",\n    \"password\": \"vekiti5651@betzenn.com\",\n    \"account_type\":\"parent\"\n}"
+							"raw": "{\n    \"email\": \"ah250296@gmail.com\",\n    \"password\": \"password\",\n    \"account_type\":\"parent\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/register",
@@ -46,7 +46,13 @@
 								"exec": [
 									"const jsonResponse = pm.response.json();",
 									"if (jsonResponse && jsonResponse.data && jsonResponse.data.token) {",
-									"    pm.globals.set('token', jsonResponse.data.token);",
+									"    if (jsonResponse.data && jsonResponse.data.account.accountType === \"admin\") {",
+									"        pm.globals.set('token_admin_super', jsonResponse.data.token);",
+									"    } else if (jsonResponse.data && jsonResponse.data.account.accountType === \"parent\") {",
+									"        pm.globals.set('token_parent_1', jsonResponse.data.token);",
+									"    } else {",
+									"        pm.globals.set('token', jsonResponse.data.token);",
+									"    }",
 									"}",
 									"if (jsonResponse && jsonResponse.data && jsonResponse.data.refreshToken) {",
 									"    pm.globals.set('refresh_token', jsonResponse.data.refreshToken);",
@@ -67,7 +73,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"vekiti5651@betzenn.com\",\n    \"password\": \"vekiti5651@betzenn.com\",\n    \"account_type\":\"parent\"\n}"
+							"raw": "// {\n//     \"email\": \"admin@tride.com\",\n//     \"password\": \"admin123\",\n//     \"account_type\":\"admin\"\n// }\n{\n    \"email\": \"parent2@example.com\",\n    \"password\": \"password\",\n    \"account_type\":\"parent\",\n    \"device_token\": \" \"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/login",
@@ -200,7 +206,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"vekiti5651@betzenn.com\",\n    \"code\": \"222562\"\n}"
+							"raw": "{\n    \"email\": \"ezz.professional@gmail.com\",\n    \"code\": \"809696\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/email/verify",
@@ -229,7 +235,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"jilike7518@daxiake.com\"\n}"
+							"raw": "{\n    \"email\": \"faded.lover.shadows@gmail.com\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/email/verify/resend",
@@ -265,7 +271,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"jilike7518@daxiake.com\"\n}"
+							"raw": "{\n    \"email\": \"faded.lover.shadows@gmail.com\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/password/request",
@@ -294,7 +300,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"jilike7518@daxiake.com\"\n}"
+							"raw": "{\n    \"email\": \"faded.lover.shadows@gmail.com\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/password/resend",
@@ -338,7 +344,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"jilike7518@daxiake.com\",\n    \"code\": \"527053\"\n}"
+							"raw": "{\n    \"email\": \"faded.lover.shadows@gmail.com\",\n    \"code\": \"883192\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/password/verify",
@@ -367,7 +373,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"jilike7518@daxiake.com\",\n    \"password\": \"newpassword123\",\n    \"resetToken\": \"{{reset_token}}\"\n}"
+							"raw": "{\n    \"email\": \"faded.lover.shadows@gmail.com\",\n    \"password\": \"newpassword123\",\n    \"resetToken\": \"{{reset_token}}\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/password/reset",
@@ -410,42 +416,50 @@
 										{
 											"key": "name",
 											"value": "jack",
-											"type": "text"
+											"type": "text",
+											"disabled": true
 										},
 										{
 											"key": "phone",
 											"value": "465456456",
-											"type": "text"
+											"type": "text",
+											"disabled": true
 										},
 										{
 											"key": "gender",
 											"value": "male",
-											"type": "text"
+											"type": "text",
+											"disabled": true
 										},
 										{
 											"key": "city_id",
-											"value": "1",
-											"type": "text"
+											"value": "3",
+											"type": "text",
+											"disabled": true
 										},
 										{
 											"key": "lng",
 											"value": "39",
-											"type": "text"
+											"type": "text",
+											"disabled": true
 										},
 										{
 											"key": "lat",
 											"value": "31",
-											"type": "text"
+											"type": "text",
+											"disabled": true
 										},
 										{
 											"key": "profile_pic",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/logo.png",
+											"disabled": true
 										},
 										{
 											"key": "google_place_id",
 											"value": "1",
-											"type": "text"
+											"type": "text",
+											"disabled": true
 										}
 									]
 								},
@@ -620,7 +634,7 @@
 										{
 											"key": "back_side_nic",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/logo.png"
 										},
 										{
 											"key": "front_side_nic",
@@ -769,7 +783,7 @@
 										{
 											"key": "profile_pic",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/tire.jpeg"
 										},
 										{
 											"key": "formatted_address",
@@ -807,64 +821,18 @@
 									{
 										"key": "Authorization",
 										"value": "Bearer {{token}}",
-										"type": "text",
-										"disabled": true
+										"type": "text"
 									},
 									{
 										"key": "Authorization",
 										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7ImlkIjo3LCJhY2NvdW50VHlwZSI6ImRyaXZlciIsInByb2ZpbGVDb21wbGV0ZSI6dHJ1ZSwiYWNjb3VudFR5cGVJZCI6MX0sImlhdCI6MTc0ODEwOTQ2MiwianRpIjoiMGJmZjM5N2EtNmJhNi00ZjUzLWEzNmYtN2MyN2M5MWY1OTVmIn0._sPViQNF6A03qIMfbfiMynUmWVZ-46UJ1be766DW3wE",
-										"type": "text"
+										"type": "text",
+										"disabled": true
 									}
 								],
 								"body": {
-									"mode": "formdata",
-									"formdata": [
-										{
-											"key": "name",
-											"value": "jack",
-											"type": "text"
-										},
-										{
-											"key": "phone",
-											"value": "465456456",
-											"type": "text"
-										},
-										{
-											"key": "gender",
-											"value": "male",
-											"type": "text"
-										},
-										{
-											"key": "city_id",
-											"value": "1",
-											"type": "text"
-										},
-										{
-											"key": "lng",
-											"value": "30",
-											"type": "text"
-										},
-										{
-											"key": "lat",
-											"value": "31",
-											"type": "text"
-										},
-										{
-											"key": "profile_pic",
-											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
-										},
-										{
-											"key": "formatted_address",
-											"value": "sdf",
-											"type": "text"
-										},
-										{
-											"key": "license_number",
-											"value": "34",
-											"type": "text"
-										}
-									]
+									"mode": "raw",
+									"raw": ""
 								},
 								"url": {
 									"raw": "{{base_url}}/profile/driver",
@@ -896,22 +864,22 @@
 										{
 											"key": "back_side_national",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/tire.jpeg"
 										},
 										{
 											"key": "driver_license",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/tire.jpeg"
 										},
 										{
 											"key": "front_side_national",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/tire.jpeg"
 										},
 										{
 											"key": "car_license",
 											"type": "file",
-											"src": "/C:/Users/dream/Pictures/logo.png"
+											"src": "/C:/Users/Ezzeldin Husen/Downloads/tire.jpeg"
 										},
 										{
 											"key": "car_model",
@@ -1721,7 +1689,7 @@
 							]
 						},
 						"url": {
-							"raw": "{{base_url}}/school?city=1",
+							"raw": "{{base_url}}/school?city_id=1",
 							"host": [
 								"{{base_url}}"
 							],
@@ -1730,7 +1698,7 @@
 							],
 							"query": [
 								{
-									"key": "city",
+									"key": "city_id",
 									"value": "1"
 								}
 							]
@@ -1848,354 +1816,6 @@
 					"name": "Notifications",
 					"item": [
 						{
-							"name": "HTTP Notification Endpoints",
-							"item": [
-								{
-									"name": "Get Notifications",
-									"request": {
-										"method": "GET",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{token}}",
-												"type": "text"
-											}
-										],
-										"url": {
-											"raw": "{{base_url}}/notifications",
-											"host": [
-												"{{base_url}}"
-											],
-											"path": [
-												"notifications"
-											],
-											"query": [
-												{
-													"key": "limit",
-													"value": "10",
-													"disabled": true
-												},
-												{
-													"key": "offset",
-													"value": "0",
-													"disabled": true
-												},
-												{
-													"key": "is_read",
-													"value": "false",
-													"disabled": true
-												}
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Create Notifications",
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{token}}",
-												"type": "text"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\r\n  \"recipientId\": \"user_abc_123\",\r\n  \"senderId\": 12345,\r\n  \"type\": \"new_notification\",\r\n  \"title\": \"Your Order Has Shipped!\",\r\n  \"message\": \"Great news! Your recent order #98765 has been dispatched and is on its way.\",\r\n  \"related_entity_type\": \"Order\",\r\n  \"related_entity_id\": \"order_98765_xyz\"\r\n}\r\n",
-											"options": {
-												"raw": {
-													"language": "json"
-												}
-											}
-										},
-										"url": {
-											"raw": "{{base_url}}/notifications",
-											"host": [
-												"{{base_url}}"
-											],
-											"path": [
-												"notifications"
-											],
-											"query": [
-												{
-													"key": "limit",
-													"value": "10",
-													"disabled": true
-												},
-												{
-													"key": "offset",
-													"value": "0",
-													"disabled": true
-												},
-												{
-													"key": "is_read",
-													"value": "false",
-													"disabled": true
-												}
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Get Unread Count",
-									"request": {
-										"method": "GET",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{token}}",
-												"type": "text"
-											}
-										],
-										"url": {
-											"raw": "{{base_url}}/notifications/unread",
-											"host": [
-												"{{base_url}}"
-											],
-											"path": [
-												"notifications",
-												"unread"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Mark Notification as Read",
-									"request": {
-										"method": "PATCH",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{token}}",
-												"type": "text"
-											},
-											{
-												"key": "Content-Type",
-												"value": "application/json",
-												"type": "text"
-											}
-										],
-										"url": {
-											"raw": "{{base_url}}/notifications/611a9d4f8fce2c2a1c6e7d5a/read",
-											"host": [
-												"{{base_url}}"
-											],
-											"path": [
-												"notifications",
-												"611a9d4f8fce2c2a1c6e7d5a",
-												"read"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Mark All Notifications as Read",
-									"request": {
-										"method": "PATCH",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{token}}",
-												"type": "text"
-											},
-											{
-												"key": "Content-Type",
-												"value": "application/json",
-												"type": "text"
-											}
-										],
-										"url": {
-											"raw": "{{base_url}}/notifications/mark-all-read",
-											"host": [
-												"{{base_url}}"
-											],
-											"path": [
-												"notifications",
-												"mark-all-read"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Delete Notification",
-									"request": {
-										"method": "DELETE",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{auth_token}}",
-												"type": "text"
-											}
-										],
-										"url": {
-											"raw": "{{base_url}}/api/notifications/611a9d4f8fce2c2a1c6e7d5a",
-											"host": [
-												"{{base_url}}"
-											],
-											"path": [
-												"api",
-												"notifications",
-												"611a9d4f8fce2c2a1c6e7d5a"
-											]
-										}
-									},
-									"response": []
-								}
-							]
-						},
-						{
-							"name": "WebSocket Notification Tests",
-							"item": [
-								{
-									"name": "Connect to Socket.IO",
-									"request": {
-										"method": "GET",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{auth_token}}"
-											}
-										],
-										"url": {
-											"raw": "ws://localhost:3000/socket.io/?token={{token}}&EIO=4&transport=websocket",
-											"protocol": "ws",
-											"host": [
-												"localhost"
-											],
-											"port": "3000",
-											"path": [
-												"socket.io",
-												""
-											],
-											"query": [
-												{
-													"key": "token",
-													"value": "{{token}}"
-												},
-												{
-													"key": "EIO",
-													"value": "4"
-												},
-												{
-													"key": "transport",
-													"value": "websocket"
-												}
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Listen for Notification Events",
-									"event": [
-										{
-											"listen": "prerequest",
-											"script": {
-												"exec": [
-													"// First establish the WebSocket connection",
-													"pm.sendRequest({",
-													"  url: 'ws://localhost:3000/socket.io/?token=' + pm.collectionVariables.get('auth_token') + '&EIO=4&transport=websocket',",
-													"  method: 'GET',",
-													"  header: {",
-													"    'Authorization': 'Bearer ' + pm.collectionVariables.get('auth_token')",
-													"  }",
-													"}, function(err, res) {",
-													"  if (err) {",
-													"    console.error(err);",
-													"    return;",
-													"  }",
-													"  // Store the WebSocket connection",
-													"  pm.collectionVariables.set('ws_connection', res);",
-													"});"
-												],
-												"type": "text/javascript",
-												"packages": {}
-											}
-										}
-									],
-									"request": {
-										"method": "GET",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{auth_token}}"
-											}
-										],
-										"url": {
-											"raw": "ws://localhost:3000/socket.io?token={{token}}&EIO=4&transport=websocket",
-											"protocol": "ws",
-											"host": [
-												"localhost"
-											],
-											"port": "3000",
-											"path": [
-												"socket.io"
-											],
-											"query": [
-												{
-													"key": "token",
-													"value": "{{token}}"
-												},
-												{
-													"key": "EIO",
-													"value": "4"
-												},
-												{
-													"key": "transport",
-													"value": "websocket"
-												}
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Simulate New Notification (Admin)",
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{token}}",
-												"type": "text"
-											},
-											{
-												"key": "Content-Type",
-												"value": "application/json",
-												"type": "text"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n    \"recipientId\": 9,\n    \"type\": \"system_message\",\n    \"title\": \"Test Notification\",\n    \"message\": \"This is a test notification sent from Postman\",\n    \"metadata\": {\n        \"test\": true,\n        \"sender\": \"Postman\"\n    }\n}",
-											"options": {
-												"raw": {
-													"language": "json"
-												}
-											}
-										},
-										"url": {
-											"raw": "{{base_url}}/notifications/",
-											"host": [
-												"{{base_url}}"
-											],
-											"path": [
-												"notifications",
-												""
-											]
-										}
-									},
-									"response": []
-								}
-							]
-						},
-						{
 							"name": "Get Notifications",
 							"request": {
 								"method": "GET",
@@ -2207,21 +1827,22 @@
 									}
 								],
 								"url": {
-									"raw": "{{base_url}}/notifications?limit=20&offset=0",
+									"raw": "{{base_url}}/me/notifications?page=1&limit=20",
 									"host": [
 										"{{base_url}}"
 									],
 									"path": [
+										"me",
 										"notifications"
 									],
 									"query": [
 										{
-											"key": "limit",
-											"value": "20"
+											"key": "page",
+											"value": "1"
 										},
 										{
-											"key": "offset",
-											"value": "0"
+											"key": "limit",
+											"value": "20"
 										}
 									]
 								},
@@ -2230,63 +1851,19 @@
 							"response": []
 						},
 						{
-							"name": "Upload Chat Media",
+							"name": "Test notification",
 							"request": {
 								"method": "POST",
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "Bearer {{token}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "formdata",
-									"formdata": [
-										{
-											"key": "file",
-											"description": "Select an image, video, audio, or document file to upload.",
-											"type": "file",
-											"src": [
-												"postman-cloud:///1f038b2b-5a18-4140-9282-1b41132996ab",
-												"/path/to/your/file.jpg"
-											]
-										}
-									]
-								},
-								"url": {
-									"raw": "{{base_url}}/messages/upload",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"messages",
-										"upload"
-									]
-								},
-								"description": "Uploads a media file for chat. Use 'file' as the form-data key. Requires authentication."
-							},
-							"response": []
-						},
-						{
-							"name": "Mark Notifications as Read",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json",
-										"type": "text"
-									},
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}",
+										"value": "Bearer {{token_admin_super}}",
 										"type": "text"
 									}
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"notificationIds\": [\"60d5ec49c6d3f00015f8a0a2\", \"60d5ec49c6d3f00015f8a0a3\"]\n}",
+									"raw": "{\r\n    \"recipientId\": 1,\r\n    \"senderId\": 2,\r\n    \"type\": \"Love you\",\r\n    \"title\": \"Hello from the postman\",\r\n    \"message\": \"Hello from the other side\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2294,16 +1871,15 @@
 									}
 								},
 								"url": {
-									"raw": "{{base_url}}/notifications/mark-read",
+									"raw": "{{base_url}}/test/notification",
 									"host": [
 										"{{base_url}}"
 									],
 									"path": [
-										"notifications",
-										"mark-read"
+										"test",
+										"notification"
 									]
-								},
-								"description": "Marks a list of notifications as read for the authenticated user. Requires authentication."
+								}
 							},
 							"response": []
 						}
@@ -2315,22 +1891,25 @@
 						{
 							"name": "Get or Create Chat Room",
 							"request": {
+								"auth": {
+									"type": "noauth"
+								},
 								"method": "GET",
 								"header": [
 									{
 										"key": "Authorization",
-										"value": "Bearer{{token}}",
+										"value": "Bearer {{token_parent_1}}",
 										"type": "text"
 									}
 								],
 								"url": {
-									"raw": "{{base_url}}/ride-group/1/room",
+									"raw": "{{base_url}}/ride-group/5/room",
 									"host": [
 										"{{base_url}}"
 									],
 									"path": [
 										"ride-group",
-										"1",
+										"5",
 										"room"
 									]
 								},
@@ -2350,14 +1929,20 @@
 									}
 								],
 								"url": {
-									"raw": "{{base_url}}/ride-group/1/messages",
+									"raw": "{{base_url}}/ride-group/4/messages?page=1",
 									"host": [
 										"{{base_url}}"
 									],
 									"path": [
 										"ride-group",
-										"1",
+										"4",
 										"messages"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										}
 									]
 								},
 								"description": "Retrieves or creates a chat room for a specific ride group. Requires authentication."
@@ -2380,7 +1965,7 @@
 									},
 									{
 										"key": "Authorization",
-										"value": "Bearer {{token}}"
+										"value": "Bearer {{token_parent_1}}"
 									}
 								],
 								"body": {
@@ -2388,13 +1973,13 @@
 									"raw": "{\n  \"type\": \"text\",\n  \"message\": \"Hello from Postman! This is a test message.\"\n}"
 								},
 								"url": {
-									"raw": "{{base_url}}/messages/683ed1fccbe8be2b733c8363/message",
+									"raw": "{{base_url}}/messages/687f93aca8f0669a64047070/message",
 									"host": [
 										"{{base_url}}"
 									],
 									"path": [
 										"messages",
-										"683ed1fccbe8be2b733c8363",
+										"687f93aca8f0669a64047070",
 										"message"
 									]
 								},
@@ -2457,22 +2042,22 @@
 									},
 									{
 										"key": "Authorization",
-										"value": "Bearer {{token}}"
+										"value": "Bearer {{token_parent_2}}"
 									}
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"type\": \"text\",\n  \"message\": \"Replying to your last message!\",\n  \"reply_to\": \"683ee78ab7f29872577cbe41\" \n}"
+									"raw": "{\n  \"type\": \"text\",\n  \"message\": \"Replying to your last message!\",\n  \"reply_to\": \"687f9444a8f0669a6404707d\" \n}"
 								},
 								"url": {
-									"raw": "{{base_url}}/messages/683ed1fccbe8be2b733c8363/",
+									"raw": "{{base_url}}/messages/687f93aca8f0669a64047070/message",
 									"host": [
 										"{{base_url}}"
 									],
 									"path": [
 										"messages",
-										"683ed1fccbe8be2b733c8363",
-										""
+										"687f93aca8f0669a64047070",
+										"message"
 									]
 								},
 								"description": "Creates a new message that is a reply to an existing message. Replace `{{existingMessageId}}` with a real message ID."
@@ -2505,12 +2090,272 @@
 							"response": []
 						}
 					]
+				},
+				{
+					"name": "Customer support",
+					"item": [
+						{
+							"name": "User: get customer support chat",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token_parent_1}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/customer-support/room",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"customer-support",
+										"room"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "User: create customer support room",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token_parent_1}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/customer-support/room",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"customer-support",
+										"room"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Admin",
+					"item": [
+						{
+							"name": "Customer support",
+							"item": [
+								{
+									"name": "Admin: get customer support chats",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token_admin_super}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/admin-view/chats/customer-support/rooms?page=1&limit=10",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"admin-view",
+												"chats",
+												"customer-support",
+												"rooms"
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "limit",
+													"value": "10"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Admin: get messages of customer support chat",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token_admin_super}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/admin-view/chats/customer-support/rooms/687ce330d2dd563bba940a2a/messages?page=1",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"admin-view",
+												"chats",
+												"customer-support",
+												"rooms",
+												"687ce330d2dd563bba940a2a",
+												"messages"
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "1"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Chat history",
+							"item": [
+								{
+									"name": "Get all ride group chats",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token_admin_super}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/admin-view/chats/ride-groups",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"admin-view",
+												"chats",
+												"ride-groups"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get chat history of a ride group",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token_admin_super}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/admin-view/chats/ride-groups/5/messages?page=1",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"admin-view",
+												"chats",
+												"ride-groups",
+												"5",
+												"messages"
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "1"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
 				}
 			]
 		},
 		{
 			"name": "Group",
 			"item": [
+				{
+					"name": "Admin",
+					"item": [
+						{
+							"name": "merge groups",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token_admin_super}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"group_src\": 4,\n    \"group_dest\": 5\n}\n"
+								},
+								"url": {
+									"raw": "{{base_url}}/manage/ride/group/merge",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"manage",
+										"ride",
+										"group",
+										"merge"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get all ride groups",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token_admin_super}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/manage/ride/groups",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"manage",
+										"ride",
+										"groups"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
 				{
 					"name": "1. Create a ride group",
 					"request": {
@@ -2523,7 +2368,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n\t\"group_name\": \"second group!\",\r\n\t\"school_id\": 1,\r\n\t\"seats\": 4,\r\n\t\"home\": {\r\n\t\t\"home_lat\": \"123.65\",\r\n\t\t\"home_lng\": \"123.65\"\r\n\t},\r\n\t\"children\": [\r\n\t\t{\r\n\t\t\t\"child_id\": 1,\r\n\t\t\t\"timing_from\": \"09:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t},\r\n\t\t\t\t{\r\n\t\t\t\"child_id\": 2,\r\n\t\t\t\"timing_from\": \"10:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t}\r\n\t],\r\n\t\"days\": [\"saturday\", \"sunday\"],\r\n    \"group_type\": \"premium\"\r\n}",
+							"raw": "{\r\n\t\"group_name\": \"fourth group!\",\r\n\t\"school_id\": 1,\r\n\t\"home\": {\r\n\t\t\"home_lat\": \"23.65\",\r\n\t\t\"home_lng\": \"23.65\"\r\n\t},\r\n\t\"children\": [\r\n\t\t{\r\n\t\t\t\"child_id\": 4,\r\n\t\t\t\"timing_from\": \"09:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t},\r\n\t\t\t\t{\r\n\t\t\t\"child_id\": 5,\r\n\t\t\t\"timing_from\": \"10:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t}\r\n\t],\r\n\t\"days\": [\"saturday\", \"sunday\"],\r\n    \"group_type\": \"regular\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2557,7 +2402,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{ \r\n\t\"group_id\": 8,\r\n    \"children\": [\r\n        {\r\n        \"child_id\": 3,\r\n        \"timing_from\": \"01:00:00\",\r\n        \"timing_to\": \"12:00:00\"\r\n        }\r\n    ]\r\n}",
+							"raw": "{ \r\n\t\"group_id\": 5,\r\n    \"children\": [\r\n        {\r\n        \"child_id\": 3,\r\n        \"timing_from\": \"01:00:00\",\r\n        \"timing_to\": \"12:00:00\"\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2579,9 +2424,12 @@
 					"response": []
 				},
 				{
-					"name": "NOT WORKING YET! 3. Add a new parent to a ride group",
+					"name": "Get an owned ride group details",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
 					"request": {
-						"method": "POST",
+						"method": "GET",
 						"header": [
 							{
 								"key": "Authorization",
@@ -2591,7 +2439,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"group_id\": 8,\r\n    \"home\": {\r\n\t\t\"home_lat\": \"123.65\",\r\n\t\t\"home_lng\": \"123.65\"\r\n\t}\r\n}\r\n",
+							"raw": "",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2599,22 +2447,30 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/ride/group/add-parent/VXM64DDS",
+							"raw": "{{base_url}}/ride/group/5?rideGroupId=5",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"ride",
 								"group",
-								"add-parent",
-								"VXM64DDS"
+								"5"
+							],
+							"query": [
+								{
+									"key": "rideGroupId",
+									"value": "5"
+								}
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Get an owned ride group details",
+					"name": "Get all ride groups a parent has",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
 					"request": {
 						"method": "GET",
 						"header": [
@@ -2624,39 +2480,25 @@
 								"type": "text"
 							}
 						],
-						"url": {
-							"raw": "{{base_url}}/ride/group/20",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"ride",
-								"group",
-								"20"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get all ride groups",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text"
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
 							}
-						],
+						},
 						"url": {
-							"raw": "{{base_url}}/ride/groups",
+							"raw": "{{base_url}}/ride/groups/by-parent/4",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"ride",
-								"groups"
+								"groups",
+								"by-parent",
+								"4"
 							]
 						}
 					},
@@ -2667,6 +2509,47 @@
 		{
 			"name": "Subscriptions",
 			"item": [
+				{
+					"name": "Admin",
+					"item": [
+						{
+							"name": "Admin get all payments",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/payments/2",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"payments",
+										"2"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
 				{
 					"name": "Test paymob",
 					"request": {
@@ -2757,7 +2640,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"plan_type\": \"double-terms\",\r\n    \"installment_plan\": true\r\n}",
+							"raw": "{\r\n    \"plan_type\": \"double-terms\",\r\n    \"installment_plan\": false\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2765,14 +2648,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/ride/group/20/subscribe",
+							"raw": "{{base_url}}/ride/group/8/subscribe",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"ride",
 								"group",
-								"20",
+								"8",
 								"subscribe"
 							]
 						}
@@ -2803,15 +2686,15 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/ride/group/20/subscription",
+							"raw": "{{base_url}}/ride/group/2/plans",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"ride",
 								"group",
-								"20",
-								"subscription"
+								"2",
+								"plans"
 							]
 						}
 					},
@@ -2824,7 +2707,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"order_id\": 348570951\r\n}",
+							"raw": "{\r\n    \"order_id\": 350453357\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2841,6 +2724,241 @@
 								"group",
 								"subscribe",
 								"confirm"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Permissions & Roles",
+					"item": [
+						{
+							"name": "Set new permissions",
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"permissions\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/roles/1/permissions",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"roles",
+										"1",
+										"permissions"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update admin role",
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n\t\"role_id\": 4\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/admins/12/role",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admins",
+										"12",
+										"role"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Get admins",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}/admins",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admins"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create New Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "email",
+									"value": "faded.lover.shadows@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "first_name",
+									"value": "alex",
+									"type": "text"
+								},
+								{
+									"key": "last_name",
+									"value": "thompson",
+									"type": "text"
+								},
+								{
+									"key": "language",
+									"value": "en",
+									"type": "text"
+								},
+								{
+									"key": "profile_pic",
+									"type": "file",
+									"src": "/C:/Users/Ezzeldin Husen/Downloads/class-diagram-elearning.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admins/create",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admins",
+								"create"
+							]
+						},
+						"description": "Register a new user account"
+					},
+					"response": []
+				},
+				{
+					"name": "Admin login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"admin@tride.com\",\r\n    \"password\": \"admin123\",\r\n    \"account_type\":\"admin\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Export all subscriptions as excel",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/payments/export/all?from=2025-05-01&to=2025-07-01",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"payments",
+								"export",
+								"all"
+							],
+							"query": [
+								{
+									"key": "from",
+									"value": "2025-05-01"
+								},
+								{
+									"key": "to",
+									"value": "2025-07-01"
+								}
 							]
 						}
 					},
