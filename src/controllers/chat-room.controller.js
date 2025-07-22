@@ -22,38 +22,39 @@ const { createPagination } = require("../utils/responseHandler");
 const chatController = {
   getCustomerSupportMessages: async (req, res, next) => {
     try {
-      const { page = 1, limit = 10 } = req.query;
-      const userId = req.userId;
+      const { userId, accountType } = req;
+      const { page = 1 } = req.query;
+
+      // validate chatRoomId
       const chatRoom = await ChatRoom.findOne({
-        participants: { $elemMatch: { user_id: userId } },
         room_type: "customer_support",
+        participants: {
+          $elemMatch: {
+            user_id: userId,
+            user_type: accountType
+          }
+        }
       });
 
       if (!chatRoom) {
-        throw new NotFoundError("Customer support chat room not found");
+        throw new NotFoundError("Chat room not found");
       }
 
-      const messages = await ChatMessage.find({
-        chat_room_id: chatRoom._id,
-        is_deleted: false,
-      })
-        .sort({ created_at: -1 })
-        .skip((page - 1) * limit)
-        .limit(parseInt(limit))
-        .populate("reply_to")
-        .lean();
+      const messages = await chatRoom.getMessagesPage(chatRoom._id, page);
 
       if (!messages || messages.length === 0) {
-        return res.success("No messages found in customer support chat room", []);
+        throw new NotFoundError("No messages found in this chat room");
       }
 
-      return res.success(
-        "Customer support messages retrieved successfully",
-        createPagination(messages, req.query)
-      );
+      const pagination = createPagination(Number(page), 10, messages.length);
+
+      return res.success("Messages retrieved successfully", {
+        pagination,
+        messages,
+      });
     } catch (error) {
-      logger.error("Error fetching customer support messages:", error.message);
-      next(error);
+      console.error("Error getting latest messages for customer service room:", error);
+      return next(error);
     }
   },
   createCustomerServiceRoom: async (req, res, next) => {
@@ -703,20 +704,31 @@ const chatController = {
     }
   },
 
+  // TODO: FIX
   getNotificationsPaginated: async (req, res, next) => {
     try {
-      const { page = 1, limit = 10 } = req.body;
+      const { page = 1, limit = 10, readOnly = false } = req.body;
 
-      const { docs: notifications, total: count } = await Notification.paginate(
-        {},
-        {
-          limit,
-          page,
-          sort: { createdAt: -1 },
-        }
-      );
+      const notifications = await Notification.find({
+        accountId: req.userId,
+        isRead: readOnly ? true : { $ne: true }
+      })
+      .sort({ created_at: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
-      const pagination = createPagination(page, limit, count);
+      // Update read status for unread notifications if readOnly is false
+      if (!readOnly) {
+        Notification.updateMany(
+          {
+        accountId: req.userId,
+        isRead: false
+          },
+          { isRead: true }
+        );
+      }
+
+      const pagination = createPagination(page, limit, notifications.length);
 
       return res.success("Notifications fetched", {
         pagination,

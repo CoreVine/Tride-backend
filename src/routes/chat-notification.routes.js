@@ -39,7 +39,7 @@ const messageIdIdSchema = Yup.object().shape({
 });
 
 const notificationFetchSchema = {
-  params: Yup.object().shape({
+  query: Yup.object().shape({
     page: Yup.number().positive().required(),
     limit: Yup.number().positive().required()
   })
@@ -200,7 +200,7 @@ router.post(
 );
 
 router.get(
-  "/me/notification",
+  "/me/notifications",
   authMiddleware,
   validate(notificationFetchSchema),
   chatController.getNotificationsPaginated
@@ -208,13 +208,13 @@ router.get(
 
 
 // Customer service
-router.get(
+router.post(
   "/customer-support/room",
   authMiddleware,
   isOneOf("parent", "driver"),
   chatController.createCustomerServiceRoom
 );
-router.get("/customer-support/messages", 
+router.get("/customer-support/room", 
   authMiddleware,
   isOneOf("parent", "driver"),
   chatController.getCustomerSupportMessages

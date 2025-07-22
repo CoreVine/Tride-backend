@@ -126,7 +126,6 @@ const isAdminWithRole = (role) => {
   };
 }
 
-// TODO: TEST, NOT USED YET
 const isAdminWithPermissions = (permissions, type = "all") => {
   return async (req, res, next) => {
     try {

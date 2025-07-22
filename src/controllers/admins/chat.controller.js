@@ -1,6 +1,7 @@
 const ChatRoom = require("../../mongo-model/ChatRoom");
 const { ROLE_PERMISSION_CHAT_WITH_DRIVER, ROLE_PERMISSION_CHAT_WITH_PARENT } = require("../../utils/constants/admin-permissions");
 const { BadRequestError, NotFoundError } = require("../../utils/errors");
+const { createPagination } = require("../../utils/responseHandler");
 
 const chatController = {
   // TODO: I MUST BE ABLE TO GET CHAT ROOMS WITHOUT BEING A PARTICIPANT!
@@ -50,11 +51,55 @@ const chatController = {
         };
       }));
 
+      const pagination = createPagination(Number(page), Number(limit), chatRooms.length);
+
       return res.success("Customer service rooms retrieved successfully", {
+        pagination,
         chatRoomsWithDetails
       });
     } catch (error) {
       console.error("Error getting customer service room:", error);
+      return next(error);
+    }
+  },
+
+  getLatestMessagesCustomerServiceRoom: async (req, res, next) => {
+    try {
+      const { chatRoomId } = req.params;
+      const { page = 1 } = req.query;
+      const { permissions } = req.account.admin.role;
+
+      const userTypes = permissions.map(p => p.role_permission_name === ROLE_PERMISSION_CHAT_WITH_DRIVER ? "driver" : "parent");
+
+      // validate chatRoomId
+      const chatRoom = await ChatRoom.findOne({
+        _id: chatRoomId,
+        room_type: "customer_support",
+        participants: {
+          $elemMatch: {
+            user_type: { $in: userTypes }
+          }
+        }
+      });
+
+      if (!chatRoom) {
+        throw new NotFoundError("Chat room not found");
+      }
+
+      const messages = await chatRoom.getMessagesPage(chatRoomId, page);
+
+      if (!messages || messages.length === 0) {
+        throw new NotFoundError("No messages found in this chat room");
+      }
+
+      const pagination = createPagination(Number(page), 10, messages.length);
+
+      return res.success("Messages retrieved successfully", {
+        pagination,
+        messages,
+      });
+    } catch (error) {
+      console.error("Error getting latest messages for customer service room:", error);
       return next(error);
     }
   }

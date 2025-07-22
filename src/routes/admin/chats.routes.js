@@ -40,10 +40,11 @@ router.get(
   chatController.getCustomerServiceRooms
 );
 
-// router.get(
-//   "/admin-view/chats/customer-support/rooms/:chatRoomId/messages",
-//   authMiddleware,
-//   chatController.getCustomerServiceRoom
-// );
+router.get(
+  "/admin-view/chats/customer-support/rooms/:chatRoomId/messages",
+  authMiddleware,
+  isAdminWithPermissions([{ type: "name", value: ROLE_PERMISSION_CHAT_WITH_DRIVER }, { type: "name", value: ROLE_PERMISSION_CHAT_WITH_PARENT }], "some"),
+  chatController.getLatestMessagesCustomerServiceRoom
+);
 
 module.exports = router;

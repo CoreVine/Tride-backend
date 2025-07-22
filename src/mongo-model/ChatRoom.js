@@ -110,6 +110,22 @@ chatRoomSchema.methods.getParticipantsProfilePictures = async function () {
   }
 }
 
+// get a pages of 10 messages sorted by created_at
+chatRoomSchema.methods.getMessagesPage = async function (chatRoomId, page = 1) {
+  const limit = 10;
+  const skip = (page - 1) * limit;
+
+  const messages = await mongoose.model("ChatMessage")
+    .find({ chat_room_id: chatRoomId })
+    .sort({ created_at: -1 })
+    .skip(skip)
+    .limit(limit)
+    .populate("reply_to")
+    .lean();
+
+  return messages;
+}
+
 const ChatRoom = mongoose.model("ChatRoom", chatRoomSchema);
 
 module.exports = ChatRoom;
