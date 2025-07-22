@@ -549,6 +549,30 @@ module.exports = {
         invite_code: null,
         group_type: "regular",
       },
+      {
+        id: 6,
+        parent_creator_id: 1,
+        group_name: "Past Morning Ride",
+        created_at: now,
+        updated_at: now,
+        driver_id: null,
+        school_id: 1,
+        current_seats_taken: 1,
+        invite_code: null,
+        group_type: "regular",
+      },
+      {
+        id: 7,
+        parent_creator_id: 1,
+        group_name: "Old Afternoon Ride",
+        created_at: now,
+        updated_at: now,
+        driver_id: null,
+        school_id: 1,
+        current_seats_taken: 1,
+        invite_code: null,
+        group_type: "regular",
+      },
     ];
 
     const defaultParentGroup = [
@@ -559,6 +583,7 @@ module.exports = {
         home_lat: 30.0444,
         home_lng: 31.2357,
         current_seats_taken: 3,
+        status: "new",
       },
       {
         id: 2,
@@ -567,6 +592,7 @@ module.exports = {
         home_lat: 30.0444,
         home_lng: 31.2357,
         current_seats_taken: 2,
+        status: "pending"
       },
       {
         id: 3,
@@ -575,6 +601,7 @@ module.exports = {
         home_lat: 30.0444,
         home_lng: 31.2357,
         current_seats_taken: 1,
+        status: "ready"
       },
       {
         id: 4,
@@ -583,14 +610,34 @@ module.exports = {
         home_lat: 30.0444,
         home_lng: 31.2357,
         current_seats_taken: 2,
+        status: "active"
       },
       {
         id: 5,
         group_id: 5,
-        parent_id: 2,
-        home_lat: 30.0534,
-        home_lng: 31.2447,
+        parent_id: 1,
+        home_lat: 30.0444,
+        home_lng: 31.2357,
         current_seats_taken: 2,
+        status: "inactive"
+      },
+      {
+        id: 6,
+        group_id: 6,
+        parent_id: 1,
+        home_lat: 30.0444,
+        home_lng: 31.2357,
+        current_seats_taken: 1,
+        status: "removed"
+      },
+      {
+        id: 7,
+        group_id: 7,
+        parent_id: 1,
+        home_lat: 30.0444,
+        home_lng: 31.2357,
+        current_seats_taken: 1,
+        status: "expired"
       },
     ];
 
@@ -651,6 +698,22 @@ module.exports = {
         ride_group_detailsid: 5,
         date_day: "Thursday",
       },
+      {
+        ride_group_detailsid: 6,
+        date_day: "Monday",
+      },
+      {
+        ride_group_detailsid: 6,
+        date_day: "Wednesday",
+      },
+      {
+        ride_group_detailsid: 7,
+        date_day: "Tuesday",
+      },
+      {
+        ride_group_detailsid: 7,
+        date_day: "Thursday",
+      },
     ];
 
     const defaultChildrenGroups = [
@@ -704,15 +767,27 @@ module.exports = {
       },
       {
         parent_group_id: 5,
-        child_id: 7,
+        child_id: 1,
         timing_from: "07:30:00",
         timing_to: "13:30:00",
       },
       {
         parent_group_id: 5,
-        child_id: 8,
+        child_id: 2,
         timing_from: "07:45:00",
         timing_to: "13:45:00",
+      },
+      {
+        parent_group_id: 6,
+        child_id: 3,
+        timing_from: "08:00:00",
+        timing_to: "14:00:00",
+      },
+      {
+        parent_group_id: 7,
+        child_id: 4,
+        timing_from: "15:00:00",
+        timing_to: "17:00:00",
       },
     ];
 
@@ -776,7 +851,7 @@ module.exports = {
       },
       {
         id: 5,
-        parent_id: 2,
+        parent_id: 1,
         ride_group_id: 5,
         current_seats_taken: 2,
         pickup_days_count: 3,
@@ -785,6 +860,46 @@ module.exports = {
         plan_id: 1,
         total_amount: 0,
         status: "new",
+      },
+      {
+        id: 6,
+        parent_id: 1,
+        ride_group_id: 6,
+        current_seats_taken: 1,
+        pickup_days_count: 4,
+        started_at: new Date(
+          now.getFullYear(),
+          now.getMonth() - 3,
+          now.getDate()
+        ),
+        valid_until: new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          now.getDate()
+        ),
+        plan_id: 1,
+        total_amount: 800.0,
+        status: "new",
+      },
+      {
+        id: 7,
+        parent_id: 1,
+        ride_group_id: 7,
+        current_seats_taken: 1,
+        pickup_days_count: 3,
+        started_at: new Date(
+          now.getFullYear(),
+          now.getMonth() - 4,
+          now.getDate()
+        ),
+        valid_until: new Date(
+          now.getFullYear(),
+          now.getMonth() - 2,
+          now.getDate()
+        ),
+        plan_id: 1,
+        total_amount: 600.0,
+        status: "pending",
       },
     ];
 

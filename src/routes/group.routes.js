@@ -142,7 +142,7 @@ groupRoutes.put('/ride/group/:rideGroupId/subscription',
     })
   }),
   isParent,
-  checkValidSubscription,
+  // checkValidSubscription,
   RideGroupController.updateCurrentSubscriptionStatus
 );
 
