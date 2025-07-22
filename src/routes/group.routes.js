@@ -113,7 +113,7 @@ groupRoutes.post('/ride/group/add-child',
 );
 
 // TODO: REMOVE GROUP_ID FROM INVITATION CODE
-// not working yet!
+// TODO: not working yet!
 groupRoutes.post('/ride/group/add-parent/:invitation_code', 
   validate(
     {

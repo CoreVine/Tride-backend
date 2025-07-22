@@ -57,6 +57,19 @@ const verifyAndJoinRoom = async (socket, roomId) => {
         }
     }
 
+    // Check if the user is already a participant
+    const isParticipantAlready = chatRoom.participants.some(
+        (p) => p.user_id === socket.userId && p.user_type === socket.accountType
+    );
+
+    // If not, add them as a participant
+    if (!isParticipantAlready) {
+        await chatRoom.addParticipant(socket.userId, socket.accountType, socket.name);
+        logger.info(
+            `[Socket.IO] User ${socket.userId} added as participant to room ${roomId}.`
+        );
+    }
+
     socket.join(roomId);
     logger.info(
         `[Socket.IO] Socket ${socket.id} joined chat room: ${roomId}`

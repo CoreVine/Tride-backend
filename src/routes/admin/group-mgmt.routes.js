@@ -8,7 +8,6 @@ const rideGroupController = require("../../controllers/admins/rideGroup.controll
 
 const groupRouter = Router();
 
-
 groupRouter.put("/manage/ride/group/merge", 
   authMiddleware,
   isAdminWithRole(ADMIN_ROLE_SUPER_ADMIN),
@@ -18,7 +17,8 @@ groupRouter.put("/manage/ride/group/merge",
   })),
   rideGroupController.mergeRideGroups
 );
-groupRouter.get('manage/ride/groups/', 
+groupRouter.get('/manage/ride/groups/',
+  authMiddleware,
   isAdminWithPermissions([{type: "group", value: "Payments"}]), 
   rideGroupController.getRideGroups);
 

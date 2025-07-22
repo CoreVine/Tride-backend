@@ -16,6 +16,8 @@ const ChatRoom = require("../mongo-model/ChatRoom");
 const Notification = require("../mongo-model/Notification");
 const AccountRepository = require("../data-access/accounts");
 const ParentRepository = require("../data-access/parent");
+const RideGroupRepository = require("../data-access/rideGroup");
+const ParentGroupRepository = require("../data-access/parentGroup");
 const DriverRepository = require("../data-access/driver");
 const { createPagination } = require("../utils/responseHandler");
 
@@ -96,21 +98,27 @@ const chatController = {
     }
   },
 
-  getChatRooms: async (req, res, next) => {
+  getChatRoom: async (req, res, next) => {
     try {
       const { rideGroupId } = req.params;
       const userId = req.userId;
       const account = await AccountRepository.findById(req.userId);
+      const rideGroup = await RideGroupRepository.findIfAccountIdInsideGroup(rideGroupId, req.userId, req.accountType);
 
       if (!account) {
         throw new NotFoundError("Account not found");
       }
 
+      
       if (!account.is_verified) {
         throw new ForbiddenError(
           "Account email must be verified before creating a profile"
         );
       }
+      if (!rideGroup) {
+        throw new NotFoundError("Ride group not found");
+      }
+
       let name;
       if (account.account_type === "parent") {
         const parent = await ParentRepository.findByAccountId(req.userId);
@@ -128,6 +136,8 @@ const chatController = {
       if (!chatRoom) {
         chatRoom = new ChatRoom({
           ride_group_id: rideGroupId,
+          name: `Chat Room for ${rideGroup.group_name}`,
+          room_type: "ride_group",
           participants: [
             {
               user_id: userId,
@@ -155,27 +165,41 @@ const chatController = {
   getChatMessages: async (req, res, next) => {
     try {
       const { rideGroupId } = req.params;
-      const { limit = 50, offset = 0 } = req.query;
+      const { page = 1 } = req.query;
+      const account = await AccountRepository.findById(req.userId);
+      const rideGroup = await RideGroupRepository.findIfAccountIdInsideGroup(rideGroupId, req.userId, req.accountType);
+
+      if (!account) {
+        throw new NotFoundError("Account not found");
+      }
+
+      if (!account.is_verified) {
+        throw new ForbiddenError(
+          "Account email must be verified before creating a profile"
+        );
+      }
+
+      if (!rideGroup) {
+        throw new NotFoundError("Ride group not found");
+      }
 
       const chatRoom = await ChatRoom.findOne({ ride_group_id: rideGroupId });
       if (!chatRoom) {
         throw new NotFoundError("Chat room not found");
       }
-      const messages = await ChatMessage.find({
-        chat_room_id: chatRoom._id,
-        is_deleted: false,
-      })
-        .sort({ created_at: -1 })
-        .skip(parseInt(offset))
-        .limit(parseInt(limit))
-        .populate("reply_to");
+      const messages = await chatRoom.getMessagesPage(chatRoom._id, page);
 
       if (!messages) {
         throw new NotFoundError("No messages found in this chat room");
       }
+
+      const pagination = createPagination(Number(page), 10, messages.length);
+
       return res.success(
-        "Chat Messages Retured Successfully",
-        messages.reverse()
+        "Chat Messages Retured Successfully", {
+          pagination,
+          messages
+        }
       );
     } catch (error) {
       logger.error(`Error fetching messages: ${error.message}`);

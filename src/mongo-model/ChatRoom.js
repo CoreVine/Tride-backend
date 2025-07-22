@@ -82,6 +82,8 @@ chatRoomSchema.methods.addParticipant = function (
       user_type: userType,
       name: name,
     });
+
+    return this.save();
   }
 };
 

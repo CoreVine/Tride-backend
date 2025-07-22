@@ -12,7 +12,7 @@ const { isParentSubscriptionValid } = require("../../domain/subscription/subscri
 
 class RideGroupRepository extends BaseRepository {
   constructor() {
-    super(RideGroupModel, isParentSubscriptionValid, ["createNewRideGroup"]);
+    super(RideGroupModel);
   }
 
   async getRideGroupDetails(rideGroupId) {
@@ -398,17 +398,50 @@ class RideGroupRepository extends BaseRepository {
   }
 
   async mergeRideGroups(groupSrcId, groupDestId) {
+    const t = await this.model.sequelize.transaction();
     
     try {
-      const t = await this.model.sequelize.transaction();
       const groupSrc = await this.model.findByPk(groupSrcId, {
-        include: ['parentGroups', 'parent_group_subscription', 'dayDates', 'rideInstances'],
+        include: [
+          {
+            association: 'parentGroups',
+            include: [
+              {
+                association: 'childDetails',
+                include: ['child']
+              }
+            ]
+          },
+          'parent_group_subscription', 
+          'dayDates', 
+          'rideInstances'
+        ],
         transaction: t
       });
-      const groupDest = await this.model.findByPk(groupDestId);
+      const groupDest = await this.model.findByPk(groupDestId, {
+        include: [
+          {
+            association: "parentGroups",
+            include: [
+              {
+                association: 'childDetails'
+              },
+              {
+                association: "parent",
+                attributes: ["account_id"],
+              }
+            ]
+          },
+          {
+            association: "driver",
+            attributes: ["account_id"],
+          },
+        ],
+        transaction: t
+      });
 
       if (!groupSrc || !groupDest || groupSrc.driver_id) {
-        throw new DatabaseError("Cannot merge groups: source or destination group not found or has a driver assigned");
+        throw new BadRequestError("Cannot merge groups: source or destination group not found or has a driver assigned");
       }
 
       if (groupSrc.group_type === 'premium' || groupDest.group_type === 'premium') {
@@ -416,26 +449,65 @@ class RideGroupRepository extends BaseRepository {
       }
       
       if (groupSrc.current_seats_taken + groupDest.current_seats_taken > MAX_SEATS_CAR) {
-        throw new DatabaseError("Unable to merge groups: total seats exceed maximum allowed");
+        throw new BadRequestError("Unable to merge groups: total seats exceed maximum allowed");
       }
 
-      // point source's parent group, subscriptions, and day dates to the destination ride group
-      for (const parentGroup of groupSrc.parentGroups) {
+      // Check for duplicate parents between source and destination groups
+      const destParentIds = new Set(groupDest.parentGroups.map(pg => pg.parent_id));
+      const duplicateParents = groupSrc.parentGroups.filter(pg => destParentIds.has(pg.parent_id));
+      const remainingParentGroups = groupSrc.parentGroups.filter(pg => !destParentIds.has(pg.parent_id));
+      
+      if (duplicateParents.length > 0) {
+        // For each duplicate parent, merge their data into the existing parent group in destination
+        for (const duplicateParent of duplicateParents) {
+          const existingParentGroup = groupDest.parentGroups.find(pg => pg.parent_id === duplicateParent.parent_id);
+          
+          if (existingParentGroup && duplicateParent.childDetails?.length > 0) {
+            // Update child details to point to the existing parent group in destination
+            for (const childDetail of duplicateParent.childDetails) {
+              childDetail.parent_group_id = existingParentGroup.id;
+              await childDetail.save({ transaction: t });
+            }
+            
+            // Update the existing parent group's seat count
+            existingParentGroup.current_seats_taken += duplicateParent.current_seats_taken;
+            await existingParentGroup.save({ transaction: t });
+          }
+          
+          // Remove the duplicate parent group after moving its data
+          await duplicateParent.destroy({ transaction: t });
+        }
+      }
+
+      // Move remaining parent groups to destination
+      for (const parentGroup of remainingParentGroups) {
         parentGroup.group_id = groupDest.id;
         await parentGroup.save({ transaction: t });
       }
-      for (const subscription of groupSrc.parent_group_subscription) {
+      
+      // Handle subscriptions - only move non-duplicate parent subscriptions
+      const remainingParentIds = new Set(remainingParentGroups.map(pg => pg.parent_id));
+      const subscriptionsToMove = groupSrc.parent_group_subscription.filter(sub => remainingParentIds.has(sub.parent_id));
+      for (const subscription of subscriptionsToMove) {
         subscription.ride_group_id = groupDest.id;
         await subscription.save({ transaction: t });
       }
+      
+      // Remove subscriptions for duplicate parents (they should keep their existing subscriptions in destination)
+      const duplicateSubscriptions = groupSrc.parent_group_subscription.filter(sub => !remainingParentIds.has(sub.parent_id));
+      for (const subscription of duplicateSubscriptions) {
+        await subscription.destroy({ transaction: t });
+      }
+
+      // ...existing code for dayDates and rideInstances...
       for (const dayDate of groupSrc.dayDates) {
         try {
           dayDate.ride_group_detailsid = groupDest.id;
           await dayDate.save({ transaction: t });
         } catch (error) {
           if (error.name === 'SequelizeUniqueConstraintError') {
-            // destroy the day date if it already exists in the destination group
-            dayDate.destroy({ transaction: t });
+            // destroy the day date if it already exists in the destination group, and continue
+            await dayDate.destroy({ transaction: t });
           } else {
             throw error;
           }
@@ -447,6 +519,28 @@ class RideGroupRepository extends BaseRepository {
         await rideInstance.save({ transaction: t });
       }
 
+      // make an array of participants for the chat room
+      const participants = [
+        ...remainingParentGroups.map(pg => ({
+          user_id: pg.parent.account_id,
+          user_type: "parent",
+          name: pg.parent.name || null
+        })),
+        ...groupDest.parentGroups.map(pg => ({
+          user_id: pg.parent.account_id,
+          user_type: "parent",
+          name: pg.parent.name || null
+        })),
+      ];
+
+      if (groupDest.driver_id) {
+        participants.push({
+          user_id: groupSrc.driver.account_id,
+          user_type: "driver",
+          name: groupSrc.driver.name || null
+        });
+      }
+
       // Update the current seats taken in the destination group
       groupDest.current_seats_taken += groupSrc.current_seats_taken;
       await groupDest.save({ transaction: t });
@@ -455,6 +549,11 @@ class RideGroupRepository extends BaseRepository {
       await groupSrc.destroy({ transaction: t });
 
       await t.commit();
+
+      return {
+        participants,
+        groupName: groupDest.group_name || `Chat Room for ${groupDest.id}`,
+      };
     } catch (error) {
       await t.rollback();
       throw error;

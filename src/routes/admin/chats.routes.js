@@ -11,11 +11,16 @@ const { checkValidSubscription } = require("../../middlewares/subscription.middl
 const { isAdminWithPermissions } = require("../../middlewares/isAccount.middleware");
 const { ROLE_PERMISSION_CHAT_WITH_DRIVER, ROLE_PERMISSION_CHAT_WITH_PARENT, ROLE_PERMISSION_VIEW_CHAT_HISTORY } = require("../../utils/constants/admin-permissions");
 
-const rideGroupIdSchema = {
+const getOneRideGroupChatRoomSchema = {
+  params: Yup.object().shape({
+    rideGroupId: Yup.string().required()
+  })
+};
+
+const getRideGroupChatRoomsSchema = {
   query: Yup.object().shape({
-    rideGroupId: Yup.string().required("Ride Group ID is required."),
-    page: Yup.number().positive().required(),
-    limit: Yup.number().positive().required()
+    page: Yup.number().positive().optional(),
+    limit: Yup.number().positive().optional()
   })
 };
 
@@ -23,8 +28,16 @@ router.get(
   "/admin-view/chats/ride-groups",
   authMiddleware,
   isAdminWithPermissions([{ type: "name", value: ROLE_PERMISSION_VIEW_CHAT_HISTORY }]),
-  validate(rideGroupIdSchema),
+  validate(getRideGroupChatRoomsSchema),
   chatController.getChatRooms
+);
+
+router.get(
+  "/admin-view/chats/ride-groups/:rideGroupId/messages",
+  authMiddleware,
+  isAdminWithPermissions([{ type: "name", value: ROLE_PERMISSION_VIEW_CHAT_HISTORY }]),
+  validate(getOneRideGroupChatRoomSchema),
+  chatController.getChatRoomMessages
 );
 
 router.get(

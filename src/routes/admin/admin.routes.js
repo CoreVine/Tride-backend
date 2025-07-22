@@ -48,7 +48,6 @@ const updateAdminRoleSchema = {
 
 const adminRouter = Router();
 
-// TODO: ALLOW ONLY SUPER ADMIN TO CREATE NEW ADMINS
 adminRouter.post('/admins/create',
     authMiddleware,
     isAdminWithRole(ADMIN_ROLE_SUPER_ADMIN),

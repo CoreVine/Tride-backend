@@ -9,7 +9,8 @@ const validate = require("../middlewares/validation.middleware");
 const Yup = require("yup");
 const { isInsideChat } = require("../middlewares/chatAuthorize.middleware");
 const { checkValidSubscription } = require("../middlewares/subscription.middleware");
-const { isOneOf } = require("../middlewares/isAccount.middleware");
+const { isOneOf, isAdminWithRole } = require("../middlewares/isAccount.middleware");
+const { ADMIN_ROLE_SUPER_ADMIN } = require("../utils/constants/admin-roles");
 
 const rideGroupIdSchema = Yup.object().shape({
   rideGroupId: Yup.string()
@@ -117,30 +118,24 @@ const notificationSchema = Yup.object().shape({
   related_entity_type: Yup.string().nullable().optional(),
   related_entity_id: Yup.mixed()
     .nullable()
-    .optional()
-    .test(
-      "is-string-or-number-or-null",
-      "Related Entity ID must be a string, a number, or null",
-      (value) =>
-        value === null || typeof value === "string" || typeof value === "number"
-    ),
+    .optional(),
   metadata: Yup.object().nullable().optional(),
 });
 
 // Get or create chat room for a ride group
-// TODO: ADD AUTHORIZATION HERE
 router.get(
   "/ride-group/:rideGroupId/room",
   authMiddleware,
   // checkValidSubscription,
   validate(rideGroupIdSchema, "params"), // Validate rideGroupId in params
-  chatController.getChatRooms
+  chatController.getChatRoom
 );
 
 // Get chat messages
 router.get(
   "/ride-group/:rideGroupId/messages",
   authMiddleware,
+  isInsideChat,
   // checkValidSubscription,
   validate(rideGroupIdSchema, "params"), // Validate rideGroupId in params
   chatController.getChatMessages
@@ -195,6 +190,7 @@ router.delete(
 router.post(
   "/test/notification",
   authMiddleware,
+  isAdminWithRole(ADMIN_ROLE_SUPER_ADMIN),
   validate(notificationSchema, "body"),
   chatController.sendTestNotification
 );

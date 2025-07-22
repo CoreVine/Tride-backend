@@ -4,21 +4,53 @@ const { BadRequestError, NotFoundError } = require("../../utils/errors");
 const { createPagination } = require("../../utils/responseHandler");
 
 const chatController = {
-  // TODO: I MUST BE ABLE TO GET CHAT ROOMS WITHOUT BEING A PARTICIPANT!
   getChatRooms: async (req, res, next) => {
     try {
-      const { rideGroupId } = req.params;
-      const userId = req.userId;
+      const { page = 1, limit = 10 } = req.query;
 
-      if (!rideGroupId) {
-        throw new BadRequestError("Ride group ID is required");
-      }
-
-      const chatRooms = await ChatRoom.find({ ride_group_id: rideGroupId, participants: { $elemMatch: { user_id: userId } } });
+      // Fetch chat rooms based on user type
+      const chatRooms = await ChatRoom.find({
+        room_type: "ride_group",
+      })
+      .sort({ updated_at: -1, created_at: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
 
       return res.success("Chat rooms retrieved successfully", chatRooms);
     } catch (error) {
       console.error("Error getting chat rooms:", error);
+      return next(error);
+    }
+  },
+  getChatRoomMessages: async (req, res, next) => {
+    try {
+      const { rideGroupId } = req.params;
+      const { page = 1 } = req.query;
+
+      // Fetch chat room for the ride group
+      const chatRoom = await ChatRoom.findOne({
+        ride_group_id: rideGroupId,
+        room_type: "ride_group"
+      });
+
+      if (!chatRoom) {
+        throw new NotFoundError("Chat room not found for this ride group");
+      }
+
+      const messages = await chatRoom.getMessagesPage(chatRoom._id, page);
+
+      if (!messages || messages.length === 0) {
+        throw new NotFoundError("No messages found in this chat room");
+      }
+
+      const pagination = createPagination(Number(page), 10, messages.length);
+
+      return res.success("Messages retrieved successfully", {
+        pagination,
+        messages,
+      });
+    } catch (error) {
+      console.error("Error getting chat room messages:", error);
       return next(error);
     }
   },

@@ -5,10 +5,15 @@ const { ROLE_PERMISSION_CHAT_WITH_PARENT, ROLE_PERMISSION_CHAT_WITH_DRIVER } = r
 
 const isInsideChat = async (req, res, next) => {
     try {
-        const { chatRoomId } = req.params;
+        const { chatRoomId, rideGroupId } = req.params;
         const userId = req.userId;
     
-        const chatRoom = await ChatRoom.findById(chatRoomId);
+        const chatRoom = await ChatRoom.findOne({ 
+            $or: [
+            { _id: chatRoomId }, 
+            { ride_group_id: rideGroupId }
+            ]
+        });
     
         if (!chatRoom) {
             throw new NotFoundError("Chat room not found");
