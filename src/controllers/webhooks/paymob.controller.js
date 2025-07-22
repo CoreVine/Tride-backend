@@ -1,6 +1,7 @@
 const { verifyPaymentSignature } = require("../../utils/payment/paymob");
 const ParentGroupSubscriptionRepository = require("../../data-access/parentGroupSubscription");
 const ParentGroupRepository = require("../../data-access/parentGroup");
+const RideGroupRepository = require("../../data-access/rideGroup");
 const redisService = require("../../services/redis.service");
 
 const paymobController = {
@@ -74,9 +75,24 @@ const paymobController = {
                 console.log('Subscription extended successfully');
             }
 
-            if (rideGroup.status !== 'ready') {
-                await ParentGroupRepository.updateParentGroupStatus(extra.parent_group_id, 'ready');
+            // Get the ride group to check if it's premium or regular
+            const rideGroup = await RideGroupRepository.findById(extra.ride_group_id);
+            
+            if (!rideGroup) {
+                throw new Error('Ride group not found');
             }
+            
+            // Update parent group status based on group type
+            if (rideGroup.group_type === 'premium') {
+                // Premium groups: update to 'ready' immediately
+                await ParentGroupRepository.updateParentGroupStatus(extra.parent_group_id, 'ready');
+                console.log(`Premium group: Updated parent group ${extra.parent_group_id} status to 'ready'`);
+            } else {
+                // Regular groups: update to 'pending' (waiting for all parents to pay)
+                await ParentGroupRepository.updateParentGroupStatus(extra.parent_group_id, 'pending');
+                console.log(`Regular group: Updated parent group ${extra.parent_group_id} status to 'pending'`);
+            }
+            
             return res.success('Payment processed successfully');
         } catch (error) {
             console.error('Error processing Paymob webhook:', error);
