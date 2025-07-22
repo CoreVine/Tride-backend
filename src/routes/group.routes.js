@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const authMiddleware = require("../middlewares/auth.middleware");
 const verifiedEmailRequired = require("../middlewares/verifiedEmailRequired.middleware");
-const { isParent, arePapersVerified, isAdminWithPermissions } = require("../middlewares/isAccount.middleware");
+const { isParent, arePapersVerified } = require("../middlewares/isAccount.middleware");
 const validate = require("../middlewares/validation.middleware");
 const Yup = require("yup");
 const RideGroupController = require("../controllers/rideGroup.controller");
@@ -111,7 +111,6 @@ groupRoutes.put('/ride/group/parent-group/:parentGroupId/status',
   RideGroupController.updateParentGroupStatus
 );
 groupRoutes.get('/ride/group/:rideGroupId', isParent, RideGroupController.getRideGroupById); //send stats
-groupRoutes.get('/ride/groups/', isAdminWithPermissions([{type: "group", value: "Payments"}]), RideGroupController.getRideGroups);
 groupRoutes.get('/ride/groups/by-parent/:parentId', isParent, arePapersVerified, RideGroupController.getRideGroupsByParentId);
 groupRoutes.post('/ride/group/create',
   isParent,
