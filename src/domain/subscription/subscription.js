@@ -84,7 +84,6 @@ const getPriceFactors = async (details) => {
 const isParentSubscriptionValid = async (accountId, rideGroupId) => {
   try {
     const subscription = await parentGroupSubscriptionRepository.findByAccountIdAndGroupId(accountId, rideGroupId);
-    console.log("wow", rideGroupId, subscription, subscription.valid_until);
     if (!subscription || subscription.status !== 'paid') {
       throw new ForbiddenError("Parent subscription is invalid or has expired");
     }

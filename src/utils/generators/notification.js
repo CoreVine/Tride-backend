@@ -78,7 +78,7 @@ async function sendNotificationTo({ accountIds, type, title, message, related_en
 
         return results;
     } catch (error) {
-        logger.error("Test notification error", {
+        logger.error("Notification error", {
             error: error.message,
             stack: error.stack,
         });

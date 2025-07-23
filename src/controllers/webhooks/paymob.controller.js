@@ -1,5 +1,6 @@
 const { verifyPaymentSignature } = require("../../utils/payment/paymob");
 const ParentGroupSubscriptionRepository = require("../../data-access/parentGroupSubscription");
+const ParentGroupRepository = require("../../data-access/parentGroup");
 const RideGroupRepository = require("../../data-access/rideGroup");
 const redisService = require("../../services/redis.service");
 
@@ -9,25 +10,20 @@ const paymobController = {
             // HMAC verification
             const is_valid = verifyPaymentSignature(req.body.obj, req.query.hmac);
             if (!is_valid) {
-                throw new Error('Invalid HMAC signature');
+                return res.error('Invalid HMAC signature', null, 400);
             }
 
             // extract payment details
             const { payment_key_claims: { extra } } = req.body.obj;
     
             if(!extra)
-                throw new Error('Missing extra data in payment claims');
+                return res.error('Missing extra data in payment claims', null, 400);
 
             // Check if group is ready to accept a driver
-            const rideGroup = await RideGroupRepository.findById(extra.ride_group_id);
+            const parentGroup = await ParentGroupRepository.findById(extra.parent_group_id);
 
-            if (!rideGroup) {
-                return res.error('Ride group is full or does not exist', null, 400);
-            }
-
-            if (Number(rideGroup.current_seats_taken) === 5) {
-                // update the ride group status to 'ready'
-                await RideGroupRepository.updateRideGroupStatus(extra.ride_group_id, 'ready');
+            if (!parentGroup) {
+                return res.error('Ride group does not exist', null, 400);
             }
 
     
@@ -79,24 +75,24 @@ const paymobController = {
                 console.log('Subscription extended successfully');
             }
 
-            let rideGroupStatus = 'pending';
-
-            if (rideGroup.group_type === 'regular') {
-                // check if all parents had paid
-                const allPaid = await ParentGroupSubscriptionRepository.checkAllParentsPaid(rideGroup.id);
-
-                // if all paid, set the ride group status to 'ready'
-                // otherwise, it remains 'pending'
-                if (allPaid) {
-                    rideGroupStatus = 'ready';
-                }
+            // Get the ride group to check if it's premium or regular
+            const rideGroup = await RideGroupRepository.findById(extra.ride_group_id);
+            
+            if (!rideGroup) {
+                throw new Error('Ride group not found');
+            }
+            
+            // Update parent group status based on group type
+            if (rideGroup.group_type === 'premium') {
+                // Premium groups: update to 'ready' immediately
+                await ParentGroupRepository.updateParentGroupStatus(extra.parent_group_id, 'ready');
+                console.log(`Premium group: Updated parent group ${extra.parent_group_id} status to 'ready'`);
             } else {
-                // For 'premium' owned car groups, we set the status to 'ready' immediately
-                rideGroupStatus = 'ready';
+                // Regular groups: update to 'pending' (waiting for all parents to pay)
+                await ParentGroupRepository.updateParentGroupStatus(extra.parent_group_id, 'pending');
+                console.log(`Regular group: Updated parent group ${extra.parent_group_id} status to 'pending'`);
             }
-            if (rideGroup.status !== rideGroupStatus) {
-                await RideGroupRepository.updateRideGroupStatus(rideGroup.id, rideGroupStatus);
-            }
+            
             return res.success('Payment processed successfully');
         } catch (error) {
             console.error('Error processing Paymob webhook:', error);

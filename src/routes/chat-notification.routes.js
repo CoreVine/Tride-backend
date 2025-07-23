@@ -9,6 +9,8 @@ const validate = require("../middlewares/validation.middleware");
 const Yup = require("yup");
 const { isInsideChat } = require("../middlewares/chatAuthorize.middleware");
 const { checkValidSubscription } = require("../middlewares/subscription.middleware");
+const { isOneOf, isAdminWithRole } = require("../middlewares/isAccount.middleware");
+const { ADMIN_ROLE_SUPER_ADMIN } = require("../utils/constants/admin-roles");
 
 const rideGroupIdSchema = Yup.object().shape({
   rideGroupId: Yup.string()
@@ -38,7 +40,7 @@ const messageIdIdSchema = Yup.object().shape({
 });
 
 const notificationFetchSchema = {
-  params: Yup.object().shape({
+  query: Yup.object().shape({
     page: Yup.number().positive().required(),
     limit: Yup.number().positive().required()
   })
@@ -116,31 +118,25 @@ const notificationSchema = Yup.object().shape({
   related_entity_type: Yup.string().nullable().optional(),
   related_entity_id: Yup.mixed()
     .nullable()
-    .optional()
-    .test(
-      "is-string-or-number-or-null",
-      "Related Entity ID must be a string, a number, or null",
-      (value) =>
-        value === null || typeof value === "string" || typeof value === "number"
-    ),
+    .optional(),
   metadata: Yup.object().nullable().optional(),
 });
 
 // Get or create chat room for a ride group
-// TODO: ADD AUTHORIZATION HERE
 router.get(
   "/ride-group/:rideGroupId/room",
   authMiddleware,
-  checkValidSubscription,
+  // checkValidSubscription,
   validate(rideGroupIdSchema, "params"), // Validate rideGroupId in params
-  chatController.getChatRooms
+  chatController.getChatRoom
 );
 
 // Get chat messages
 router.get(
   "/ride-group/:rideGroupId/messages",
   authMiddleware,
-  checkValidSubscription,
+  isInsideChat,
+  // checkValidSubscription,
   validate(rideGroupIdSchema, "params"), // Validate rideGroupId in params
   chatController.getChatMessages
 );
@@ -149,7 +145,7 @@ router.get(
 router.post(
   "/messages/upload",
   authMiddleware,
-  checkValidSubscription,
+  // checkValidSubscription,
   upload.single("file"), // `upload` here is the Multer instance from destructuring
   chatController.uploadFile
 );
@@ -158,7 +154,7 @@ router.post(
 router.post(
   "/messages/:chatRoomId/media",
   authMiddleware,
-  checkValidSubscription,
+  // checkValidSubscription,
   validate(chatRoomIdSchema, "params"),
   upload.single("file"),
   chatController.asssginMediaMeta,
@@ -168,7 +164,13 @@ router.post(
 router.post(
   "/messages/:chatRoomId/message",
   authMiddleware,
-  checkValidSubscription,
+  (req, res, next) => {
+    req.resourceRequested = "chat";
+    req.resourceId = req.params.chatRoomId;
+
+    next();
+  },
+  // checkValidSubscription,
   isInsideChat,
   validate(chatRoomIdSchema, "params"),
   validate(chatMessageValidationSchema, "body"),
@@ -178,7 +180,7 @@ router.post(
 router.delete(
   "/messages/:messageId",
   validate(messageIdIdSchema, "params"),
-  checkValidSubscription,
+  // checkValidSubscription,
   authMiddleware,
   chatController.deleteMessage
 );
@@ -188,15 +190,30 @@ router.delete(
 router.post(
   "/test/notification",
   authMiddleware,
+  isAdminWithRole(ADMIN_ROLE_SUPER_ADMIN),
   validate(notificationSchema, "body"),
   chatController.sendTestNotification
 );
 
 router.get(
-  "/me/notification",
+  "/me/notifications",
   authMiddleware,
   validate(notificationFetchSchema),
   chatController.getNotificationsPaginated
+);
+
+
+// Customer service
+router.post(
+  "/customer-support/room",
+  authMiddleware,
+  isOneOf("parent", "driver"),
+  chatController.createCustomerServiceRoom
+);
+router.get("/customer-support/room", 
+  authMiddleware,
+  isOneOf("parent", "driver"),
+  chatController.getCustomerSupportMessages
 );
 
 module.exports = router;

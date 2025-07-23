@@ -20,6 +20,22 @@ class ParentGroupRepository extends BaseRepository {
         }
     }
 
+    async updateParentGroupStatus(parentGroupId, status) {
+        try {
+          const parentGroup = await this.model.findByPk(parentGroupId);
+          if (!parentGroup) {
+            throw new DatabaseError("Parent group not found");
+          }
+    
+          parentGroup.status = status;
+          await parentGroup.save();
+    
+          return parentGroup;
+        } catch (error) {
+          throw new DatabaseError(error);
+        }
+      }
+
     async getSeatsTaken(groupId, parentId) {
         try {
             const parentGroup = await this.findByGroupAndParentId(groupId, parentId);

@@ -238,31 +238,33 @@ const authController = {
         }
       }
 
-      // TODO: Refactor all mongoose models into data-access layer
-      // register device token to get notifications
-      let tokensDoc = await AccountsFirebaseTokens.findOne({
-        account_id: account.id,
-      });
-
-      if (!tokensDoc) {
-        tokensDoc = await AccountsFirebaseTokens.create({
+      if (account.account_type !== "admin") {
+        // TODO: Refactor all mongoose models into data-access layer
+        // register device token to get notifications
+        let tokensDoc = await AccountsFirebaseTokens.findOne({
           account_id: account.id,
-          tokens: [],
         });
-      }
 
-      // Add device token if not already present
-      if (!tokensDoc.tokens.includes(device_token)) {
-        if (tokensDoc.tokens.length == 20) {
-          tokensDoc.tokens.shift();
+        if (!tokensDoc) {
+          tokensDoc = await AccountsFirebaseTokens.create({
+            account_id: account.id,
+            tokens: [],
+          });
         }
 
-        tokensDoc.tokens = [...tokensDoc.tokens, device_token];
-        await tokensDoc.save();
-      }
+        // Add device token if not already present
+        if (!tokensDoc.tokens.includes(device_token)) {
+          if (tokensDoc.tokens.length == 20) {
+            tokensDoc.tokens.shift();
+          }
 
-      // Store device token in Redis for quick access
-      await redisService.upsertDeviceTokens(account.id, tokensDoc.tokens);
+          tokensDoc.tokens = [...tokensDoc.tokens, device_token];
+          await tokensDoc.save();
+        }
+
+        // Store device token in Redis for quick access
+        await redisService.upsertDeviceTokens(account.id, tokensDoc.tokens);
+      }
 
       // Add claims to token for profile type
       const jwtResponse = JwtService.jwtSign(account.id, {
