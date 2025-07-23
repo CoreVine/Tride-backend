@@ -7,7 +7,7 @@ const ChildrenGroupDetailsRepository = require("../data-access/childGroupDetails
 const PlanRepository = require("../data-access/plan");
 const ParentGroupSubscriptionRepository = require("../data-access/parentGroupSubscription");
 const loggingService = require("../services/logging.service");
-const { createPagination } = require("../utils/responseHandler");
+const SchoolRepository = require("../data-access/school");
 const {
   BadRequestError,
   NotFoundError,
@@ -15,6 +15,7 @@ const {
 } = require("../utils/errors/types/Api.error");
 const paymobUtil = require("../utils/payment/paymob");
 const redisService = require("../services/redis.service");
+const openRouteUtil = require("../utils/openRoutesService");
 const subscriptionDomain = require("../domain/subscription/subscription");
 const { MAX_SEATS_CAR } = require("../config/upload/constants");
 const logger = loggingService.getLogger();
@@ -488,6 +489,30 @@ const RideGroupController = {
       if (req.body.group_type === 'premium') {
         inviteCode = await RideGroupRepository.generateUniqueInviteCode();
       }
+
+      // check before creation if the distance can be calculated
+      const school = await SchoolRepository.findById(req.body.school_id);
+
+      if (!school) {
+        throw new NotFoundError("School not found");
+      }
+
+      if (!school.lat || !school.lng) {
+        throw new BadRequestError("School location is not set");
+      }
+
+      const points = {
+        lat_lng_house: [
+          parseFloat(req.body.home.home_lng),
+          parseFloat(req.body.home.home_lat),
+        ],
+        lat_lng_school: [
+          parseFloat(school.lng),
+          parseFloat(school.lat),
+        ],
+      };
+
+      await openRouteUtil.getDistanceForRide(points);
       // create a new ride group
       const payload = {
         rideGroupPayload: {

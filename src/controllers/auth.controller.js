@@ -71,7 +71,9 @@ const authController = {
       // If email verification is required, send verification code
       if (emailVerificationRequired) {
         // Generate a verification code
-        const code = emailService.generateVerificationCode();
+        // const code = emailService.generateVerificationCode();
+        // DEBUG: Use a fixed code for testing purposes
+        const code = "111111"; // Replace with emailService.generateVerificationCode() in
         const expiresAt = getEmailVerificationExpiration();
 
         // Save the verification code
