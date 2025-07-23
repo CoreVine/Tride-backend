@@ -70,7 +70,7 @@ authRoutes.post("/auth/login", validate(loginSchema), authController.login);
 authRoutes.post("/auth/register/firebase/device-token", authMiddleware, validate(deviceTokenSchema), authController.registerDeviceToken);
 
 // remove device token
-authRoutes.post("/auth/remove/firebase/device-token", authMiddleware, validate(deviceTokenSchema), authController.removeDeviceToken);
+authRoutes.delete("/auth/remove/firebase/device-token", authMiddleware, validate(deviceTokenSchema), authController.removeDeviceToken);
 
 authRoutes.post(
   "/auth/refresh",
