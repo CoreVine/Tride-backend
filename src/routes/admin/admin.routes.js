@@ -48,8 +48,8 @@ adminRouter.post(
   isAdminWithRole(ADMIN_ROLE_SUPER_ADMIN),
   adminProfileUploader.single("profile_pic"),
   async (req, res, next) => {
-    req.fromAdminCreation = true
-    req.body.account_type = "admin"
+    req.fromAdminCreation = true; // Flag to indicate this is an admin creation request
+    req.body.account_type = "admin"; // Set account type to admin
     return next()
   },
   validate(createNewAdminSchema),

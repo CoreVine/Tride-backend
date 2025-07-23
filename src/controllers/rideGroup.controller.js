@@ -132,7 +132,10 @@ const RideGroupController = {
         seatsTaken,
         totalDays,
         overallPrice,
-        toPayPrice
+        toPayPrice,
+        {
+          parent_group_id: rideGroup.parentGroups[0].id,
+        }
       );
 
       const { clientSecret, orderId } = await paymobUtil.requestPaymentToken(
@@ -414,27 +417,6 @@ const RideGroupController = {
         stack: error.stack,
       });
       return next(new NotFoundError("Ride group not found"));
-    }
-  },
-
-  getRideGroups: async (req, res, next) => {
-    try {
-      const { page = 1, limit = 10 } = req.query;
-      const { count, rows: rideGroups } = await RideGroupRepository.findAllDetailedPaginated(parseInt(page), parseInt(limit));
-
-      if (!rideGroups || rideGroups.length === 0) {
-        return res.success("No ride groups found for this parent", { rideGroups: [] });
-      }
-      
-      const pagination = createPagination(page, limit, count);
-
-      return res.success("Ride groups fetched successfully", { pagination, rideGroups });
-    } catch (error) {
-      logger.error("Error fetching ride groups", {
-        error: error.message,
-        stack: error.stack,
-      });
-      return next(error);
     }
   },
 
@@ -806,6 +788,44 @@ const RideGroupController = {
       });
     } catch (error) {
       logger.error("Error fetching next payment details", {
+        error: error.message,
+        stack: error.stack,
+      });
+      return next(error);
+    }
+  },
+
+  updateParentGroupStatus: async (req, res, next) => {
+    const { parentGroupId } = req.params;
+    const { status } = req.body;
+
+    try {
+      if (!req.account.parent) {
+        throw new ForbiddenError(
+          "Account email must be verified, have a valid parent profile"
+        );
+      }
+
+      // Get the parent group details
+      const parentGroup = await ParentGroupRepository.findById(parentGroupId);
+
+      if (!parentGroup) {
+        throw new NotFoundError("Parent group not found");
+      }
+
+      // Check if the user has permission to update this parent group
+      if (parentGroup.parent_id !== req.account.parent.id) {
+        throw new ForbiddenError("You don't have permission to update this parent group");
+      }
+
+      // Update the parent group status
+      await ParentGroupRepository.update(parentGroupId, {
+        status,
+      });
+
+      return res.success("Parent group status updated successfully", {});
+    } catch (error) {
+      logger.error("Error updating parent group status", {
         error: error.message,
         stack: error.stack,
       });

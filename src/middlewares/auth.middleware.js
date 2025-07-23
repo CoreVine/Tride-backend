@@ -1,6 +1,7 @@
 const loggingService = require("../services/logging.service");
 const JwtService = require("../services/jwt.service");
 const { BadTokenError } = require("../utils/errors/types/Api.error");
+const AdminRepository = require("../data-access/admin");
 
 const logger = loggingService.getLogger();
 
@@ -30,9 +31,30 @@ const authMiddleware = async (req, res, next) => {
       req.userId = decoded.id;
       req.accountType = decoded.accountType;
 
+
+      // admin permissions are added to the request object
+      if (decoded.accountType === "admin") {
+        // Fetch admin permissions from the database
+        const admin = await AdminRepository.getPermissionsByAccountId(req.userId);
+
+        if (admin) {
+          req.admin = {
+            id: admin.id,
+            role: admin.role.role_name,
+            permissions: admin.role.permissions.map(p => ({
+              id: p.id,
+              group: p.role_permission_group,
+              name: p.role_permission_name
+            }))
+          };
+        } else {
+          logger.warn("[Auth] Admin not found for user ID:", req.userId);
+        }
+      }
+
       return next();
     } catch (error) {
-      logger.error("[Auth] Token verification failed:", error.message);
+      logger.error(`[Auth] Token verification failed: ${error.message}`);
       return next(
         new BadTokenError(`Token verification failed: ${error.message}`)
       );

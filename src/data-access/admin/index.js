@@ -69,6 +69,37 @@ class AdminRepository extends BaseRepository {
     }    
   }
 
+  async getPermissionsByAccountId(accountId) {
+    try {
+      const admin = await this.model.findOne({
+        where: { account_id: accountId },
+        include: [
+          {
+            model: AdminRolesModel,
+            as: 'role',
+            include: [
+              {
+                model: AdminPermissionModel,
+                as: 'permissions',
+                attributes: ['id', 'role_permission_group', 'role_permission_name']
+              }
+            ],
+            attributes: ['id', 'role_name']
+          }
+        ],
+        attributes: ['id', 'account_id', 'created_at', 'updated_at']
+      });
+
+      if (!admin) {
+        throw new NotFoundError("Admin not found for the given account ID");
+      }
+
+      return admin;
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
   async findByIdIncludeDetails(selfAdminId, options = {}) {
     try {
       const admins = await this.model.findOne({
