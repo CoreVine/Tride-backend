@@ -11,12 +11,7 @@ const Yup = require("yup");
 const loginSchema = Yup.object().shape({
   email: Yup.string().email().required(),
   password: Yup.string().required(),
-  account_type: Yup.string().oneOf(["parent", "driver", "admin"]).default("parent"),
-  device_token: Yup.string().when("account_type", (account_type, schema) => {
-    return account_type[0] !== "admin"
-      ? schema.required("Device token is required for non-admin accounts.")
-      : schema.notRequired();
-  }),
+  account_type: Yup.string().oneOf(["parent", "driver", "admin"]).default("parent")
 });
 
 const registerSchema = Yup.object().shape({
@@ -45,6 +40,10 @@ const emailVerificationSchema = Yup.object().shape({
   code: Yup.string().length(6).required(),
 });
 
+const deviceTokenSchema = Yup.object().shape({
+  device_token: Yup.string().required("Device token is required for removal."),
+});
+
 // Social auth schemas
 const googleAuthSchema = Yup.object().shape({
   idToken: Yup.string().required(),
@@ -67,17 +66,19 @@ authRoutes.post(
 
 authRoutes.post("/auth/login", validate(loginSchema), authController.login);
 
+// register device tokens
+authRoutes.post("/auth/register/firebase/device-token", authMiddleware, validate(deviceTokenSchema), authController.registerDeviceToken);
+
+// remove device token
+authRoutes.post("/auth/remove/firebase/device-token", authMiddleware, validate(deviceTokenSchema), authController.removeDeviceToken);
+
 authRoutes.post(
   "/auth/refresh",
   verifiedEmailRequired,
   authController.refreshToken
 );
 
-authRoutes.post("/auth/logout", validate({
-  body: Yup.object().shape({
-    device_token: Yup.string().required("Device token is required for logout."),
-  }),
-}), authController.logout);
+authRoutes.post("/auth/logout", authMiddleware, authController.logout);
 
 // Get current user - requires verified email
 authRoutes.get(

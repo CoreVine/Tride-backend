@@ -170,9 +170,80 @@ const authController = {
     }
   },
 
+  registerDeviceToken: async (req, res, next) => {
+    const { userId } = req;
+    const { device_token } = req.body;
+    
+    try {
+      const account = await AccountRepository.findById(userId);
+      if (!account) {
+        logger.warn("Device token registration failed - account not found");
+        throw new NotFoundError("Account not found");
+      }
+  
+      // TODO: Refactor all mongoose models into data-access layer
+      // register device token to get notifications
+      let tokensDoc = await AccountsFirebaseTokens.findOne({
+        account_id: account.id,
+      });
+  
+      if (!tokensDoc) {
+        tokensDoc = await AccountsFirebaseTokens.create({
+          account_id: account.id,
+          tokens: [],
+        });
+      }
+  
+      // Add device token if not already present
+      if (!tokensDoc.tokens.includes(device_token)) {
+        if (tokensDoc.tokens.length == 20) {
+          tokensDoc.tokens.shift();
+        }
+  
+        tokensDoc.tokens = [...tokensDoc.tokens, device_token];
+        await tokensDoc.save();
+      }
+  
+      // Store device token in Redis for quick access
+      await redisService.upsertDeviceTokens(account.id, tokensDoc.tokens);  
+
+      return res.success("Device token registered successfully");
+    } catch (error) {
+      logger.error("Device token registration error", {
+        error: error.message,
+        stack: error.stack,
+      });
+      next(error);
+    }
+  },
+
+  removeDeviceToken: async (req, res, next) => {
+    try {
+      // destroy the device token for notifications (if provided)
+      const { device_token } = req.body;
+
+      if (device_token && req.userId) {
+        await AccountsFirebaseTokens.updateOne(
+          { account_id: req.userId },
+          { $pull: { tokens: device_token } }
+        );
+
+        await redisService.removeDeviceTokens(req.userId, device_token);
+      }
+
+      return res.success("Device token removed successfully");
+    } catch (error) {
+      logger.error("Error removing device token", {
+        error: error.message,
+        stack: error.stack,
+      });
+      next(error);
+    }
+  },
+
   login: async (req, res, next) => {
     try {
-      const { email, password, account_type, device_token } = req.body;
+      const { email, password, account_type } = req.body;
       logger.info(
         `Login attempt for: ${email} as ${account_type || "unspecified type"}`
       );
@@ -236,34 +307,6 @@ const authController = {
             profileData.papersComplete = false;
           }
         }
-      }
-
-      if (account.account_type !== "admin") {
-        // TODO: Refactor all mongoose models into data-access layer
-        // register device token to get notifications
-        let tokensDoc = await AccountsFirebaseTokens.findOne({
-          account_id: account.id,
-        });
-
-        if (!tokensDoc) {
-          tokensDoc = await AccountsFirebaseTokens.create({
-            account_id: account.id,
-            tokens: [],
-          });
-        }
-
-        // Add device token if not already present
-        if (!tokensDoc.tokens.includes(device_token)) {
-          if (tokensDoc.tokens.length == 20) {
-            tokensDoc.tokens.shift();
-          }
-
-          tokensDoc.tokens = [...tokensDoc.tokens, device_token];
-          await tokensDoc.save();
-        }
-
-        // Store device token in Redis for quick access
-        await redisService.upsertDeviceTokens(account.id, tokensDoc.tokens);
       }
 
       // Add claims to token for profile type
@@ -447,18 +490,6 @@ const authController = {
       // Try to get token but don't throw if not found
       let token;
       try {
-        // destroy the device token for notifications (if provided)
-        const deviceToken = req.body.device_token;
-
-        if (deviceToken && req.userId) {
-          await AccountsFirebaseTokens.updateOne(
-            { account_id: req.userId },
-            { $pull: { tokens: deviceToken } }
-          );
-
-          await redisService.removeDeviceTokens(req.userId, deviceToken);
-        }
-
         token = JwtService.jwtGetToken(req);
         // Blacklist the token only if it exists
         if (token) {
