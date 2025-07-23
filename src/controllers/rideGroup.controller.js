@@ -512,7 +512,12 @@ const RideGroupController = {
         ],
       };
 
-      await openRouteUtil.getDistanceForRide(points);
+      const result = await openRouteUtil.getDistanceForRide(points);
+
+      if (isNaN(result) || result <= 0 || !result) {
+        throw new BadRequestError("Invalid distance calculated for the ride");
+      }
+
       // create a new ride group
       const payload = {
         rideGroupPayload: {

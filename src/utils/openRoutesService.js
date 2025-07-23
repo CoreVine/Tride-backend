@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { BadRequestError } = require('./errors');
 
 async function getDistanceForRide(points) {
     try {
@@ -32,11 +33,11 @@ async function getDistanceForRide(points) {
             error.response.data.error &&
             error.response.data.error.code === 6010
         ) {
-            throw new Error(
+            throw new BadRequestError(
                 "Invalid coordinates provided. Please check the latitude and longitude values."
             );
         }
-        throw new Error('Failed to fetch distance');
+        throw new BadRequestError('Failed to fetch distance');
     }
 }
 
