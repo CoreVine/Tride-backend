@@ -178,6 +178,41 @@ class AccountRepository extends BaseRepository {
             throw new DatabaseError(error);
         }
     }
+
+    async filterAccountIdsByQuery({ name, email }, userTypes = ["parent", "driver"]) {
+        try {
+            const accounts = await this.model.findAll({
+                where: {
+                    [Op.and]: [
+                        { account_type: { [Op.in]: userTypes } },
+                        {
+                            email: { [Op.like]: `%${email}%` }
+                        }
+                    ]
+                },
+                include: [
+                    {
+                        model: this.model.sequelize.models.Parent,
+                        as: 'parent',
+                        attributes: ['id'],
+                        where: name ? { name: { [Op.like]: `%${name}%` } } : {},
+                        required: userTypes.includes("parent")
+                    },
+                    {
+                        model: this.model.sequelize.models.Driver,
+                        as: 'driver',
+                        attributes: ['id'],
+                        where: name ? { name: { [Op.like]: `%${name}%` } } : {},
+                        required: userTypes.includes("driver")
+                    }
+                ],
+                attributes: ['id']
+            });
+        } catch (error) {
+            console.error('Error filtering account IDs by query:', error);
+            throw new DatabaseError(error);
+        }
+    }
 }
 
 module.exports = new AccountRepository();
