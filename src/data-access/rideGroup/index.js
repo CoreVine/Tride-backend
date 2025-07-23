@@ -262,6 +262,60 @@ class RideGroupRepository extends BaseRepository {
     }
   }
 
+  async findByIdDetailed(rideGroupId, options = {}) {
+    try {
+      const queryOptions = {
+        where: { id: rideGroupId },
+        include: [
+          {
+            association: "creator",
+            attributes: ["id"],
+          },
+          {
+            association: "parent_group_subscription",
+            include: [
+              "plan",
+              {
+                association: "payment_history",
+              },
+            ],
+          },
+          {
+            association: "driver",
+            attributes: { exclude: ["created_at", "updated_at"] },
+          },
+          {
+            association: "school",
+          },
+          {
+            association: "parentGroups",
+            include: [
+              {
+                association: "parent",
+                attributes: { exclude: ["created_at", "updated_at"] },
+              },
+              {
+                association: "childDetails",
+                include: [
+              {
+                association: "child",
+              },
+                ],
+              },
+            ],
+          },
+          {
+            association: "dayDates",
+          },
+        ],
+        ...options,
+      };
+      return await this.model.findOne(queryOptions);
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
   async findIfAccountIdInsideGroup(rideGroupId, accountId, accountType) {
     try {
       const whereClause = {
@@ -331,9 +385,29 @@ class RideGroupRepository extends BaseRepository {
     }
   }
 
-  async findAllDetailedPaginated(page, limit) {
+  async findAllDetailedPaginated(page, limit, filters = {}) {
     try {
+      const filter = {};
+
+      if (filters.name) {
+        filter.group_name = {
+          [Op.like]: `%${filters.name}%`
+        };
+      }
+
+      if (filters.seats) {        
+        filter.current_seats_taken = {
+          [Op.gte]: filters.seats
+        };
+      }
+
+      if (filters.type) {
+        filter.group_type = filters.type;
+      }
+
+
       const { count, rows } = await this.model.findAndCountAll({
+        where: filter,
         include: [
           {
             association: "creator",

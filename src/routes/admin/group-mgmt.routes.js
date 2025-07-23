@@ -6,6 +6,13 @@ const { isAdminWithRole, isAdminWithPermissions } = require("../../middlewares/i
 const { ADMIN_ROLE_SUPER_ADMIN } = require("../../utils/constants/admin-roles");
 const rideGroupController = require("../../controllers/admins/rideGroup.controller");
 
+const getRideGroupsSchema = Yup.object().shape({
+  page: Yup.number().integer().min(1).default(1),
+  limit: Yup.number().integer().min(1).max(100).default(10),
+  name: Yup.string().optional(),
+  seats: Yup.number().integer().optional()
+});
+
 const groupRouter = Router();
 
 groupRouter.put("/manage/ride/group/merge", 
@@ -19,7 +26,17 @@ groupRouter.put("/manage/ride/group/merge",
 );
 groupRouter.get('/manage/ride/groups/',
   authMiddleware,
+  validate(getRideGroupsSchema),
   isAdminWithPermissions([{type: "group", value: "Payments"}]), 
   rideGroupController.getRideGroups);
+groupRouter.get('/manage/ride/groups/:rideGroupId',
+  authMiddleware,
+  validate({
+    params: Yup.object().shape({
+      rideGroupId: Yup.string().required()
+    })
+  }),
+  isAdminWithPermissions([{type: "group", value: "Payments"}]), 
+  rideGroupController.getRideGroupDetails);
 
 module.exports = groupRouter;
