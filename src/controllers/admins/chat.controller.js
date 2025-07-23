@@ -2,6 +2,7 @@ const ChatRoom = require("../../mongo-model/ChatRoom");
 const { ROLE_PERMISSION_CHAT_WITH_DRIVER, ROLE_PERMISSION_CHAT_WITH_PARENT } = require("../../utils/constants/admin-permissions");
 const { BadRequestError, NotFoundError } = require("../../utils/errors");
 const { createPagination } = require("../../utils/responseHandler");
+const AccountRepository = require("../../data-access/accounts");
 
 const chatController = {
   getChatRooms: async (req, res, next) => {
@@ -56,13 +57,37 @@ const chatController = {
   },
   getCustomerServiceRooms: async (req, res, next) => {
     try {
-      const { page = 1, limit = 10 } = req.query;
+      const { page = 1, limit = 10, account_type, name, email } = req.query;
       const { permissions } = req.account.admin.role;
 
-      const userTypes = permissions.map(p => p.role_permission_name === ROLE_PERMISSION_CHAT_WITH_DRIVER ? "driver" : "parent");
-    
+      let userTypes = permissions.map(p => p.role_permission_name === ROLE_PERMISSION_CHAT_WITH_DRIVER ? "driver" : "parent");
+
+      // filter user types based on account_type query parameter
+      if (account_type && account_type !== "all") {
+        userTypes = userTypes.filter(type => type === account_type);
+      }
+
+      // validate after filtering if userTypes is empty
+      if (userTypes.length === 0) {
+        throw new BadRequestError("No valid user types found for the provided permissions");
+      }
+
+      // get all accountIds based on q_type and q_value
+      const accountIds = await AccountRepository.filterAccountIdsByQuery({
+        name,
+        email
+      }, userTypes);
+
+      const participantsFilter = { user_type: { $in: userTypes } };
+      if (name) {
+        participantsFilter.name = { $regex: name, $options: "i" };
+      }
+      if (accountIds && accountIds.length > 0) {
+        participantsFilter.account_id = { $in: accountIds };
+      }
+
       const chatRooms = await ChatRoom.find({
-        participants: { $elemMatch: { user_type: { $in: userTypes } } },
+        participants: { $elemMatch: participantsFilter },
         room_type: "customer_support",
       })
       .skip((page - 1) * limit)

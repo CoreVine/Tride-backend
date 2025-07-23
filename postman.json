@@ -2232,7 +2232,7 @@
 											}
 										],
 										"url": {
-											"raw": "{{base_url}}/admin-view/chats/customer-support/rooms?page=1&limit=10",
+											"raw": "{{base_url}}/admin-view/chats/customer-support/rooms?page=1&limit=10&account_type=parent&name=&email=ah",
 											"host": [
 												"{{base_url}}"
 											],
@@ -2250,6 +2250,18 @@
 												{
 													"key": "limit",
 													"value": "10"
+												},
+												{
+													"key": "account_type",
+													"value": "parent"
+												},
+												{
+													"key": "name",
+													"value": ""
+												},
+												{
+													"key": "email",
+													"value": "ah"
 												}
 											]
 										}

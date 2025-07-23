@@ -7,13 +7,17 @@ const logger = require("../../services/logging.service").getLogger();
 const rideGroupController = {
     getRideGroups: async (req, res, next) => {
         try {
-          const { page = 1, limit = 10 } = req.query;
-          const { count, rows: rideGroups } = await RideGroupRepository.findAllDetailedPaginated(parseInt(page), parseInt(limit));
+          const { page = 1, limit = 10, name, seats, type } = req.query;
+            const { count, rows: rideGroups } = await RideGroupRepository.findAllDetailedPaginated(
+            parseInt(page, 10) || 1,
+            parseInt(limit, 10) || 10,
+            { name, seats: parseInt(seats, 10) || 0, type }
+            );
     
           if (!rideGroups || rideGroups.length === 0) {
             return res.success("No ride groups found for this parent", { rideGroups: [] });
           }
-          
+
           const pagination = createPagination(page, limit, count);
     
           return res.success("Ride groups fetched successfully", { pagination, rideGroups });
@@ -23,6 +27,25 @@ const rideGroupController = {
             stack: error.stack,
           });
           return next(error);
+        }
+    },
+
+    getRideGroupDetails: async (req, res, next) => {
+        try {
+            const { rideGroupId } = req.params;
+            const rideGroup = await RideGroupRepository.findByIdDetailed(rideGroupId);
+
+            if (!rideGroup) {
+                return res.error("Ride group not found", 404);
+            }
+
+            return res.success("Ride group details fetched successfully", { rideGroup });
+        } catch (error) {
+            logger.error("Error fetching ride group details", {
+                error: error.message,
+                stack: error.stack,
+            });
+            return next(error);
         }
     },
 

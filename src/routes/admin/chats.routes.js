@@ -45,8 +45,11 @@ router.get(
   authMiddleware,
   validate({
     query: Yup.object().shape({
-      page: Yup.number().positive().required(),
-      limit: Yup.number().positive().required()
+      page: Yup.number().positive().optional(),
+      limit: Yup.number().positive().optional(),
+      account_type: Yup.string().oneOf(["parent", "driver", "all"]).optional(),
+      name: Yup.string().optional(),
+      email: Yup.string().optional()
     })
   }),
   isAdminWithPermissions([{ type: "name", value: ROLE_PERMISSION_CHAT_WITH_DRIVER }, { type: "name", value: ROLE_PERMISSION_CHAT_WITH_PARENT }], "some"),
