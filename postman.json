@@ -187,6 +187,76 @@
 						"description": "Get details of currently logged-in user"
 					},
 					"response": []
+				},
+				{
+					"name": "Register device token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"device_token\": \"INSERT\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/remove/firebase/device-token",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"remove",
+								"firebase",
+								"device-token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove device token",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"device_token\": \"INSERT\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/remove/firebase/device-token",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"remove",
+								"firebase",
+								"device-token"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"description": "Authentication-related endpoints"
@@ -2363,12 +2433,12 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}"
+								"value": "Bearer {{token_parent_1}}"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n\t\"group_name\": \"fourth group!\",\r\n\t\"school_id\": 1,\r\n\t\"home\": {\r\n\t\t\"home_lat\": \"23.65\",\r\n\t\t\"home_lng\": \"23.65\"\r\n\t},\r\n\t\"children\": [\r\n\t\t{\r\n\t\t\t\"child_id\": 4,\r\n\t\t\t\"timing_from\": \"09:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t},\r\n\t\t\t\t{\r\n\t\t\t\"child_id\": 5,\r\n\t\t\t\"timing_from\": \"10:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t}\r\n\t],\r\n\t\"days\": [\"saturday\", \"sunday\"],\r\n    \"group_type\": \"regular\"\r\n}",
+							"raw": "{\r\n\t\"group_name\": \"fourth group!\",\r\n\t\"school_id\": 1,\r\n\t\"home\": {\r\n\t\t\"home_lat\": \"23.65\",\r\n\t\t\"home_lng\": \"24.65\"\r\n\t},\r\n\t\"children\": [\r\n\t\t{\r\n\t\t\t\"child_id\": 4,\r\n\t\t\t\"timing_from\": \"09:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t},\r\n\t\t\t\t{\r\n\t\t\t\"child_id\": 5,\r\n\t\t\t\"timing_from\": \"10:00:00\",\r\n\t\t\t\"timing_to\": \"12:00:00\"\r\n\t\t}\r\n\t],\r\n\t\"days\": [\"saturday\", \"sunday\"],\r\n    \"group_type\": \"regular\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2648,14 +2718,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/ride/group/8/subscribe",
+							"raw": "{{base_url}}/ride/group/10/subscribe",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"ride",
 								"group",
-								"8",
+								"10",
 								"subscribe"
 							]
 						}
