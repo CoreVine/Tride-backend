@@ -119,8 +119,8 @@ chatRoomSchema.methods.getMessagesPage = async function (chatRoomId, page = 1) {
 
   const messages = await mongoose.model("ChatMessage")
     .find({ chat_room_id: chatRoomId })
-    .sort({ created_at: -1 })
     .skip(skip)
+    .sort({ created_at: -1 })
     .limit(limit)
     .populate("reply_to")
     .lean();
