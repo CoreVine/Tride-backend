@@ -40,6 +40,15 @@ const updateAdminRoleSchema = {
   })
 }
 
+const updateAdminSchema = Yup.object().shape({
+  first_name: Yup.string().optional(),
+  last_name: Yup.string().optional(),
+  email: Yup.string().email().optional(),
+  password: Yup.string().min(6).optional(),
+  newPassword: Yup.string().min(6).optional(),
+  language: Yup.string().oneOf(["en", "ar"]).optional(),
+})
+
 const adminRouter = Router()
 
 adminRouter.post(
@@ -60,6 +69,14 @@ adminRouter.post(
 adminRouter.get("/admins", authMiddleware, isAdminWithRole(ADMIN_ROLE_SUPER_ADMIN), adminController.getAllAdminsExceptMe)
 
 adminRouter.get("/admins/me", authMiddleware, isAdmin, adminController.me)
+adminRouter.patch(
+  "/admins/me",
+  authMiddleware,
+  isAdmin,
+  validate(updateAdminSchema),
+  adminProfileUploader.single("profile_pic"),
+  adminController.updateMe
+)
 
 adminRouter.patch("/admins/:adminId/role", authMiddleware, isAdminWithRole(ADMIN_ROLE_SUPER_ADMIN), validate(updateAdminRoleSchema), adminController.updateAdminRole)
 
