@@ -128,6 +128,13 @@ chatRoomSchema.methods.getMessagesPage = async function (chatRoomId, page = 1) {
   return messages;
 }
 
+chatRoomSchema.methods.getMessageCount = async function (chatRoomId) {
+  const count = await mongoose.model("ChatMessage")
+    .countDocuments({ chat_room_id: chatRoomId });
+
+  return count;
+}
+
 const ChatRoom = mongoose.model("ChatRoom", chatRoomSchema);
 
 module.exports = ChatRoom;
