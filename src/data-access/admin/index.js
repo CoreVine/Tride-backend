@@ -12,6 +12,29 @@ class AdminRepository extends BaseRepository {
     super(AdminModel);
   }
 
+  async findByIdIncludeAccount(adminId) {
+    try {
+      const admin = await this.model.findOne({
+        where: { id: adminId },
+        include: [
+          {
+            model: this.model.sequelize.models.Account,
+            as: 'account',
+            attributes: ['id', 'email', 'password', 'is_verified']
+          },
+          {
+            model: AdminRolesModel,
+            as: 'role',
+            attributes: ['id', 'role_name']
+          }
+        ]
+      });
+      return admin;
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
   async createNewAdmin(adminData) {
     const t = await this.model.sequelize.transaction();
     try {
@@ -158,6 +181,26 @@ class AdminRepository extends BaseRepository {
       await t.rollback();
 
       throw error;
+    }
+  }
+
+  async updateAdmin(adminId, updateData) {
+    try {
+        const admin = await this.model.findByPk(adminId);
+
+        if (!admin) {
+          throw new NotFoundError("Admin not found");
+        }
+
+        if (updateData.first_name) admin.first_name = updateData.first_name;
+        if (updateData.last_name) admin.last_name = updateData.last_name;
+        if (updateData.language) admin.language = updateData.language;
+        if (updateData.profile_pic) admin.profile_pic = updateData.profile_pic;
+
+        await admin.save();
+    } catch (error) {
+      await t.rollback();
+      throw new DatabaseError(error);
     }
   }
 

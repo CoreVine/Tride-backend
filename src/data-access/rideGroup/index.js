@@ -514,8 +514,8 @@ class RideGroupRepository extends BaseRepository {
         transaction: t
       });
 
-      if (!groupSrc || !groupDest || groupSrc.driver_id) {
-        throw new BadRequestError("Cannot merge groups: source or destination group not found or has a driver assigned");
+      if (!groupSrc || !groupDest) {
+        throw new BadRequestError("Cannot merge groups: source or destination group not found.");
       }
 
       if (groupSrc.group_type === 'premium' || groupDest.group_type === 'premium') {

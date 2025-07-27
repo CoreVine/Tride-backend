@@ -73,7 +73,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "// {\n//     \"email\": \"admin@tride.com\",\n//     \"password\": \"admin123\",\n//     \"account_type\":\"admin\"\n// }\n{\n    \"email\": \"parent2@example.com\",\n    \"password\": \"password\",\n    \"account_type\":\"parent\",\n    \"device_token\": \" \"\n}"
+							"raw": "{\n    \"email\": \"admin@tride.com\",\n    \"password\": \"password123\",\n    \"account_type\":\"admin\"\n}\n// {\n//     \"email\": \"parent2@example.com\",\n//     \"password\": \"password\",\n//     \"account_type\":\"parent\"\n// }"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/login",
@@ -2423,7 +2423,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{base_url}}/manage/ride/groups",
+									"raw": "{{base_url}}/manage/ride/groups?page=&limit&name=&seats=3",
 									"host": [
 										"{{base_url}}"
 									],
@@ -2431,6 +2431,50 @@
 										"manage",
 										"ride",
 										"groups"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": ""
+										},
+										{
+											"key": "limit",
+											"value": null
+										},
+										{
+											"key": "name",
+											"value": ""
+										},
+										{
+											"key": "seats",
+											"value": "3"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get ride group by ID",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token_admin_super}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/manage/ride/groups/4",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"manage",
+										"ride",
+										"groups",
+										"4"
 									]
 								}
 							},
@@ -2920,6 +2964,37 @@
 					"response": []
 				},
 				{
+					"name": "Admin: Get my admin info",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_admin_super}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}/admins/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admins",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Create New Admin",
 					"request": {
 						"method": "POST",
@@ -2934,7 +3009,7 @@
 							"formdata": [
 								{
 									"key": "email",
-									"value": "faded.lover.shadows@gmail.com",
+									"value": "faded.lover.shadows@2gmail.com",
 									"type": "text"
 								},
 								{
@@ -2960,7 +3035,7 @@
 								{
 									"key": "profile_pic",
 									"type": "file",
-									"src": "/C:/Users/Ezzeldin Husen/Downloads/class-diagram-elearning.png"
+									"src": "/C:/Users/Ezzeldin Husen/Downloads/images.jpeg"
 								}
 							]
 						},
@@ -2972,6 +3047,74 @@
 							"path": [
 								"admins",
 								"create"
+							]
+						},
+						"description": "Register a new user account"
+					},
+					"response": []
+				},
+				{
+					"name": "Update admin personal info",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "email",
+									"value": "admin@tride.com",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "password",
+									"value": "admin123",
+									"type": "text"
+								},
+								{
+									"key": "first_name",
+									"value": "alex",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "last_name",
+									"value": "thompson",
+									"type": "text"
+								},
+								{
+									"key": "language",
+									"value": "ar",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "profile_pic",
+									"type": "file",
+									"src": "/C:/Users/Ezzeldin Husen/Downloads/images.jpeg",
+									"disabled": true
+								},
+								{
+									"key": "new_password",
+									"value": "password123",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admins/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admins",
+								"me"
 							]
 						},
 						"description": "Register a new user account"

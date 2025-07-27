@@ -213,6 +213,29 @@ class AccountRepository extends BaseRepository {
             throw new DatabaseError(error);
         }
     }
+
+    async updateAccount(id, updateData) {
+        try {
+            const account = await this.model.findByPk(id);
+            if (!account) {
+                throw new DatabaseError(`Account with ID ${id} not found`);
+            }
+
+            // Update the account with the provided data if present
+            if (updateData.email) {
+                account.email = updateData.email;
+            }
+            if (updateData.password) {
+                account.password = updateData.password;
+            }
+            await account.save();
+            return account;
+        } catch (error) {
+            console.error('Error updating account:', error);
+            throw new DatabaseError(error);
+        }
+
+    }
 }
 
 module.exports = new AccountRepository();
