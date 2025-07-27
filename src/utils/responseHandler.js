@@ -58,19 +58,19 @@ const formatErrorResponse = (message, status = 400) => {
  * @param {number} totalItems - Total number of items
  * @returns {object} Pagination object
  */
-const createPagination = (page, limit, totalItems) => {
-  const currentPage = parseInt(page, 10) || 1;
-  const totalPages = Math.ceil(totalItems / limit);
-  
+const createPagination = (page, limit, totalItems, currentPageItemCount) => {
+  const currentPage = Math.max(parseInt(String(page), 10) || 1, 1)
+  const totalPages = Math.max(Math.ceil(totalItems / limit), 1)
+
   return {
     page: currentPage,
     nextPage: currentPage < totalPages ? currentPage + 1 : null,
-    lastPage: currentPage > 1 ? currentPage - 1 : null,
-    itemCount: limit,
+    prevPage: currentPage > 1 ? currentPage - 1 : null,
+    itemCount: currentPageItemCount, // actual items in THIS page
     totalPages,
     totalItems
-  };
-};
+  }
+}
 
 module.exports = {
   formatSuccessResponse,

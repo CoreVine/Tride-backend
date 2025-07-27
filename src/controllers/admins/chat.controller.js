@@ -165,12 +165,13 @@ const chatController = {
       }
 
       const messages = await chatRoom.getMessagesPage(chatRoomId, page);
+      const totalMessages = await chatRoom.getMessageCount(chatRoomId);
 
       if (!messages || messages.length === 0) {
         throw new NotFoundError("No messages found in this chat room");
       }
 
-      const pagination = createPagination(Number(page), 10, messages.length);
+      const pagination = createPagination(Number(page), 10, totalMessages);
 
       return res.success("Messages retrieved successfully", {
         pagination,
