@@ -17,7 +17,7 @@ const chatController = {
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
 
-      return res.success("Chat rooms retrieved successfully", chatRooms);
+      return res.success("Chat rooms retrieved successfully", {data: chatRooms});
     } catch (error) {
       console.error("Error getting chat rooms:", error);
       return next(error);
@@ -30,7 +30,7 @@ const chatController = {
 
       // Fetch chat room for the ride group
       const chatRoom = await ChatRoom.findOne({
-        ride_group_id: rideGroupId,
+        _id: rideGroupId,
         room_type: "ride_group"
       });
 
@@ -40,15 +40,15 @@ const chatController = {
 
       const messages = await chatRoom.getMessagesPage(chatRoom._id, page);
 
-      if (!messages || messages.length === 0) {
+/*       if (!messages || messages.length === 0) {
         throw new NotFoundError("No messages found in this chat room");
-      }
+      } */
 
       const pagination = createPagination(Number(page), 10, messages.length);
 
       return res.success("Messages retrieved successfully", {
         pagination,
-        messages,
+        data: messages,
       });
     } catch (error) {
       console.error("Error getting chat room messages:", error);
@@ -112,10 +112,31 @@ const chatController = {
 
       return res.success("Customer service rooms retrieved successfully", {
         pagination,
-        chatRoomsWithDetails
+        data: chatRoomsWithDetails
       });
     } catch (error) {
       console.error("Error getting customer service room:", error);
+      return next(error);
+    }
+  },
+  getChatById: async (req, res, next) => {
+    try {
+      const { chatId } = req.params;
+
+      // Validate chatId
+      if (!chatId) {
+        throw new BadRequestError("Chat ID is required");
+      }
+
+      // Fetch chat room by ID
+      const chatRoom = await ChatRoom.findById(chatId).populate('last_message');
+      if (!chatRoom) {
+        throw new NotFoundError("Chat room not found");
+      }
+
+      return res.success("Chat retrieved successfully", chatRoom);
+    } catch (error) {
+      console.error("Error getting chat by ID:", error);
       return next(error);
     }
   },
@@ -153,7 +174,7 @@ const chatController = {
 
       return res.success("Messages retrieved successfully", {
         pagination,
-        messages,
+        data: messages,
       });
     } catch (error) {
       console.error("Error getting latest messages for customer service room:", error);

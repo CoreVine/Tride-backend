@@ -25,6 +25,13 @@ const getRideGroupChatRoomsSchema = {
 };
 
 router.get(
+  "/admin-view/chats/details/:chatId",
+  authMiddleware,
+  isAdminWithPermissions([{ type: "name", value: ROLE_PERMISSION_VIEW_CHAT_HISTORY }]),
+  chatController.getChatById
+);
+
+router.get(
   "/admin-view/chats/ride-groups",
   authMiddleware,
   isAdminWithPermissions([{ type: "name", value: ROLE_PERMISSION_VIEW_CHAT_HISTORY }]),

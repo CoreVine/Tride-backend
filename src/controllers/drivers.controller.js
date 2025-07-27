@@ -53,7 +53,7 @@ const driversController = {
       const { approved } = req.body
 
       const paper = await driverPapersRepository.findByDriverId(driverId)
-      if (!paper) return NotFoundError("Driver papers not found")
+      if (!paper) throw new NotFoundError("Driver papers not found")
 
       const updatedPapers = await driverPapersRepository.updateApprovalStatus(paper.id, approved, approved ? new Date() : null)
 
