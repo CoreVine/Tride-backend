@@ -164,10 +164,6 @@ profileRoutes
 // Upload parent ID documents
 profileRoutes.post(
   "/profile/parent/papers",
-  ...parentIdUploader.fields([
-    { name: "front_side_nic", maxCount: 1 },
-    { name: "back_side_nic", maxCount: 1 },
-  ]),
   authMiddleware,
   verifiedEmailRequired,
   isParent,

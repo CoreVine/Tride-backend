@@ -55,7 +55,20 @@ const TRANSFORMATIONS = {
 };
 
 const MAX_SEATS_CAR = 5;
-const RIDE_PRICE_PER_KM = 25; // Example price per km, adjust as needed
+const RIDE_PRICE_PER_KM = (distance) => {
+  if (distance <= 600)
+    return 15;
+  else if (distance <= 800)
+    return 13.12;
+  else if (distance <= 1000)
+    return 12.5;
+  else if (distance <= 1200)
+    return 11.66;
+  else if (distance <= 1500)
+    return 11.5;
+  else
+  throw new Error("DISTANCE IS LARGER THAN 1500!");
+}; // Example price per km, adjust as needed
 /**
  * Get a transformation configuration
  * @param {Array} customTransformation - Custom transformation array
