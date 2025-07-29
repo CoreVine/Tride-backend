@@ -178,20 +178,9 @@ const profileController = {
         throw new NotFoundError("Parent profile not found");
       }
 
-      // Check if required files are present
-      console.log(req.files, req.body);
-      
-      if (!req.files || !req.files.front_side_nic || !req.files.back_side_nic) {
-        throw new BadRequestError(
-          "Both front and back sides of ID card are required"
-        );
-      }
-
       // Get document URLs from uploaded files
       const updateData = {
-        front_side_nic: req.files.front_side_nic[0].path,
-        back_side_nic: req.files.back_side_nic[0].path,
-        documents_approved: true, // Reset approval status when new documents are uploaded
+        documents_approved: true,
         documents_approval_date: new Date(),
         face_auth_complete: true
       };
