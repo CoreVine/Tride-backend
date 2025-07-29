@@ -1,14 +1,23 @@
 const jwt = require("jsonwebtoken");
 const AccountRepository = require("../../data-access/accounts");
 const joinSocketController = require("../../socket/controllers/join.sock-controller");
+const rideSocketController = require("../../socket/controllers/ride.sock-controller");
 const leaveSocketController = require("../../socket/controllers/leave.sock-controller");
 const { UnauthorizedError } = require("../../utils/errors/types/Api.error");
 const logger = require("../../services/logging.service").getLogger();
 const redisService = require("../../services/redis.service");
 
-function socketEventWrapper(socket) {
+function socketEventWrapper(socket, io) {
+    // chat sockets
     socket.on("join_room", async (room_id) => joinSocketController.verifyAndJoinRoom(socket, room_id));
     socket.on("leave_room", (room_id) => leaveSocketController.leaveRoom(socket, room_id));
+    // ride sockets
+    socket.on("driver_join_ride", async () => rideSocketController.driverVerifyAndJoinRide(socket));
+    socket.on("parent_watch_ride", async () => rideSocketController.parentVerifyAndJoinRide(socket));
+    socket.on("driver_location_update", async (location) => rideSocketController.relayLocationUpdates(socket, location));
+    // TODO: DRIVER SHOULD GET THE NEXT CHECKPOINT, WHICH SHOULD BE THE NEAREST TO HIM
+    // TODO: DRIVER CAN CHANGE HIS MIND, AND AS SOON AS THE GEO-FENCING HITS ANY OF THE CHECKPOINTS, IT IS REGISTERED AUTOMATICALLY
+    // socket.on("driver_checkpoint_update", async () => {});
 }
 
 function setupConnection(io) {
@@ -38,7 +47,7 @@ function setupConnection(io) {
     if (account.account_type === "parent" && (!account.parent || !account.parent.documents_approved)) {
       logger.warn("Parent account documents not approved", { accountId: socket.userId });
       throw new UnauthorizedError("Unauthorized access");
-    } else if (account.account_type === "driver" && (!account.driver_papers || !account.driver_papers.approved)) {
+    } else if (account.account_type === "driver" && (!account.driver.papers || !account.driver.papers.approved)) {
       logger.warn("Driver account papers not approved", { accountId: socket.userId });
       throw new UnauthorizedError("Unauthorized access");
     }
@@ -51,11 +60,15 @@ function setupConnection(io) {
         name: permission.role_permission_name,
         group: permission.role_permission_group,
       }));
+    } else if (socket.accountType === "driver") {
+      socket.driver = {
+        id: account.driver.id
+      };
     }
 
     // Store user connection in Redis
     await redisService.storeUserConnection(socket.userId, socket.id, socket.accountType);
-    logger.info(`[Socket.IO] User  connected and stored in Redis: ${socket.id} for user ${socket.userId}`);
+    logger.info(`[Socket.IO] User connected and stored in Redis: ${socket.id} for user ${socket.userId}`);
 
     next();
     } catch (error) {

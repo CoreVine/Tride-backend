@@ -424,7 +424,17 @@ const redisService = {
       }
       await redisClient.srem(key, ...deviceTokens);
     } catch (error) {
-      logger.error(`[REDIS] Error removing device tokens for accountId ${accountId}:`, error);
+      logger.error(`[REDIS] Error removing device tokens for accountId ${accountId}: ${error}`);
+      throw error;
+    }
+  },
+
+  setLocationUpdates: async (roomId, location) => {
+    try {
+      // TODO: Take location update
+      await redis.set(roomId, JSON.stringify({ lat, lng, ts }));
+    } catch (error) {
+      logger.error(`[REDIS] Error setting location for room ${roomId}: ${error}`);
       throw error;
     }
   },

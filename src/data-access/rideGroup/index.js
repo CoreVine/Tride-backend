@@ -61,6 +61,27 @@ class RideGroupRepository extends BaseRepository {
     }
   }
 
+  async findOneIfDriver(ride_group_id, drive_id) {
+    try {
+      await this.model.findOne({
+        where: {
+          id: ride_group_id,
+          driver_id: drive_id
+        },
+        include: [
+          {
+            association: "driver",
+            required: true,
+            attributes: ["id", "account_id", "name"]
+          }
+        ]
+      });
+      return ride_group_id;
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
   async findAllIfParent(parentId, options = {}) {
     try {
       const queryOptions = {

@@ -73,7 +73,7 @@ const arePapersVerified = async (req, res, next) => {
     if (account.account_type === "parent" && (!account.parent || !account.parent.documents_approved)) {
       logger.warn("Parent account documents not approved", { accountId });
       throw new UnauthorizedError("Parent account documents not approved");
-    } else if (account.account_type === "driver" && (!account.driver_papers || !account.driver_papers.approved)) {
+    } else if (account.account_type === "driver" && (!account.driver.papers || !account.driver.papers.approved)) {
       logger.warn("Driver account papers not approved", { accountId });
       throw new UnauthorizedError("Driver account papers not approved");
     }
@@ -172,6 +172,43 @@ const isAdminWithPermissions = (permissions, type = "all") => {
   }
 }
 
+const isDriverApproved = async (req, res, next) => {
+  try {
+    // Get account ID from auth middleware
+    const accountId = req.userId;
+
+    if (!accountId) {
+      throw new UnauthorizedError("Authentication required");
+    }
+
+    // Get account from database
+    const account = await AccountRepository.findByIdIncludeDetails(accountId);
+    if (!account || !account.is_verified) {
+      logger.warn("Account not found or is not verified", { accountId });
+      throw new UnauthorizedError("Account not found or not verified");
+    }
+
+    if (account.account_type !== "driver") {
+      throw new UnauthorizedError("Driver account not found");
+    } else if (!account.driver.papers || !account.driver.papers.approved) {
+      logger.warn("Driver account papers not approved", { accountId });
+      throw new UnauthorizedError("Driver account papers not approved");
+    }
+
+    req.account = {
+      id: account.id,
+      email: account.email,
+      account_type: account.account_type,
+      is_verified: account.is_verified,
+      driver: account.driver
+    };
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
 const isOneOf = (...userTypes) => {
   if (userTypes.length === 0) {
     throw new Error("At least one user type must be specified");
@@ -233,5 +270,6 @@ module.exports = {
   isAdminWithRole,
   isAdminWithPermissions,
   isAccountType,
-  arePapersVerified
+  arePapersVerified,
+  isDriverApproved
 };

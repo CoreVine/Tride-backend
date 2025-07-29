@@ -52,7 +52,7 @@ function init(httpServer) {
       logger.error(`[Socket.IO] Error managing user connection for ${userId}: ${error.message}`);
     }
 
-    socketEventWrapper(socket);
+    socketEventWrapper(socket, io);
     setupDisconnection(socket);
   });
 

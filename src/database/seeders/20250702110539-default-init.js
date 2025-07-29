@@ -578,6 +578,24 @@ module.exports = {
       },
     ];
 
+    const defaultDriverPapers = [
+      {
+        id: 1,
+        driver_id: 1,
+        front_side_national_url: "https://example.com/front_national1.jpg",
+        back_side_national_url: "https://example.com/back_national1.jpg",
+        car_model: "Toyota Corolla",
+        car_model_year: 2018,
+        driver_license_url: "https://example.com/driver_license1.jpg",
+        driver_license_exp_date: new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()),
+        car_license_url: "https://example.com/car_license1.jpg",
+        car_license_exp_date: new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()),
+        approved: true,
+        approval_date: new Date(),
+        face_auth_complete: 1,
+      }
+    ];
+
     const defaultChildren = [
       {
         id: 1,
@@ -1160,6 +1178,7 @@ module.exports = {
       await queryInterface.bulkInsert("driver", defaultDrivers, {
         transaction,
       });
+      await queryInterface.bulkInsert("driver_papers", defaultDriverPapers, { transaction });
       await queryInterface.bulkInsert("child", defaultChildren, {
         transaction,
       });
