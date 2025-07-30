@@ -459,6 +459,87 @@ class RideGroupRepository extends BaseRepository {
     }
   }
 
+  async findAllDetailedPaginatedByParentId(parentId, page, limit, filters = {}) {
+    try {
+      const filter = {};
+
+      if (filters.name) {
+        filter.group_name = {
+          [Op.like]: `%${filters.name}%`
+        };
+      }
+
+      if (filters.seats) {        
+        filter.current_seats_taken = {
+          [Op.gte]: filters.seats
+        };
+      }
+
+      if (filters.type) {
+        filter.group_type = filters.type;
+      }
+
+
+      const { count, rows } = await this.model.findAndCountAll({
+        where: {
+          ...filter,
+          parent_creator_id: parentId,
+        },
+        include: [
+          {
+            association: "creator",
+            attributes: ["id"],
+          },
+          {
+            association: "parent_group_subscription",
+          },
+          {
+            association: "driver",
+            attributes: { exclude: ["created_at", "updated_at"] },
+          },
+          {
+            association: "school",
+          },
+          {
+            association: "parentGroups",
+            where: {
+              status: {
+                [Op.ne]: "removed"
+              }
+            },
+            include: [
+              {
+                association: "parent",
+                attributes: { exclude: ["created_at", "updated_at"] },
+              },
+              {
+                association: "childDetails",
+                include: [
+                  {
+                    association: "child",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            association: "dayDates",
+          },
+        ],
+        offset: (page - 1) * limit,
+        limit,
+      });
+
+      const hasNextPage = count > page * limit;
+      const hasPreviousPage = page > 1;
+
+      return { count, rows, hasNextPage,hasPreviousPage };
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
+
   async findByInviteCode(inviteCode) {
     try {
       return await this.model.findOne({
