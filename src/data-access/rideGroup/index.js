@@ -405,6 +405,9 @@ class RideGroupRepository extends BaseRepository {
         filter.group_type = filters.type;
       }
 
+      if (filters.school_id) {
+        filter.school_id = filters.school_id;
+      }
 
       const { count, rows } = await this.model.findAndCountAll({
         where: filter,

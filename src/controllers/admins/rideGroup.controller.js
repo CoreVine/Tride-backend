@@ -1,17 +1,17 @@
 const RideGroupRepository = require("../../data-access/rideGroup");
 const ChatRoom = require("../../mongo-model/ChatRoom");
-const { BadRequestError } = require("../../utils/errors");
+const { BadRequestError, NotFoundError } = require("../../utils/errors");
 const { createPagination } = require("../../utils/responseHandler");
 const logger = require("../../services/logging.service").getLogger();
 
 const rideGroupController = {
     getRideGroups: async (req, res, next) => {
         try {
-          const { page = 1, limit = 10, name, seats, type } = req.query;
+          const { page = 1, limit = 10, name, seats, type, school_id } = req.query;
             const { count, rows: rideGroups } = await RideGroupRepository.findAllDetailedPaginated(
             parseInt(page, 10) || 1,
             parseInt(limit, 10) || 10,
-            { name, seats: parseInt(seats, 10) || 0, type }
+            { name, seats: parseInt(seats, 10) || 0, type, school_id }
             );
     
           if (!rideGroups || rideGroups.length === 0) {
@@ -88,6 +88,34 @@ const rideGroupController = {
             console.error("Error merging ride groups:", error);
             return next(error);
         }
+    },
+
+    assignDriverToRideGroup: async (req, res, next) => {
+        try {
+            const { rideGroupId } = req.params
+            const { driverId } = req.body
+
+            const rideGroup = await RideGroupRepository.findById(rideGroupId)
+            if (!rideGroup) throw new NotFoundError("Ride group not found")
+
+            /* if (rideGroup.driver_id) {
+              throw new BadRequestError("This ride group already has a driver assigned")
+            } */
+
+            const updatedRideGroup = await RideGroupRepository.update(rideGroupId, {
+              driver_id: driverId
+            })
+
+            if (!updatedRideGroup) {
+              throw new NotFoundError("Failed to assign driver to ride group")
+            }
+
+            return res.success("Driver assigned to ride group successfully")
+        
+          } catch (error) {
+				return next(error)
+          }
+
     }
 };
 
