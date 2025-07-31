@@ -17,7 +17,7 @@ class RideGroup extends Model {
           key: 'id'
         },
         onUpdate: 'CASCADE',
-        onDelete: 'RESTRICT'
+        onDelete: 'CASCADE'
       },
       group_name: {
         type: DataTypes.STRING(255),

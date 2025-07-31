@@ -263,4 +263,10 @@ profileRoutes.get(
   profileController.getProfileStatus
 );
 
+profileRoutes.delete(
+  "/profile/me",
+  authMiddleware,
+  profileController.removeAccount
+);
+
 module.exports = profileRoutes;
