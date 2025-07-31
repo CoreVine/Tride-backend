@@ -12,6 +12,7 @@ const CityRepository = require("../data-access/city");
 const JwtService = require("../services/jwt.service");
 const { deleteUploadedFile } = require("../config/upload");
 const { createPagination } = require("../utils/responseHandler");
+const ParentGroupSubscriptionRepository = require("../data-access/parentGroupSubscription");
 
 const logger = loggingService.getLogger();
 
@@ -1009,6 +1010,23 @@ const profileController = {
       next(error);
     }
   },
+
+  removeAccount: async (req, res, next) => {
+    try {
+      const hasActiveSubscription = await ParentGroupSubscriptionRepository.findActiveSubscriptionByAccountId(req.userId);
+      
+      if (hasActiveSubscription)
+        throw new BadRequestError("Cannot delete an account while it has an active subscription!");
+
+      await AccountRepository.deleteAccountById(req.userId);
+
+      return res.success("Account is deleted successfully!");
+    } catch (error) {
+      logger.error(`Profile status check error: ${error.message} ${error.stack}`);
+      next(error);
+    }
+
+  }
 };
 
 module.exports = profileController;

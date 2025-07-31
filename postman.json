@@ -73,7 +73,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"admin@tride.com\",\n    \"password\": \"password123\",\n    \"account_type\":\"admin\"\n}\n// {\n//     \"email\": \"parent2@example.com\",\n//     \"password\": \"password\",\n//     \"account_type\":\"parent\"\n// }"
+							"raw": "// {\n//     \"email\": \"admin@tride.com\",\n//     \"password\": \"password123\",\n//     \"account_type\":\"admin\"\n// }\n{\n    \"email\": \"ah250296@gmail.com\",\n    \"password\": \"password\",\n    \"account_type\":\"parent\"\n}\n// {\n//     \"email\": \"driver@example.com\",\n//     \"password\": \"password\",\n//     \"account_type\":\"driver\"\n// }"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/login",
@@ -253,6 +253,33 @@
 								"remove",
 								"firebase",
 								"device-token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DANGEROUS: DELETE ACCOUNT",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/profile/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"profile",
+								"me"
 							]
 						}
 					},
@@ -3184,6 +3211,38 @@
 									"key": "to",
 									"value": "2025-07-01"
 								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Ride Flow",
+			"item": [
+				{
+					"name": "Create a new ride instance",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"ride_group_id\": \"1\",\r\n    \"type\": \"to_school\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/create",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ride",
+								"create"
 							]
 						}
 					},
