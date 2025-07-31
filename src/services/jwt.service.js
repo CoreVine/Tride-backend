@@ -17,7 +17,7 @@ const JwtService = {
       if (process.env.SERVER_JWT !== "true")
         throw new Error("[JWT] Fastify JWT flag is not set");
 
-      console.log("[JWT] Generating fastify JWT sign");
+      logger.debug("[JWT] Generating fastify JWT sign");
 
       // Combine account ID with additional claims into a complete payload
       const payload = {
@@ -176,7 +176,7 @@ const JwtService = {
           true,
           ttl > 0 ? ttl : fallbackTtl
         );
-        logger.info(
+        logger.debug(
           `[JWT] Added token with fingerprint ${tokenFingerprint} to blacklist with TTL ${
             ttl > 0 ? ttl : fallbackTtl
           }`

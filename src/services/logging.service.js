@@ -1,7 +1,9 @@
+require('dotenv').config();
 const winston = require('winston');
 const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
+require('winston-daily-rotate-file');
 
 // Ensure logs directory exists
 const logDir = path.join(__dirname, '../../logs');
@@ -43,15 +45,23 @@ const logger = winston.createLogger({
   defaultMeta: { service: 'api' },
   transports: [
     // Console transport with optimized format
-    new winston.transports.Console({ format: consoleFormat }),
-    // File transport for all logs
-    new winston.transports.File({ 
-      filename: path.join(logDir, 'combined.log')
+    new winston.transports.Console({ format: consoleFormat, level: process.env.NODE_ENV === "production" ? "info" : "debug" }),
+    // Daily rotate file transport for all logs
+    new winston.transports.DailyRotateFile({
+      filename: path.join(logDir, 'combined-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '20m',
+      maxFiles: '14d',
+      zippedArchive: true
     }),
-    // Separate file for error logs
-    new winston.transports.File({ 
-      filename: path.join(logDir, 'error.log'), 
-      level: 'error' 
+    // Daily rotate file transport for error logs
+    new winston.transports.DailyRotateFile({
+      filename: path.join(logDir, 'error-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '20m',
+      maxFiles: '14d',
+      level: 'error',
+      zippedArchive: true
     })
   ]
 });
@@ -59,43 +69,49 @@ const logger = winston.createLogger({
 // Create stream for Morgan to use Winston
 const morganStream = {
   write: (message) => {
-    logger.info(message.trim());
+    // Use warn level for HTTP errors
+    logger.warn(message.trim());
   }
 };
 
-// Configure Morgan format based on environment
-const morganFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
+// Configure Morgan with custom format focusing on errors
+const httpLogger = morgan((tokens, req, res) => {
+  const status = tokens.status(req, res);
+  if (status >= 400) {
+    return [
+      tokens.method(req, res),
+      tokens.url(req, res),
+      status,
+      tokens['remote-addr'](req, res),
+      '-',
+      tokens['response-time'](req, res), 'ms'
+    ].join(' ');
+  }
+  return null; // Skip logging for 2xx/3xx responses in production
+}, { stream: morganStream });
+
+// Development morgan format - more verbose
+const devHttpLogger = morgan('dev', { 
+  stream: { 
+    write: (message) => logger.info(message.trim()) 
+  } 
+});
 
 const loggingService = {
   init: async () => {
     try {
       logger.info('[LOGGING] Logging service initialized');
+      // Configure and return logging components
       return {
         logger,
-        morgan: morgan(morganFormat, { stream: morganStream })
+        morgan: process.env.NODE_ENV === 'production' ? httpLogger : devHttpLogger
       };
     } catch (error) {
       console.error('[LOGGING] Error during logging service initialization', error);
       throw error;
     }
   },
-  getLogger: () => logger,
-  
-  // Specialized logging methods for common use cases
-  logAPIRequest: (req, message) => {
-    logger.info(`API ${req.method} ${req.originalUrl} - ${message}`, {
-      userId: req.userId,
-      ip: req.ip
-    });
-  },
-  
-  logValidationError: (errors, context) => {
-    logger.warn(`Validation errors in ${context}:`, { errors });
-  },
-  
-  logDatabaseOperation: (operation, model, result) => {
-    logger.debug(`DB Operation: ${operation} on ${model}`, { result });
-  }
+  getLogger: () => logger
 };
 
 module.exports = loggingService;

@@ -39,7 +39,7 @@ const socialAuthController = {
           is_verified: userData.isVerified
         });
         
-        logger.info('New account created from Google login', {
+        logger.debug('New account created from Google login', {
           id: account.id,
           email: account.email
         });
@@ -163,7 +163,7 @@ const socialAuthController = {
           is_verified: userData.isVerified
         });
         
-        logger.info('New account created from Facebook login', {
+        logger.debug('New account created from Facebook login', {
           id: account.id,
           email: account.email
         });

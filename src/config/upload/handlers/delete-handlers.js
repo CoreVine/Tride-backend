@@ -21,7 +21,7 @@ const deleteFromDisk = async (filePath) => {
     
     if (fs.existsSync(fullPath)) {
       await fs.promises.unlink(fullPath);
-      logger.info(`[UPLOAD] File deleted successfully: ${fullPath}`);
+      logger.debug(`[UPLOAD] File deleted successfully: ${fullPath}`);
       return true;
     }
     return false;
@@ -53,7 +53,7 @@ const deleteFromS3 = async (fileUrl) => {
       : '';
     
     await awsService.deleteFile(fileUUID, extension, bucketPath);
-    logger.info(`[UPLOAD] File deleted from S3: ${filename}`);
+    logger.debug(`[UPLOAD] File deleted from S3: ${filename}`);
     return true;
   } catch (error) {
     logger.error(`[UPLOAD] Error deleting file from S3: ${error.message}`);
@@ -162,7 +162,7 @@ const deleteFromCloudinary = async (fileUrl) => {
       });
       
       if (result.deleted && result.deleted[publicId] === 'deleted') {
-        logger.info(`[CLOUDINARY] Successfully deleted: ${publicId}`);
+        logger.debug(`[CLOUDINARY] Successfully deleted: ${publicId}`);
         return true;
       }
       
@@ -180,7 +180,7 @@ const deleteFromCloudinary = async (fileUrl) => {
       });
       
       if (destroyResult && destroyResult.result === 'ok') {
-        logger.info(`[CLOUDINARY] Successfully deleted with uploader.destroy: ${publicId}`);
+        logger.debug(`[CLOUDINARY] Successfully deleted with uploader.destroy: ${publicId}`);
         return true;
       }
       
@@ -201,7 +201,7 @@ const deleteFromCloudinary = async (fileUrl) => {
         });
         
         if (altResult && altResult.result === 'ok') {
-          logger.info(`[CLOUDINARY] Successfully deleted with type ${type}: ${publicId}`);
+          logger.debug(`[CLOUDINARY] Successfully deleted with type ${type}: ${publicId}`);
           return true;
         }
       } catch (err) {
@@ -214,7 +214,6 @@ const deleteFromCloudinary = async (fileUrl) => {
     return false;
   } catch (error) {
     logger.error(`[CLOUDINARY] Error in deleteFromCloudinary: ${error.message}`, { url: fileUrl });
-    // Don't throw, just return false to not break the application flow
     return false;
   }
 };

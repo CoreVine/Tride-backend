@@ -20,7 +20,7 @@ const profileController = {
   // Create Parent Profile (Step 2 for parents)
   createParentProfile: async (req, res, next) => {
     try {
-      logger.info("Parent profile creation attempt", { accountId: req.userId });
+      logger.debug("Parent profile creation attempt", { accountId: req.userId });
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -78,7 +78,7 @@ const profileController = {
         profile_pic: profilePicUrl,
       });
 
-      logger.info("Parent profile created successfully", {
+      logger.debug("Parent profile created successfully", {
         accountId: req.userId,
         parentId: parent.id,
       });
@@ -106,7 +106,7 @@ const profileController = {
   },
   getParentProfile: async (req, res, next) => {
     try {
-      logger.info("Parent profile Retrived attempt", { accountId: req.userId });
+      logger.debug("Parent profile Retrived attempt", { accountId: req.userId });
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -130,7 +130,7 @@ const profileController = {
         );
       }
 
-      logger.info("Parent profile retrived successfully", {
+      logger.debug("Parent profile retrived successfully", {
         accountId: req.userId,
         parentId: parent.id,
       });
@@ -160,7 +160,7 @@ const profileController = {
   // Upload Parent ID Documents
   uploadParentIdDocuments: async (req, res, next) => {
     try {
-      logger.info("Parent ID documents upload attempt", {
+      logger.debug("Parent ID documents upload attempt", {
         accountId: req.userId,
       });
 
@@ -186,7 +186,7 @@ const profileController = {
         face_auth_complete: true
       };
 
-      logger.info("Updating parent with document data:", {
+      logger.debug("Updating parent with document data:", {
         parentId: parent.id,
         updateData: updateData
       });
@@ -194,19 +194,19 @@ const profileController = {
       // Update parent profile with document URLs
       const updateResult = await ParentRepository.update(parent.id, updateData);
       
-      logger.info("Update result:", { updateResult });
+      logger.debug("Update result:", { updateResult });
 
       // Fetch updated profile
       const updatedParent = await ParentRepository.findById(parent.id);
       
-      logger.info("Updated parent data:", {
+      logger.debug("Updated parent data:", {
         parentId: updatedParent?.id,
         front_side_nic: updatedParent?.front_side_nic,
         back_side_nic: updatedParent?.back_side_nic,
         documents_approved: updatedParent?.documents_approved
       });
 
-      logger.info("Parent ID documents uploaded successfully", {
+      logger.debug("Parent ID documents uploaded successfully", {
         accountId: req.userId,
         parentId: parent.id,
       });
@@ -227,7 +227,7 @@ const profileController = {
   // Get Parent ID Documents
   getParentIdDocuments: async (req, res, next) => {
     try {
-      logger.info("Parent ID documents retrieval attempt", {
+      logger.debug("Parent ID documents retrieval attempt", {
         accountId: req.userId,
       });
 
@@ -253,7 +253,7 @@ const profileController = {
         documents_approval_date: parent.documents_approval_date,
       };
 
-      logger.info("Parent ID documents retrieved successfully", {
+      logger.debug("Parent ID documents retrieved successfully", {
         accountId: req.userId,
         parentId: parent.id,
       });
@@ -274,7 +274,7 @@ const profileController = {
   // Create Driver Profile (Step 2 for drivers)
   createDriverProfile: async (req, res, next) => {
     try {
-      logger.info("Driver profile creation attempt", { accountId: req.userId });
+      logger.debug("Driver profile creation attempt", { accountId: req.userId });
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -347,7 +347,7 @@ const profileController = {
         profile_pic: profilePicUrl,
       });
 
-      logger.info("Driver profile created successfully", {
+      logger.debug("Driver profile created successfully", {
         accountId: req.userId,
         driverId: driver.id,
       });
@@ -379,7 +379,7 @@ const profileController = {
   // Upload Driver Papers (Step 3 for drivers)
   uploadDriverPapers: async (req, res, next) => {
     try {
-      logger.info("Driver papers upload attempt", { accountId: req.userId });
+      logger.debug("Driver papers upload attempt", { accountId: req.userId });
 
       // Verify driver profile exists FIRST before processing any files
       const driver = await DriverRepository.findByAccountId(req.userId);
@@ -459,7 +459,7 @@ const profileController = {
         approved: false, // Default to not approved, admin will review
       });
 
-      logger.info("Driver papers uploaded successfully", {
+      logger.debug("Driver papers uploaded successfully", {
         accountId: req.userId,
         driverId: driver.id,
         papersId: driverPapers.id,
@@ -491,7 +491,7 @@ const profileController = {
   // Upload Driver Papers (Step 3 for drivers)
   uploadDriverApproved: async (req, res, next) => {
     try {
-      logger.info("Driver papers upload attempt", { accountId: req.userId });
+      logger.debug("Driver papers upload attempt", { accountId: req.userId });
       const { papersId } = req.params;
       const { approved } = req.body;
       if (!papersId) {
@@ -538,7 +538,7 @@ const profileController = {
         Date.now()
       );
 
-      logger.info("Driver papers uploaded successfully", {
+      logger.debug("Driver papers uploaded successfully", {
         accountId: req.userId,
         driverId: driver.id,
         papersId: driverPapers.id,
@@ -571,7 +571,7 @@ const profileController = {
   // Approve Parent Documents (Admin function)
   approveParentDocuments: async (req, res, next) => {
     try {
-      logger.info("Parent documents approval attempt", { accountId: req.userId });
+      logger.debug("Parent documents approval attempt", { accountId: req.userId });
       const { parentId } = req.params;
       const { approved } = req.body;
       
@@ -604,7 +604,7 @@ const profileController = {
       // Fetch updated parent profile
       const updatedParent = await ParentRepository.findById(parentId);
 
-      logger.info("Parent documents approval status updated successfully", {
+      logger.debug("Parent documents approval status updated successfully", {
         accountId: req.userId,
         parentId: parentId,
         approved: approved,
@@ -630,7 +630,7 @@ const profileController = {
   // Update Parent Profile
   updateParentProfile: async (req, res, next) => {
     try {
-      logger.info("Parent profile update attempt", { accountId: req.userId });
+      logger.debug("Parent profile update attempt", { accountId: req.userId });
 
       // Find parent profile FIRST before processing any files
       const parent = await ParentRepository.findByAccountId(req.userId);
@@ -708,7 +708,7 @@ const profileController = {
       // Fetch updated profile
       const updatedParent = await ParentRepository.findById(parent.id);
 
-      logger.info("Parent profile updated successfully", {
+      logger.debug("Parent profile updated successfully", {
         accountId: req.userId,
         parentId: parent.id,
       });
@@ -729,7 +729,7 @@ const profileController = {
   // Update Driver Profile
   updateDriverProfile: async (req, res, next) => {
     try {
-      logger.info("Driver profile update attempt", { accountId: req.userId });
+      logger.debug("Driver profile update attempt", { accountId: req.userId });
 
       // Find driver profile
       const driver = await DriverRepository.findByAccountId(req.userId);
@@ -797,7 +797,7 @@ const profileController = {
       // Fetch updated profile
       const updatedDriver = await DriverRepository.findById(driver.id);
 
-      logger.info("Driver profile updated successfully", {
+      logger.debug("Driver profile updated successfully", {
         accountId: req.userId,
         driverId: driver.id,
       });
@@ -818,7 +818,7 @@ const profileController = {
     const { page = 1, limit = 10 } = req.query;
 
     try {
-      logger.info("Retrieving all driver profiles", {
+      logger.debug("Retrieving all driver profiles", {
         page,
         limit,
         accountId: req.userId,
@@ -833,7 +833,7 @@ const profileController = {
 
       const pagination = createPagination(page, limit, count);
 
-      logger.info("Driver profiles retrieved successfully", {
+      logger.debug("Driver profiles retrieved successfully", {
         count: drivers.length,
       });
 
@@ -853,7 +853,7 @@ const profileController = {
   getDriverProfile: async (req, res, next) => {
     try {
       const { account_id } = req.params;
-      logger.info(`Driver profile Retrived attempt: ${ account_id }`);
+      logger.debug(`Driver profile Retrived attempt: ${ account_id }`);
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(account_id);
@@ -877,7 +877,7 @@ const profileController = {
         );
       }
 
-      logger.info("driver profile retrived successfully", {
+      logger.debug("driver profile retrived successfully", {
         account_id,
         driverid: driver.id,
       });
@@ -904,7 +904,7 @@ const profileController = {
   // Get profile status - especially useful for drivers to check approval
   getProfileStatus: async (req, res, next) => {
     try {
-      logger.info("Profile status check", { accountId: req.userId });
+      logger.debug("Profile status check", { accountId: req.userId });
 
       // Get the account
       const account = await AccountRepository.findById(req.userId);
@@ -934,7 +934,7 @@ const profileController = {
 
         if (parent) {
           // Debug logging to see what we're getting from the database
-          logger.info("Parent data from database:", {
+          logger.debug("Parent data from database:", {
             parentId: parent.id,
             front_side_nic: parent.front_side_nic,
             back_side_nic: parent.back_side_nic,

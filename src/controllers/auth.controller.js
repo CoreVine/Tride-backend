@@ -29,7 +29,7 @@ const getEmailVerificationExpiration = () => {
 const authController = {
   register: async (req, res, next) => {
     try {
-      logger.info("Registration attempt");
+      logger.debug("Registration attempt");
 
       // Validation is already handled by the validate middleware in routes
       const { email, password, account_type } = req.body;
@@ -58,7 +58,7 @@ const authController = {
         is_verified: !emailVerificationRequired, // Set to true if verification not required
       });
 
-      logger.info("Account registered successfully", {
+      logger.debug("Account registered successfully", {
         account_id: account.id,
         email,
         account_type: userAccountType,
@@ -94,7 +94,7 @@ const authController = {
           expiryMinutes: process.env.EMAIL_VERIFICATION_EXP_MINS || 30,
         });
 
-        logger.info(`Email verification code sent to ${email}`);
+        logger.debug(`Email verification code sent to ${email}`);
 
         if (req.fromAdminCreation) {
           req.account = {
@@ -246,7 +246,7 @@ const authController = {
   login: async (req, res, next) => {
     try {
       const { email, password, account_type } = req.body;
-      logger.info(
+      logger.debug(
         `Login attempt for: ${email} as ${account_type || "unspecified type"}`
       );
 
@@ -320,7 +320,7 @@ const authController = {
 
       const { token } = jwtResponse;
 
-      logger.info(`Login successful for account: ${email}`, {
+      logger.debug(`Login successful for account: ${email}`, {
         account_id: account.id,
         profile_complete: profileComplete,
       });

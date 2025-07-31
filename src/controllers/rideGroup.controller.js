@@ -367,7 +367,7 @@ const RideGroupController = {
     const { order_id } = req.body;
 
     try {
-      logger.info("Confirming new subscription", { orderId: order_id });
+      logger.debug("Confirming new subscription", { orderId: order_id });
       const result = await redisService.get(order_id);
 
       if (!result) {
@@ -463,7 +463,7 @@ const RideGroupController = {
 
   createRideGroup: async (req, res, next) => {
     try {
-      logger.info("ride group creation attempt", { accountId: req.userId });
+      logger.debug("ride group creation attempt", { accountId: req.userId });
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -548,7 +548,7 @@ const RideGroupController = {
 
       const rideGroup = await RideGroupRepository.createNewRideGroup(payload);
 
-      logger.info("A new ride group is created successfully");
+      logger.debug("A new ride group is created successfully");
 
       // Return success with parent profile
       return res.success("A new ride group has been created successfully", {
@@ -639,7 +639,7 @@ const RideGroupController = {
 
   addChildToGroup: async (req, res, next) => {
     try {
-      logger.info("Parent attempting to add children to group", {
+      logger.debug("Parent attempting to add children to group", {
         accountId: req.userId,
       });
 
@@ -719,7 +719,7 @@ const RideGroupController = {
         throw new BadRequestError("Unable to add children to the group");
       }
 
-      logger.info(
+      logger.debug(
         `${childrenAdded.length} children successfully added to the group`
       );
 

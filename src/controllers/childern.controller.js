@@ -13,7 +13,7 @@ const logger = loggingService.getLogger();
 const childController = {
   createChildProfile: async (req, res, next) => {
     try {
-      logger.info("Parent profile creation attempt", { accountId: req.userId });
+      logger.debug("Parent profile creation attempt", { accountId: req.userId });
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -50,7 +50,7 @@ const childController = {
         profile_pic: profilePicUrl,
       });
 
-      logger.info("child created successfully", {
+      logger.debug("child created successfully", {
         child: child,
       });
 
@@ -68,7 +68,7 @@ const childController = {
   },
   getChildProfileforParent: async (req, res, next) => {
     try {
-      logger.info("chidlens get creation attempt", { accountId: req.userId });
+      logger.debug("chidlens get creation attempt", { accountId: req.userId });
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -90,7 +90,7 @@ const childController = {
         parentProfile.id
       );
 
-      logger.info("child created successfully", {
+      logger.debug("child created successfully", {
         childrens: childrens.children,
       });
 
@@ -108,7 +108,7 @@ const childController = {
   },
   updateChildProfile: async (req, res, next) => {
     try {
-      logger.info("Childen update attempt", { accountId: req.userId });
+      logger.debug("Childen update attempt", { accountId: req.userId });
       const child_id = req.params.id;
       if (!child_id) {
         throw new BadRequestError("Child ID is required");
@@ -152,7 +152,7 @@ const childController = {
         profile_pic: profilePicUrl,
       });
 
-      logger.info("child update successfully", {
+      logger.debug("child update successfully", {
         child: newChild,
       });
 
@@ -170,7 +170,7 @@ const childController = {
   },
   getByChildProfile: async (req, res, next) => {
     try {
-      logger.info("Childen retrieved attempt", { accountId: req.userId });
+      logger.debug("Childen retrieved attempt", { accountId: req.userId });
       const child_id = req.params.id;
       if (!child_id) {
         throw new BadRequestError("Child ID is required");
@@ -205,7 +205,7 @@ const childController = {
         throw new NotFoundError("Child profile not found");
       }
 
-      logger.info("child created successfully", {
+      logger.debug("child created successfully", {
         child: child,
       });
 
@@ -223,7 +223,7 @@ const childController = {
   },
   deleteByChildProfile: async (req, res, next) => {
     try {
-      logger.info("Childen profile Delete attempt", { accountId: req.userId });
+      logger.debug("Childen profile Delete attempt", { accountId: req.userId });
       const child_id = req.params.id;
       if (!child_id) {
         throw new BadRequestError("Child ID is required");
@@ -258,7 +258,7 @@ const childController = {
         throw new NotFoundError("Child profile not found");
       }
       await ChildRepository.delete(child_id);
-      logger.info("child created successfully", {
+      logger.debug("child created successfully", {
         child: child,
       });
 
