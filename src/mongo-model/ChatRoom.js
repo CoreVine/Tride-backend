@@ -5,7 +5,6 @@ const chatRoomSchema = new mongoose.Schema({
   ride_group_id: {
     type: Number,
     required: false,
-    index: true,
   },
   room_type: {
     type: String,
