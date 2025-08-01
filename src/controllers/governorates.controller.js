@@ -56,7 +56,7 @@ module.exports = {
         throw new NotFoundError("Governorate not found")
       }
 
-      logger.info(`Governorate retrieved successfully: ${Governorate.name}`)
+      logger.debug(`Governorate retrieved successfully: ${Governorate.name}`)
       return res.success("Governorate retrieved successfully", Governorate)
     } catch (error) {
       logger.error("Error fetching Governorate", {
@@ -83,7 +83,7 @@ module.exports = {
         governorate_name
       })
 
-      logger.info(`Governorate created successfully with ID: ${Governorate.id}`)
+      logger.debug(`Governorate created successfully with ID: ${Governorate.id}`)
       return res.success("Governorate created successfully", Governorate, null, 201)
     } catch (error) {
       logger.error("Error creating Governorate", {
@@ -118,7 +118,7 @@ module.exports = {
 
       const updatedGovernorate = await GovernorateRepository.findById(id)
 
-      logger.info(`Governorate updated successfully: ${updatedGovernorate.governorate_name}`)
+      logger.debug(`Governorate updated successfully: ${updatedGovernorate.governorate_name}`)
       return res.success("Governorate updated successfully", updatedGovernorate)
     } catch (error) {
       logger.error("Error updating Governorate", {
@@ -146,7 +146,7 @@ module.exports = {
 
       try {
         const result = await GovernorateRepository.deleteWithCities(id)
-        logger.info(`Governorate deleted successfully with ID: ${id} along with ${result.citiesDeleted} cities`)
+        logger.debug(`Governorate deleted successfully with ID: ${id} along with ${result.citiesDeleted} cities`)
         return res.success(result.message)
       } catch (error) {
         if (error.message.includes("Cannot delete Governorate because")) {
@@ -178,7 +178,7 @@ module.exports = {
 
       const Governorates = await GovernorateRepository.findByName(name)
 
-      logger.info(`Found ${Governorates.length} Governorates matching search criteria`)
+      logger.debug(`Found ${Governorates.length} Governorates matching search criteria`)
       return res.success("Governorates retrieved successfully", Governorates)
     } catch (error) {
       logger.error("Error searching Governorates", {

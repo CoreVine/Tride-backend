@@ -380,7 +380,7 @@ const authController = {
 
   me: async (req, res, next) => {
     try {
-      logger.info("Profile retrieval attempt", { accountId: req.userId });
+      logger.debug("Profile retrieval attempt", { accountId: req.userId });
 
       const account = await AccountRepository.findByIdExcludeProps(req.userId, [
         "password",

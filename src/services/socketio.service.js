@@ -40,12 +40,12 @@ function init(httpServer) {
       // Store user connection in Redis (already handled in setupConnection)
       // Just join the user-specific room for notifications
       socket.join(`user_${userId}`);
-      logger.info(`[Socket.IO] Socket ${socket.id} joined room user_${userId}`);
+      logger.debug(`[Socket.IO] Socket ${socket.id} joined room user_${userId}`);
       
       // Get current connection count from Redis for logging
       const connections = await redisService.getUserConnections(userId);
       const connectionCount = connections ? Object.keys(connections).length : 0;
-      logger.info(
+      logger.debug(
         `[Socket.IO] Socket ${socket.id} associated with user_${userId}. Total sockets for user: ${connectionCount}`
       );
     } catch (error) {
@@ -56,7 +56,7 @@ function init(httpServer) {
     setupDisconnection(socket);
   });
 
-  logger.info("[Socket.IO] Server initialized and attached to HTTP server.");
+  logger.debug("[Socket.IO] Server initialized and attached to HTTP server.");
 }
 
 function getIo() {

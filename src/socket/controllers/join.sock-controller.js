@@ -25,7 +25,7 @@ const verifyAndJoinRoom = async (socket, roomId) => {
             return;
         }
     
-        logger.info(
+        logger.debug(
             `[Socket.IO] User ${socket.userId} authorized to join room ${roomId}.
             Joining room...`
         );
@@ -50,7 +50,7 @@ const verifyAndJoinRoom = async (socket, roomId) => {
                 socket.emit("ack", `Unauthorized!`);
                 return;
             } else {
-                logger.info(
+                logger.debug(
                     `[Socket.IO] Admin ${socket.userId} authorized to join customer support room ${roomId}.`
                 );
             }
@@ -65,13 +65,13 @@ const verifyAndJoinRoom = async (socket, roomId) => {
     // If not, add them as a participant
     if (!isParticipantAlready) {
         await chatRoom.addParticipant(socket.userId, socket.accountType, socket.name);
-        logger.info(
+        logger.debug(
             `[Socket.IO] User ${socket.userId} added as participant to room ${roomId}.`
         );
     }
 
     socket.join(roomId);
-    logger.info(
+    logger.debug(
         `[Socket.IO] Socket ${socket.id} joined chat room: ${roomId}`
     );
     socket.emit("ack", "OK");
