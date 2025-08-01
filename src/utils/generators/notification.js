@@ -58,7 +58,7 @@ async function sendNotificationTo({ accountIds, type, title, message, related_en
             };
 
             const result = await firebaseService.sendNotification(firebaseMessage);
-            logger.info('Notification is sent', {
+            logger.debug('Notification is sent', {
                 notificationId: notification._id,
                 deviceTokenCount: deviceTokens.length,
                 result

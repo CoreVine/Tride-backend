@@ -159,7 +159,7 @@ const passwordResetController = {
       // Generate reset token
       const resetToken = await VerificationCodeRepository.generateResetToken(verificationCode.id);
       
-      logger.info(`Password reset code verified for ${email}`);
+      logger.debug(`Password reset code verified for ${email}`);
       
       res.success('Verification code validated successfully', {
         email,
@@ -213,7 +213,7 @@ const passwordResetController = {
       // Mark token as used and immediately delete it
       await VerificationCodeRepository.markUsedAndDelete(verifiedCode.id);
       
-      logger.info(`Password successfully reset for ${email}`);
+      logger.debug(`Password successfully reset for ${email}`);
       
       return res.success('Password reset successfully');
     } catch (error) {
