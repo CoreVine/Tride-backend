@@ -76,7 +76,7 @@ const JwtService = {
         token = request.cookies?.token;
       }
 
-      if (!token) throw new BadTokenError("[JWT] JWT token not provided");
+      if (!token) throw new BadTokenError("[JWT] JWT token is not provided");
 
       return token;
     } catch (error) {

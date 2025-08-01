@@ -3,7 +3,7 @@
  */
 module.exports = {
   allowedOrigins: [
-    "*" // Allow all origins for testing
+    // "*" // Allow all origins for testing
     // process.env.FRONTEND_URL, // Default frontend URL
     // Add more web origins as needed
   ],

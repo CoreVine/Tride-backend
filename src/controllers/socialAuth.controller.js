@@ -81,28 +81,7 @@ const socialAuthController = {
       
       const { token } = jwtResponse;
       
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/'
-      };
-      
-      if (process.env.SERVER_JWT_USE_EXPIRY === "true") {
-        cookieOptions.maxAge = Number(process.env.SERVER_JWT_TIMEOUT);
-      }
-      
-      res.cookie('token', token, cookieOptions);
-      
       if (jwtResponse.refreshToken) {
-        res.cookie('refresh_token', jwtResponse.refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: Number(process.env.SERVER_JWT_REFRESH_MAX_AGE),
-          sameSite: 'strict',
-          path: '/'
-        });
-        
         return res.success('Google authentication successful', {
           account: {
             id: account.id,
@@ -205,28 +184,7 @@ const socialAuthController = {
       
       const { token } = jwtResponse;
       
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/'
-      };
-      
-      if (process.env.SERVER_JWT_USE_EXPIRY === "true") {
-        cookieOptions.maxAge = Number(process.env.SERVER_JWT_TIMEOUT);
-      }
-      
-      res.cookie('token', token, cookieOptions);
-      
       if (jwtResponse.refreshToken) {
-        res.cookie('refresh_token', jwtResponse.refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: Number(process.env.SERVER_JWT_REFRESH_MAX_AGE),
-          sameSite: 'strict',
-          path: '/'
-        });
-        
         return res.success('Facebook authentication successful', {
           account: {
             id: account.id,
