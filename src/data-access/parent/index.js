@@ -54,9 +54,7 @@ class ParentRepository extends BaseRepository {
                 documents_approved: approved
             };
             
-            if (approvalDate) {
-                updateData.documents_approval_date = approvalDate;
-            }
+            updateData.documents_approval_date = approvalDate;
             
             return await this.model.update(updateData, {
                 where: { id: parentId }
@@ -65,6 +63,9 @@ class ParentRepository extends BaseRepository {
             throw new DatabaseError(error);
         }
     }
+
+  
+      
 }
 
 module.exports = new ParentRepository();

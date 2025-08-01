@@ -4,10 +4,12 @@ const driverPapersRepository = require("../data-access/driverPapers")
 const { NotFoundError } = require("../utils/errors/types/Api.error")
 const { createPagination } = require("../utils/responseHandler")
 
+const { Op } = require("sequelize")
+
 const driversController = {
   getAllDrivers: async (req, res, next) => {
     try {
-      const { page = 1, limit = 10 } = req.query
+      const { page = 1, limit = 10, search } = req.query
 
       const { count, rows: drivers } = await driverRepository.findAllPaginated(page, limit, {
         include: [
@@ -19,7 +21,8 @@ const driversController = {
             association: "papers",
             attributes: ["id", "approved", "approval_date"]
           }
-        ]
+        ],
+        where: search ? { name: { [Op.like]: `%${search}%` } } : {}
       })
       const pagination = createPagination(page, limit, count)
 

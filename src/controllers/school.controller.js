@@ -3,8 +3,10 @@ const SchoolRepository = require("../data-access/school")
 const schoolRepository = require("../data-access/school")
 const CityRepository = require("../data-access/city")
 const loggingService = require("../services/logging.service")
+
 const { BadRequestError, NotFoundError, ForbiddenError } = require("../utils/errors/types/Api.error")
-const { where } = require("sequelize")
+const { Op } = require("sequelize")
+
 const logger = loggingService.getLogger()
 
 const schoolController = {
@@ -39,7 +41,29 @@ const schoolController = {
       next(error)
     }
   },
-  createschool: async (req, res, next) => {
+
+  getAllSchools: async (req, res, next) => {
+    try {
+      const { search } = req.query
+
+      const schools = await SchoolRepository.findAll({
+        include: {
+          association: "city"
+        },
+        where: search ? { school_name: { [Op.like]: `%${search}%` } } : {}
+      })
+
+      return res.success("Schools retrieved successfully", schools)
+      
+    } catch (error) {
+      logger.error("Failed to fetch all schools", {
+        error: error.message,
+        stack: error.stack
+      })
+      next(error)
+    }
+  },
+  createSchool: async (req, res, next) => {
     try {
       logger.debug("School profile creation attempt", { accountId: req.userId })
 
@@ -89,7 +113,7 @@ const schoolController = {
       next(error)
     }
   },
-  getschoolForCity: async (req, res, next) => {
+  getSchoolForCity: async (req, res, next) => {
     try {
       logger.debug("chidlens get creation attempt", { accountId: req.userId })
 
@@ -133,7 +157,7 @@ const schoolController = {
       next(error)
     }
   },
-  updateschool: async (req, res, next) => {
+  updateSchool: async (req, res, next) => {
     try {
       logger.debug("School profile Update attempt", { accountId: req.userId })
 
@@ -185,7 +209,7 @@ const schoolController = {
       next(error)
     }
   },
-  getschoolByID: async (req, res, next) => {
+  getSchoolById: async (req, res, next) => {
     try {
       logger.debug("School retrieved by id attempt", { accountId: req.userId })
 
@@ -218,7 +242,7 @@ const schoolController = {
       next(error)
     }
   },
-  deleteSchollByID: async (req, res, next) => {
+  deleteSchoolById: async (req, res, next) => {
     try {
       logger.debug("School Delete attempt", { accountId: req.userId })
 
