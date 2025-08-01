@@ -17,7 +17,7 @@ const facebookAuthService = {
    */
   async verifyAccessToken(accessToken) {
     try {
-      logger.info('Verifying Facebook access token');
+      logger.debug('Verifying Facebook access token');
       
       // First verify the token
       const appAccessTokenResponse = await axios.get(
@@ -55,7 +55,7 @@ const facebookAuthService = {
         authMethod: 'facebook'
       };
       
-      logger.info('Facebook token verified successfully', { email: userData.email });
+      logger.debug('Facebook token verified successfully', { email: userData.email });
       return userData;
     } catch (error) {
       logger.error('Facebook token verification failed', { 

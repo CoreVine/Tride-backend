@@ -10,7 +10,7 @@ module.exports = {
    */
   async getAllGovernorates(req, res, next) {
     try {
-      logger.info("Fetching all Governorates")
+      logger.debug("Fetching all Governorates")
 
       const Governorates = await GovernorateRepository.findAll({
         order: [["governorate_name", "ASC"]]
@@ -26,7 +26,7 @@ module.exports = {
   async getPaginatedGovernorates(req, res, next) {
     try {
       const { page, limit } = req.query
-      logger.info(`Fetching paginated Governorates: page ${page}, limit ${limit}`)
+      logger.debug(`Fetching paginated Governorates: page ${page}, limit ${limit}`)
 
       const Governorates = await GovernorateRepository.findAllPaginated(page, limit, {
         order: [["governorate_name", "ASC"]]
@@ -47,7 +47,7 @@ module.exports = {
   async getGovernorateById(req, res, next) {
     try {
       const { id } = req.params
-      logger.info(`Fetching Governorate with ID: ${id}`)
+      logger.debug(`Fetching Governorate with ID: ${id}`)
 
       const Governorate = await GovernorateRepository.findByIdWithCities(id)
 
@@ -73,7 +73,7 @@ module.exports = {
   async createGovernorate(req, res, next) {
     try {
       const { governorate_name } = req.body
-      logger.info(`Creating new Governorate: ${governorate_name}`)
+      logger.debug(`Creating new Governorate: ${governorate_name}`)
 
       if (!governorate_name) {
         throw new BadRequestError("Governorate name is required")
@@ -101,7 +101,7 @@ module.exports = {
     try {
       const { id } = req.params
       const { governorate_name } = req.body
-      logger.info(`Updating Governorate with ID: ${id}`)
+      logger.debug(`Updating Governorate with ID: ${id}`)
 
       if (!governorate_name) {
         throw new BadRequestError("Governorate name is required")
@@ -135,7 +135,7 @@ module.exports = {
   async deleteGovernorate(req, res, next) {
     try {
       const { id } = req.params
-      logger.info(`Deleting Governorate with ID: ${id} and all its cities`)
+      logger.debug(`Deleting Governorate with ID: ${id} and all its cities`)
 
       const Governorate = await GovernorateRepository.findById(id)
 
@@ -170,7 +170,7 @@ module.exports = {
   async searchGovernorates(req, res, next) {
     try {
       const { name } = req.query
-      logger.info(`Searching Governorates with name: ${name}`)
+      logger.debug(`Searching Governorates with name: ${name}`)
 
       if (!name) {
         throw new BadRequestError("Name query parameter is required")

@@ -44,7 +44,7 @@ const passwordResetController = {
       // SECURITY: Always return success response even if user not found
       // This prevents user enumeration attacks
       if (!accountData) {
-        logger.info(`Password reset requested for non-existent account: ${email}`);
+        logger.debug(`Password reset requested for non-existent account: ${email}`);
         return res.success('If your email is registered, you will receive a password reset code', {
           email,
           expiresAt: getCodeExpiration()
@@ -82,7 +82,7 @@ const passwordResetController = {
         expiryMinutes: process.env.RESET_PW_VERIFICATION_EXP_MINS || 5
       });
       
-      logger.info(`Password reset verification code sent to ${email}`);
+      logger.debug(`Password reset verification code sent to ${email}`);
       
       res.success('If your email is registered, you will receive a password reset code', {
         email,

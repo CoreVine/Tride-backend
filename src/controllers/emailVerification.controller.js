@@ -47,7 +47,7 @@ const emailVerificationController = {
 
       // Check if email is already verified
       if (accountData.is_verified) {
-        logger.info(
+        logger.debug(
           `Email verification requested for already verified email: ${email}`
         );
         return res.success("Your email is already verified");

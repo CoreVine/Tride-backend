@@ -51,16 +51,6 @@ const chatMessageSchema = new mongoose.Schema({
       ].includes(this.type);
     },
   },
-  // For media metadata
-  // media_meta: {
-  //   size: Number, // in bytes
-  //   duration: Number, // for audio/video in seconds
-  //   width: Number, // for images/videos
-  //   height: Number, // for images/videos
-  //   mime_type: String,
-  // },
-  // For location messages
-
   // System messages (like "User joined")
   is_system: {
     type: Boolean,
@@ -102,18 +92,6 @@ const chatMessageSchema = new mongoose.Schema({
 chatMessageSchema.index({ chat_room_id: 1, created_at: -1 });
 chatMessageSchema.index({ sender_id: 1, sender_type: 1 });
 
-// chatMessageSchema.pre("save", function (next) {
-//   if (this.type === messageTypes.LOCATION) {
-//     if (
-//       !this.location ||
-//       !this.location.coordinates ||
-//       this.location.coordinates.length !== 2
-//     ) {
-//       throw new Error("Location messages require valid coordinates");
-//     }
-//   }
-//   next();
-// });
 // Update timestamp on save
 chatMessageSchema.pre("save", function (next) {
   this.updated_at = Date.now();
@@ -132,35 +110,3 @@ module.exports = {
   ChatMessage,
   messageTypes,
 };
-
-// location: {
-//     type: {
-//       type: String,
-//       default: "Point",
-//       enum: ["Point"],
-//       required: function () {
-//         return this.type === messageTypes.LOCATION;
-//       },
-//     },
-//     coordinates: {
-//       type: [Number],
-//       required: function () {
-//         return this.type === messageTypes.LOCATION;
-//       },
-//       validate: {
-//         validator: function (v) {
-//           return (
-//             v.length === 2 &&
-//             typeof v[0] === "number" &&
-//             typeof v[1] === "number"
-//           );
-//         },
-//         message: (props) =>
-//           `${props.value} must be an array of two numbers [longitude, latitude]`,
-//       },
-//     },
-//     name: {
-//       type: String,
-//       required: false,
-//     },
-//   },
