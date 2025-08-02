@@ -11,7 +11,6 @@ const { isInsideRideGroup } = require("../middlewares/chatAuthorize.middleware")
 const groupRoutes = Router();
 
 const createGroupSchema = Yup.object().shape({
-  group_name: Yup.string().min(3).required(),
   school_id: Yup.string().required(),
   home: Yup.object().shape({
     home_lat: Yup.string().required(),
