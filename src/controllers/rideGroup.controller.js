@@ -17,7 +17,7 @@ const paymobUtil = require("../utils/payment/paymob");
 const redisService = require("../services/redis.service");
 const openRouteUtil = require("../utils/openRoutesService");
 const subscriptionDomain = require("../domain/subscription/subscription");
-const { MAX_SEATS_CAR } = require("../config/upload/constants");
+const { RIDE_PRICE_PER_KM, MAX_SEATS_CAR } = require("../config/upload/constants");
 const logger = loggingService.getLogger();
 
 const RideGroupController = {
@@ -513,10 +513,18 @@ const RideGroupController = {
         ],
       };
 
-      const result = await openRouteUtil.getDistanceForRide(points);
+      const dailyRideDistance = await openRouteUtil.getDistanceForRide(points);
 
-      if (isNaN(result) || result <= 0 || !result) {
+      if (isNaN(dailyRideDistance) || dailyRideDistance <= 0 || !dailyRideDistance) {
         throw new BadRequestError("Invalid distance calculated for the ride");
+      }
+
+      try {
+        const totalDays =  req.body.days.length || 0;
+        const totalMonthlyDistance = dailyRideDistance * totalDays * 4;
+        const pricePerKm = RIDE_PRICE_PER_KM(totalMonthlyDistance);
+      } catch (error) {
+        throw new BadRequestError("Distance is too large. You can't create a group with a distance that exceeds 1500km monthly");
       }
 
       // create a new ride group
