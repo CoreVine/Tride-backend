@@ -90,6 +90,21 @@ const profileController = {
         accountTypeId: parent.id,
       });
 
+      // Set documents approval to auto true
+      const updateData = {
+        documents_approved: true,
+        documents_approval_date: new Date(),
+        face_auth_complete: true
+      };
+
+      logger.debug("Updating parent with document data:", {
+        parentId: parent.id,
+        updateData: updateData
+      });
+
+      // Update parent profile with document URLs
+      const updateResult = await ParentRepository.update(parent.id, updateData);
+
       // Return success with parent profile
       return res.success("Parent profile created successfully", {
         parent,
@@ -159,6 +174,8 @@ const profileController = {
 
   // Upload Parent ID Documents
   uploadParentIdDocuments: async (req, res, next) => {
+    // NOT USED CURRENTLY
+    throw new NotFoundError("Route not found");
     try {
       logger.debug("Parent ID documents upload attempt", {
         accountId: req.userId,
@@ -947,28 +964,9 @@ const profileController = {
           statusData.profile = parent;
           
           // Check if ID documents are uploaded
-          if (parent.front_side_nic && parent.back_side_nic) {
-            statusData.steps.documentsUpload = true;
-            statusData.documents = {
-              front_side_nic: parent.front_side_nic,
-              back_side_nic: parent.back_side_nic
-            };
-            
-            // Check if documents are approved
-            if (parent.documents_approved) {
-              statusData.steps.documentsApproval = true;
-              statusData.profileComplete = true; // Profile is complete when documents are approved
-            } else {
-              statusData.steps.documentsApproval = false;
-              statusData.profileComplete = false; // Profile not complete without approval
-              statusData.nextStep = "pending_approval";
-              statusData.message = "Your documents are under review. You will be notified when they are approved.";
-            }
-          } else {
-            statusData.profileComplete = false; // Profile not complete without documents
-            statusData.nextStep = "upload_id_documents";
-            statusData.message = "Please upload your ID documents to complete your profile.";
-          }
+          statusData.steps.documentsUpload = true;
+          statusData.steps.documentsApproval = true;
+          statusData.profileComplete = true; // Profile is complete when documents are approved
         } else {
           statusData.nextStep = "create_parent_profile";
         }
