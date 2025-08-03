@@ -17,7 +17,7 @@ const paymobUtil = require("../utils/payment/paymob");
 const redisService = require("../services/redis.service");
 const openRouteUtil = require("../utils/openRoutesService");
 const subscriptionDomain = require("../domain/subscription/subscription");
-const { MAX_SEATS_CAR } = require("../config/upload/constants");
+const { RIDE_PRICE_PER_KM, MAX_SEATS_CAR } = require("../config/upload/constants");
 const logger = loggingService.getLogger();
 
 const RideGroupController = {
@@ -500,7 +500,8 @@ const RideGroupController = {
       if (!school.lat || !school.lng) {
         throw new BadRequestError("School location is not set");
       }
-
+      
+      const countGroupsInSchool = await RideGroupRepository.countRideGroupsBySchoolId(school.id);
       const points = {
         lat_lng_house: [
           parseFloat(req.body.home.home_lng),
@@ -512,17 +513,25 @@ const RideGroupController = {
         ],
       };
 
-      const result = await openRouteUtil.getDistanceForRide(points);
+      const dailyRideDistance = await openRouteUtil.getDistanceForRide(points);
 
-      if (isNaN(result) || result <= 0 || !result) {
+      if (isNaN(dailyRideDistance) || dailyRideDistance <= 0 || !dailyRideDistance) {
         throw new BadRequestError("Invalid distance calculated for the ride");
+      }
+
+      try {
+        const totalDays =  req.body.days.length || 0;
+        const totalMonthlyDistance = dailyRideDistance * totalDays * 4;
+        const pricePerKm = RIDE_PRICE_PER_KM(totalMonthlyDistance);
+      } catch (error) {
+        throw new BadRequestError("Distance is too large. You can't create a group with a distance that exceeds 1500km monthly");
       }
 
       // create a new ride group
       const payload = {
         rideGroupPayload: {
           parent_creator_id: parentProfile.id,
-          group_name: req.body.group_name,
+          group_name: `${school.school_name} - #${countGroupsInSchool + 1 || 1}`,
           school_id: req.body.school_id,
           current_seats_taken: req.body.children.length || 0,
           invite_code: inviteCode || null,
@@ -552,7 +561,7 @@ const RideGroupController = {
 
       // Return success with parent profile
       return res.success("A new ride group has been created successfully", {
-        rideGroup,
+        rideGroup: rideGroup.dataValues || rideGroup,
       });
     } catch (error) {
       logger.error("Unable to create a new ride group ", {

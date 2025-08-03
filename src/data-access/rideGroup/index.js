@@ -211,6 +211,18 @@ class RideGroupRepository extends BaseRepository {
     }
   }
 
+  async countRideGroupsBySchoolId(schoolId) {
+    try {
+      return await this.model.count({
+        where: {
+          school_id: schoolId
+        }
+      });
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
   async findOneByIdWithSchoolAndParent(parentId, rideGroupId, options = {}) {
     try {
       const queryOptions = {

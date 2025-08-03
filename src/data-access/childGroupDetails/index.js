@@ -43,7 +43,7 @@ class ChildGroupDetailsRepository extends BaseRepository {
                 });
 
                 if (!childExists) {
-                    throw new NotFoundError(`Unable to create a new ride group.`);
+                    throw new NotFoundError(`Invalid children entries`);
                 }
 
                 // Check for existing children before starting transaction
