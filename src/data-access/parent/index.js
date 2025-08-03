@@ -16,6 +16,23 @@ class ParentRepository extends BaseRepository {
             throw new DatabaseError(error);
         }
     }
+   
+    async findByAccountIdWithGovernorate(accountId) {
+        try {
+            return await this.model.findOne({
+                where: { account_id: accountId },
+                include: [{
+                    association: 'city',
+                    attributes: ['id'],
+                    include: [{
+                        association: 'governorate'
+                    }]
+                }]
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
 
     async findByIdWithChildren(parentId) {
         try {

@@ -9,7 +9,6 @@ const ParentRepository = require("../data-access/parent");
 const DriverRepository = require("../data-access/driver");
 const DriverPapersRepository = require("../data-access/driverPapers");
 const CityRepository = require("../data-access/city");
-const JwtService = require("../services/jwt.service");
 const { deleteUploadedFile } = require("../config/upload");
 const { createPagination } = require("../utils/responseHandler");
 const ParentGroupSubscriptionRepository = require("../data-access/parentGroupSubscription");
@@ -83,13 +82,6 @@ const profileController = {
         parentId: parent.id,
       });
 
-      // Update JWT with new profile info
-      const newToken = JwtService.jwtSign(req.userId, {
-        accountType: "parent",
-        profileComplete: true,
-        accountTypeId: parent.id,
-      });
-
       // Set documents approval to auto true
       const updateData = {
         documents_approved: true,
@@ -107,9 +99,7 @@ const profileController = {
 
       // Return success with parent profile
       return res.success("Parent profile created successfully", {
-        parent,
-        token: newToken.token,
-        refreshToken: newToken.refreshToken,
+        parent
       });
     } catch (error) {
       logger.error("Parent profile creation error", {
@@ -137,7 +127,7 @@ const profileController = {
       }
 
       // Check if parent profile already exists BEFORE processing files
-      const parent = await ParentRepository.findByAccountId(req.userId);
+      const parent = await ParentRepository.findByAccountIdWithGovernorate(req.userId);
 
       if (!parent) {
         throw new NotFoundError(
@@ -150,18 +140,9 @@ const profileController = {
         parentId: parent.id,
       });
 
-      // Update JWT with new profile info
-      const newToken = JwtService.jwtSign(req.userId, {
-        accountType: "parent",
-        profileComplete: true,
-        accountTypeId: parent.id,
-      });
-
       // Return success with parent profile
       return res.success("Parent profile retrived successfully", {
-        parent,
-        token: newToken.token,
-        refreshToken: newToken.refreshToken,
+        parent
       });
     } catch (error) {
       logger.error("Parent profile retrived error", {
@@ -369,19 +350,9 @@ const profileController = {
         driverId: driver.id,
       });
 
-      // Update JWT with new profile info - profile not complete since papers still needed
-      const newToken = JwtService.jwtSign(req.userId, {
-        accountType: "driver",
-        profileComplete: false,
-        accountTypeId: driver.id,
-        stepsCompleted: { basicInfo: true, papers: false },
-      });
-
       // Return success with driver profile
       return res.success("Driver profile created successfully", {
         driver,
-        token: newToken.token,
-        refreshToken: newToken.refreshToken,
         nextStep: "upload_papers",
       });
     } catch (error) {
@@ -482,19 +453,9 @@ const profileController = {
         papersId: driverPapers.id,
       });
 
-      // Update JWT with completed profile
-      const newToken = JwtService.jwtSign(req.userId, {
-        accountType: "driver",
-        profileComplete: true,
-        accountTypeId: driver.id,
-        stepsCompleted: { basicInfo: true, papers: true },
-      });
-
       // Return success with driver papers
       return res.success("Driver papers uploaded successfully", {
         papers: driverPapers,
-        token: newToken.token,
-        refreshToken: newToken.refreshToken,
         message: "Your documents have been uploaded and are pending approval",
       });
     } catch (error) {
@@ -561,19 +522,9 @@ const profileController = {
         papersId: driverPapers.id,
       });
 
-      // Update JWT with completed profile
-      const newToken = JwtService.jwtSign(req.userId, {
-        accountType: "driver",
-        profileComplete: true,
-        accountTypeId: driver.id,
-        stepsCompleted: { basicInfo: true, papers: true },
-      });
-
       // Return success with driver papers
       return res.success("Driver papers uploaded successfully", {
         papers: driverPapers,
-        token: newToken.token,
-        refreshToken: newToken.refreshToken,
         message: "Your documents have been uploaded and are pending approval",
       });
     } catch (error) {
