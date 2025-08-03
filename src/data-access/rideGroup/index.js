@@ -729,6 +729,31 @@ class RideGroupRepository extends BaseRepository {
       throw error;
     }
   }
+
+  async getAllParentsLocationsByRideGroupId(rideGroupId) {
+    try {
+      return await this.model.findAll({
+        where: {
+          id: rideGroupId
+        },
+        attributes: [],
+        include: [
+          {
+            association: "parentGroups",
+            attributes: ["parent_id", "home_lat", "home_lng"],
+            include: [
+              {
+                association: "parent",
+                attributes: ["account_id", "name"]
+              }
+            ],
+          }
+        ]
+      });
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
 }
 
 module.exports = new RideGroupRepository();

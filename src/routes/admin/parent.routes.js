@@ -15,12 +15,21 @@ const updateParentSchema = {
   })
 }
 
+const filterParentsSchema = {
+  query: Yup.object().shape({
+    page: Yup.number().positive().integer().default(1).optional(),
+    limit: Yup.number().positive().integer().default(10).optional(),
+    name: Yup.string().optional(),
+    school_id: Yup.string().optional()
+  })
+}
+
 
 const adminParentRouter = Router()
 
-adminParentRouter.get("/admins/parents", authMiddleware, adminParentController.getAllParents)
-adminParentRouter.get("/admins/parents/:parentId", authMiddleware, adminParentController.getParentById)
-adminParentRouter.get("/admins/parents/:parentId/ride-groups", authMiddleware, adminParentController.getParentRideGroups)
-adminParentRouter.patch("/admins/parents/:parentId", authMiddleware, validate(updateParentSchema), adminParentController.updateParent)
+adminParentRouter.get("/admins/parents", authMiddleware, isAdmin, validate(filterParentsSchema), adminParentController.getAllParents)
+adminParentRouter.get("/admins/parents/:parentId", authMiddleware, isAdmin, adminParentController.getParentById)
+adminParentRouter.get("/admins/parents/:parentId/ride-groups", authMiddleware, isAdmin, adminParentController.getParentRideGroups)
+adminParentRouter.patch("/admins/parents/:parentId", authMiddleware, isAdmin, validate(updateParentSchema), adminParentController.updateParent)
 
 module.exports = adminParentRouter
