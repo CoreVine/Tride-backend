@@ -70,7 +70,7 @@ const getPriceFactors = async (details) => {
       }
 
       // Calculate round trip distance (home to school and back)
-      const distance = oneWayDistance * 2;
+      const distance = parseFloat((oneWayDistance * 2).toFixed(2));
 
       return {
         seatsTaken,

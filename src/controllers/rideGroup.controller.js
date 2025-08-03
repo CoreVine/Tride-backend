@@ -800,8 +800,8 @@ const RideGroupController = {
         });
 
         plans.push({
-          inDayDistance: `${distance} km`,
-          totalDistance:`${distance * plan.months_count * totalDays * 4} km`,
+          inDayDistance: distance,
+          totalDistance: distance * plan.months_count * totalDays * 4,
           totalDays: totalDays * plan.months_count * 4,
           ...plan.dataValues,
           overallPrice: Number(overallPrice.toFixed(2)),
