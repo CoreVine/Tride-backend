@@ -113,9 +113,23 @@ const rideGroupController = {
             return res.success("Driver assigned to ride group successfully")
         
           } catch (error) {
-				return next(error)
+    				return next(error)
           }
 
+    },
+
+    getAllParentsLocations: async (req, res, next) => {
+      try {
+        const { rideGroupId } = req.params;
+  
+        const locations = await RideGroupRepository.getAllParentsLocationsByRideGroupId(rideGroupId);
+
+        return res.success("Locations are retrieved successfully!", {
+          locations
+        });
+      } catch (error) {
+        return next(error);
+      }
     }
 };
 

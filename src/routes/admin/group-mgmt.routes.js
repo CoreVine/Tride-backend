@@ -54,4 +54,15 @@ validate({
 isAdmin, 
 rideGroupController.assignDriverToRideGroup);
 
+groupRouter.get("/manage/ride/groups/:rideGroupId/locations",
+  authMiddleware,
+  validate({
+    params: Yup.object().shape({
+      rideGroupId: Yup.string().required()
+    }),
+  }),
+  isAdmin,
+  rideGroupController.getAllParentsLocations
+)
+
 module.exports = groupRouter;

@@ -7,7 +7,12 @@ const Sequelize = require('sequelize');
 const adminParentController = {
   	getAllParents: async (req, res, next) => {
 		try {
-			const { page = 1, limit = 10, name } = req.query;
+			const { page = 1, limit = 10, name, school_id } = req.query;
+			const schoolQuery = school_id ? {
+				where: {
+					school_id
+				}
+			} : {}
 			const parents = await ParentRepository.findAllPaginated(page, limit, {
 				where: {
 					name: {
@@ -17,6 +22,19 @@ const adminParentController = {
 				include: [
 					{ association: 'account', attributes: ['id', 'email', 'account_type', 'auth_method', 'is_verified'] },
 					{ association: 'children' },
+					{ 
+						association: 'groups',
+						attributes: ['id'],
+						include: [{
+							association: 'group',
+							attributes: ['school_id'],
+							...schoolQuery,
+							include: [{
+								association: 'school',
+								attributes: ['school_name']
+							}]
+						}]
+					}
 				]
 			})
 			return res.success('Parents retrieved successfully', parents)
