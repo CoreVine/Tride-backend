@@ -18,7 +18,7 @@ const googleAuthService = {
    */
   async verifyIdToken(idToken) {
     try {
-      logger.info('Verifying Google ID token');
+      logger.debug('Verifying Google ID token');
       
       const ticket = await client.verifyIdToken({
         idToken,
@@ -38,7 +38,7 @@ const googleAuthService = {
         authMethod: 'google'
       };
       
-      logger.info('Google ID token verified successfully', { email: userData.email });
+      logger.debug('Google ID token verified successfully', { email: userData.email });
       return userData;
     } catch (error) {
       logger.error('Google token verification failed', { error: error.message });

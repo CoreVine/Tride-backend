@@ -44,8 +44,9 @@ const schoolUpdateSchema = Yup.object().shape({
 const schoolRoutes = Router()
 
 schoolRoutes.use("/school", authMiddleware, verifiedEmailRequired)
-schoolRoutes.route("/school").get(schoolController.getschoolForCity).post(validate(schoolSchema), schoolController.createschool)
+schoolRoutes.route("/school").get(schoolController.getSchoolForCity).post(validate(schoolSchema), schoolController.createSchool)
 schoolRoutes.get("/school/paginated", authMiddleware, schoolController.getSchools)
-schoolRoutes.route("/school/:id").get(schoolController.getschoolByID).put(validate(schoolUpdateSchema), schoolController.updateschool).delete(schoolController.deleteSchollByID)
+schoolRoutes.get("/school/all", authMiddleware, schoolController.getAllSchools)
+schoolRoutes.route("/school/:id").get(schoolController.getSchoolById).put(validate(schoolUpdateSchema), schoolController.updateSchool).delete(schoolController.deleteSchoolById)
 
 module.exports = schoolRoutes

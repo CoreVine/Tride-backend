@@ -67,8 +67,8 @@ const adminController = {
           await deleteUploadedFile(existingAdmin.profile_pic)
 
         toUpdate.profile_pic = profile_pic
-        logger.info(`FILE UPLOADED: ${profile_pic}`)
-        logger.info(`FILE DELETED: ${existingAdmin.profile_pic}`)
+        logger.debug(`FILE UPLOADED: ${profile_pic}`)
+        logger.debug(`FILE DELETED: ${existingAdmin.profile_pic}`)
       }
 
       // update the admin
@@ -100,7 +100,7 @@ const adminController = {
         profile_pic
       })
 
-      logger.info(`FILE UPLOADED: ${profile_pic}`)
+      logger.debug(`FILE UPLOADED: ${profile_pic}`)
 
       return res.success("Admin created successfully", {
         admin: {

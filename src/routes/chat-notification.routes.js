@@ -45,19 +45,7 @@ const notificationFetchSchema = {
     limit: Yup.number().positive().required()
   })
 };
-// Base media types
 
-// Location Schema
-// const locationSchema = Yup.object({
-//   type: Yup.string()
-//     .oneOf(["Point"])
-//     .required("Location type must be 'Point'"),
-//   coordinates: Yup.array()
-//     .of(Yup.number())
-//     .length(2, "Coordinates must be an array of two numbers [longitude, latitude]")
-//     .required("Coordinates are required for location messages"),
-//   name: Yup.string().optional(),
-// });
 const mediaTypes = [
   messageTypes.IMAGE,
   messageTypes.VIDEO,

@@ -236,6 +236,16 @@ class AccountRepository extends BaseRepository {
         }
 
     }
+
+    async deleteAccountById(id) {
+        try {
+            await this.model.destroy({
+                where: { id }
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
 }
 
 module.exports = new AccountRepository();

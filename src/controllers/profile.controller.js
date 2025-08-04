@@ -9,9 +9,9 @@ const ParentRepository = require("../data-access/parent");
 const DriverRepository = require("../data-access/driver");
 const DriverPapersRepository = require("../data-access/driverPapers");
 const CityRepository = require("../data-access/city");
-const JwtService = require("../services/jwt.service");
 const { deleteUploadedFile } = require("../config/upload");
 const { createPagination } = require("../utils/responseHandler");
+const ParentGroupSubscriptionRepository = require("../data-access/parentGroupSubscription");
 
 const logger = loggingService.getLogger();
 
@@ -19,7 +19,7 @@ const profileController = {
   // Create Parent Profile (Step 2 for parents)
   createParentProfile: async (req, res, next) => {
     try {
-      logger.info("Parent profile creation attempt", { accountId: req.userId });
+      logger.debug("Parent profile creation attempt", { accountId: req.userId });
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -77,23 +77,29 @@ const profileController = {
         profile_pic: profilePicUrl,
       });
 
-      logger.info("Parent profile created successfully", {
+      logger.debug("Parent profile created successfully", {
         accountId: req.userId,
         parentId: parent.id,
       });
 
-      // Update JWT with new profile info
-      const newToken = JwtService.jwtSign(req.userId, {
-        accountType: "parent",
-        profileComplete: true,
-        accountTypeId: parent.id,
+      // Set documents approval to auto true
+      const updateData = {
+        documents_approved: true,
+        documents_approval_date: new Date(),
+        face_auth_complete: true
+      };
+
+      logger.debug("Updating parent with document data:", {
+        parentId: parent.id,
+        updateData: updateData
       });
+
+      // Update parent profile with document URLs
+      const updateResult = await ParentRepository.update(parent.id, updateData);
 
       // Return success with parent profile
       return res.success("Parent profile created successfully", {
-        parent,
-        token: newToken.token,
-        refreshToken: newToken.refreshToken,
+        parent
       });
     } catch (error) {
       logger.error("Parent profile creation error", {
@@ -105,7 +111,7 @@ const profileController = {
   },
   getParentProfile: async (req, res, next) => {
     try {
-      logger.info("Parent profile Retrived attempt", { accountId: req.userId });
+      logger.debug("Parent profile Retrived attempt", { accountId: req.userId });
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -121,7 +127,7 @@ const profileController = {
       }
 
       // Check if parent profile already exists BEFORE processing files
-      const parent = await ParentRepository.findByAccountId(req.userId);
+      const parent = await ParentRepository.findByAccountIdWithGovernorate(req.userId);
 
       if (!parent) {
         throw new NotFoundError(
@@ -129,23 +135,14 @@ const profileController = {
         );
       }
 
-      logger.info("Parent profile retrived successfully", {
+      logger.debug("Parent profile retrived successfully", {
         accountId: req.userId,
         parentId: parent.id,
       });
 
-      // Update JWT with new profile info
-      const newToken = JwtService.jwtSign(req.userId, {
-        accountType: "parent",
-        profileComplete: true,
-        accountTypeId: parent.id,
-      });
-
       // Return success with parent profile
       return res.success("Parent profile retrived successfully", {
-        parent,
-        token: newToken.token,
-        refreshToken: newToken.refreshToken,
+        parent
       });
     } catch (error) {
       logger.error("Parent profile retrived error", {
@@ -158,8 +155,10 @@ const profileController = {
 
   // Upload Parent ID Documents
   uploadParentIdDocuments: async (req, res, next) => {
+    // NOT USED CURRENTLY
+    throw new NotFoundError("Route not found");
     try {
-      logger.info("Parent ID documents upload attempt", {
+      logger.debug("Parent ID documents upload attempt", {
         accountId: req.userId,
       });
 
@@ -178,25 +177,14 @@ const profileController = {
         throw new NotFoundError("Parent profile not found");
       }
 
-      // Check if required files are present
-      console.log(req.files, req.body);
-      
-      if (!req.files || !req.files.front_side_nic || !req.files.back_side_nic) {
-        throw new BadRequestError(
-          "Both front and back sides of ID card are required"
-        );
-      }
-
       // Get document URLs from uploaded files
       const updateData = {
-        front_side_nic: req.files.front_side_nic[0].path,
-        back_side_nic: req.files.back_side_nic[0].path,
-        documents_approved: true, // Reset approval status when new documents are uploaded
+        documents_approved: true,
         documents_approval_date: new Date(),
         face_auth_complete: true
       };
 
-      logger.info("Updating parent with document data:", {
+      logger.debug("Updating parent with document data:", {
         parentId: parent.id,
         updateData: updateData
       });
@@ -204,19 +192,19 @@ const profileController = {
       // Update parent profile with document URLs
       const updateResult = await ParentRepository.update(parent.id, updateData);
       
-      logger.info("Update result:", { updateResult });
+      logger.debug("Update result:", { updateResult });
 
       // Fetch updated profile
       const updatedParent = await ParentRepository.findById(parent.id);
       
-      logger.info("Updated parent data:", {
+      logger.debug("Updated parent data:", {
         parentId: updatedParent?.id,
         front_side_nic: updatedParent?.front_side_nic,
         back_side_nic: updatedParent?.back_side_nic,
         documents_approved: updatedParent?.documents_approved
       });
 
-      logger.info("Parent ID documents uploaded successfully", {
+      logger.debug("Parent ID documents uploaded successfully", {
         accountId: req.userId,
         parentId: parent.id,
       });
@@ -237,7 +225,7 @@ const profileController = {
   // Get Parent ID Documents
   getParentIdDocuments: async (req, res, next) => {
     try {
-      logger.info("Parent ID documents retrieval attempt", {
+      logger.debug("Parent ID documents retrieval attempt", {
         accountId: req.userId,
       });
 
@@ -263,7 +251,7 @@ const profileController = {
         documents_approval_date: parent.documents_approval_date,
       };
 
-      logger.info("Parent ID documents retrieved successfully", {
+      logger.debug("Parent ID documents retrieved successfully", {
         accountId: req.userId,
         parentId: parent.id,
       });
@@ -284,7 +272,7 @@ const profileController = {
   // Create Driver Profile (Step 2 for drivers)
   createDriverProfile: async (req, res, next) => {
     try {
-      logger.info("Driver profile creation attempt", { accountId: req.userId });
+      logger.debug("Driver profile creation attempt", { accountId: req.userId });
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
@@ -357,24 +345,14 @@ const profileController = {
         profile_pic: profilePicUrl,
       });
 
-      logger.info("Driver profile created successfully", {
+      logger.debug("Driver profile created successfully", {
         accountId: req.userId,
         driverId: driver.id,
-      });
-
-      // Update JWT with new profile info - profile not complete since papers still needed
-      const newToken = JwtService.jwtSign(req.userId, {
-        accountType: "driver",
-        profileComplete: false,
-        accountTypeId: driver.id,
-        stepsCompleted: { basicInfo: true, papers: false },
       });
 
       // Return success with driver profile
       return res.success("Driver profile created successfully", {
         driver,
-        token: newToken.token,
-        refreshToken: newToken.refreshToken,
         nextStep: "upload_papers",
       });
     } catch (error) {
@@ -389,7 +367,7 @@ const profileController = {
   // Upload Driver Papers (Step 3 for drivers)
   uploadDriverPapers: async (req, res, next) => {
     try {
-      logger.info("Driver papers upload attempt", { accountId: req.userId });
+      logger.debug("Driver papers upload attempt", { accountId: req.userId });
 
       // Verify driver profile exists FIRST before processing any files
       const driver = await DriverRepository.findByAccountId(req.userId);
@@ -469,25 +447,15 @@ const profileController = {
         approved: false, // Default to not approved, admin will review
       });
 
-      logger.info("Driver papers uploaded successfully", {
+      logger.debug("Driver papers uploaded successfully", {
         accountId: req.userId,
         driverId: driver.id,
         papersId: driverPapers.id,
       });
 
-      // Update JWT with completed profile
-      const newToken = JwtService.jwtSign(req.userId, {
-        accountType: "driver",
-        profileComplete: true,
-        accountTypeId: driver.id,
-        stepsCompleted: { basicInfo: true, papers: true },
-      });
-
       // Return success with driver papers
       return res.success("Driver papers uploaded successfully", {
         papers: driverPapers,
-        token: newToken.token,
-        refreshToken: newToken.refreshToken,
         message: "Your documents have been uploaded and are pending approval",
       });
     } catch (error) {
@@ -501,7 +469,7 @@ const profileController = {
   // Upload Driver Papers (Step 3 for drivers)
   uploadDriverApproved: async (req, res, next) => {
     try {
-      logger.info("Driver papers upload attempt", { accountId: req.userId });
+      logger.debug("Driver papers upload attempt", { accountId: req.userId });
       const { papersId } = req.params;
       const { approved } = req.body;
       if (!papersId) {
@@ -548,25 +516,15 @@ const profileController = {
         Date.now()
       );
 
-      logger.info("Driver papers uploaded successfully", {
+      logger.debug("Driver papers uploaded successfully", {
         accountId: req.userId,
         driverId: driver.id,
         papersId: driverPapers.id,
       });
 
-      // Update JWT with completed profile
-      const newToken = JwtService.jwtSign(req.userId, {
-        accountType: "driver",
-        profileComplete: true,
-        accountTypeId: driver.id,
-        stepsCompleted: { basicInfo: true, papers: true },
-      });
-
       // Return success with driver papers
       return res.success("Driver papers uploaded successfully", {
         papers: driverPapers,
-        token: newToken.token,
-        refreshToken: newToken.refreshToken,
         message: "Your documents have been uploaded and are pending approval",
       });
     } catch (error) {
@@ -581,7 +539,7 @@ const profileController = {
   // Approve Parent Documents (Admin function)
   approveParentDocuments: async (req, res, next) => {
     try {
-      logger.info("Parent documents approval attempt", { accountId: req.userId });
+      logger.debug("Parent documents approval attempt", { accountId: req.userId });
       const { parentId } = req.params;
       const { approved } = req.body;
       
@@ -614,7 +572,7 @@ const profileController = {
       // Fetch updated parent profile
       const updatedParent = await ParentRepository.findById(parentId);
 
-      logger.info("Parent documents approval status updated successfully", {
+      logger.debug("Parent documents approval status updated successfully", {
         accountId: req.userId,
         parentId: parentId,
         approved: approved,
@@ -640,7 +598,7 @@ const profileController = {
   // Update Parent Profile
   updateParentProfile: async (req, res, next) => {
     try {
-      logger.info("Parent profile update attempt", { accountId: req.userId });
+      logger.debug("Parent profile update attempt", { accountId: req.userId });
 
       // Find parent profile FIRST before processing any files
       const parent = await ParentRepository.findByAccountId(req.userId);
@@ -718,7 +676,7 @@ const profileController = {
       // Fetch updated profile
       const updatedParent = await ParentRepository.findById(parent.id);
 
-      logger.info("Parent profile updated successfully", {
+      logger.debug("Parent profile updated successfully", {
         accountId: req.userId,
         parentId: parent.id,
       });
@@ -739,7 +697,7 @@ const profileController = {
   // Update Driver Profile
   updateDriverProfile: async (req, res, next) => {
     try {
-      logger.info("Driver profile update attempt", { accountId: req.userId });
+      logger.debug("Driver profile update attempt", { accountId: req.userId });
 
       // Find driver profile
       const driver = await DriverRepository.findByAccountId(req.userId);
@@ -807,7 +765,7 @@ const profileController = {
       // Fetch updated profile
       const updatedDriver = await DriverRepository.findById(driver.id);
 
-      logger.info("Driver profile updated successfully", {
+      logger.debug("Driver profile updated successfully", {
         accountId: req.userId,
         driverId: driver.id,
       });
@@ -828,7 +786,7 @@ const profileController = {
     const { page = 1, limit = 10 } = req.query;
 
     try {
-      logger.info("Retrieving all driver profiles", {
+      logger.debug("Retrieving all driver profiles", {
         page,
         limit,
         accountId: req.userId,
@@ -843,7 +801,7 @@ const profileController = {
 
       const pagination = createPagination(page, limit, count);
 
-      logger.info("Driver profiles retrieved successfully", {
+      logger.debug("Driver profiles retrieved successfully", {
         count: drivers.length,
       });
 
@@ -863,7 +821,7 @@ const profileController = {
   getDriverProfile: async (req, res, next) => {
     try {
       const { account_id } = req.params;
-      logger.info(`Driver profile Retrived attempt: ${ account_id }`);
+      logger.debug(`Driver profile Retrived attempt: ${ account_id }`);
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(account_id);
@@ -887,7 +845,7 @@ const profileController = {
         );
       }
 
-      logger.info("driver profile retrived successfully", {
+      logger.debug("driver profile retrived successfully", {
         account_id,
         driverid: driver.id,
       });
@@ -914,7 +872,7 @@ const profileController = {
   // Get profile status - especially useful for drivers to check approval
   getProfileStatus: async (req, res, next) => {
     try {
-      logger.info("Profile status check", { accountId: req.userId });
+      logger.debug("Profile status check", { accountId: req.userId });
 
       // Get the account
       const account = await AccountRepository.findById(req.userId);
@@ -944,7 +902,7 @@ const profileController = {
 
         if (parent) {
           // Debug logging to see what we're getting from the database
-          logger.info("Parent data from database:", {
+          logger.debug("Parent data from database:", {
             parentId: parent.id,
             front_side_nic: parent.front_side_nic,
             back_side_nic: parent.back_side_nic,
@@ -957,28 +915,9 @@ const profileController = {
           statusData.profile = parent;
           
           // Check if ID documents are uploaded
-          if (parent.front_side_nic && parent.back_side_nic) {
-            statusData.steps.documentsUpload = true;
-            statusData.documents = {
-              front_side_nic: parent.front_side_nic,
-              back_side_nic: parent.back_side_nic
-            };
-            
-            // Check if documents are approved
-            if (parent.documents_approved) {
-              statusData.steps.documentsApproval = true;
-              statusData.profileComplete = true; // Profile is complete when documents are approved
-            } else {
-              statusData.steps.documentsApproval = false;
-              statusData.profileComplete = false; // Profile not complete without approval
-              statusData.nextStep = "pending_approval";
-              statusData.message = "Your documents are under review. You will be notified when they are approved.";
-            }
-          } else {
-            statusData.profileComplete = false; // Profile not complete without documents
-            statusData.nextStep = "upload_id_documents";
-            statusData.message = "Please upload your ID documents to complete your profile.";
-          }
+          statusData.steps.documentsUpload = true;
+          statusData.steps.documentsApproval = true;
+          statusData.profileComplete = true; // Profile is complete when documents are approved
         } else {
           statusData.nextStep = "create_parent_profile";
         }
@@ -1020,6 +959,23 @@ const profileController = {
       next(error);
     }
   },
+
+  removeAccount: async (req, res, next) => {
+    try {
+      const hasActiveSubscription = await ParentGroupSubscriptionRepository.findActiveSubscriptionByAccountId(req.userId);
+      
+      if (hasActiveSubscription)
+        throw new BadRequestError("Cannot delete an account while it has an active subscription!");
+
+      await AccountRepository.deleteAccountById(req.userId);
+
+      return res.success("Account is deleted successfully!");
+    } catch (error) {
+      logger.error(`Profile status check error: ${error.message} ${error.stack}`);
+      next(error);
+    }
+
+  }
 };
 
 module.exports = profileController;

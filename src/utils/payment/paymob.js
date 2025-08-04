@@ -30,7 +30,7 @@ function createPaymobOrderObject(orderType, userAccount, rideGroup, planDetails,
         payment_methods: [parseInt(process.env.PAYMOB_PAYMENT_METHOD_ID)],
         items: [
             {
-            name: `Ride Group Payment for ${rideGroup.group_name}`,
+            name: `Ride Group Payment for group ID: ${rideGroup.id}`,
             amount: Number(toPayPrice)  * 100,
             description: `Payment for ride group ${rideGroup.group_name} for ${seatsTaken} seats over ${totalDays} days.`,
             quantity: 1,

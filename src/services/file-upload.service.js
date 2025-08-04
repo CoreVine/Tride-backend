@@ -121,10 +121,10 @@ upload.processFile = async (file) => {
     resource_type: file.resource_type, // 'image', 'video', 'raw' - determined by Cloudinary
   };
 
-  logger.info(
+  logger.debug(
     `File successfully processed and uploaded to Cloudinary: ${result.url}`
   );
-  return result;
+    return result;
 };
 
 // --- Helper function (remains the same, used for application-specific categorization) ---

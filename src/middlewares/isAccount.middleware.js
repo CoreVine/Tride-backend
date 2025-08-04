@@ -226,7 +226,7 @@ const isOneOf = (...userTypes) => {
           // Get account from database
           const account = await AccountRepository.findById(accountId);
           if (!account || !account.is_verified) {
-            logger.info("Account not found", { accountId });
+            logger.debug("Account not found", { accountId });
             throw new UnauthorizedError("Account not found");
           }
       
@@ -242,7 +242,7 @@ const isOneOf = (...userTypes) => {
           const details = await AccountRepository.findByIdIncludeDetails(accountId, account.account_type);
   
           if (!details) {
-            logger.info("Account details not found", { accountId });
+            logger.debug("Account details not found", { accountId });
             throw new UnauthorizedError("Account details not found");
           }
   

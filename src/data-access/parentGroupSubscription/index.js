@@ -374,6 +374,34 @@ class ParentGroupSubscriptionRepository extends BaseRepository {
             throw new DatabaseError(error);
         }
     }
+
+    async findActiveSubscriptionByAccountId(accountId) {
+        try {
+            return await this.model.findOne({
+                where: {
+                    status: 'active',
+                    valid_until: {
+                        [Op.gte]: new Date() // Check expiration date
+                    }
+                },
+                include: [{
+                    association: 'parent',
+                    include: [
+                        {
+                            association: 'account',
+                            where: {
+                                id: accountId
+                            }
+                        }
+                    ]
+                }
+                ],
+                limit: 1
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
 }
 
 module.exports = new ParentGroupSubscriptionRepository();

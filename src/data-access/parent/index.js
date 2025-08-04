@@ -16,6 +16,23 @@ class ParentRepository extends BaseRepository {
             throw new DatabaseError(error);
         }
     }
+   
+    async findByAccountIdWithGovernorate(accountId) {
+        try {
+            return await this.model.findOne({
+                where: { account_id: accountId },
+                include: [{
+                    association: 'city',
+                    attributes: ['id'],
+                    include: [{
+                        association: 'governorate'
+                    }]
+                }]
+            });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
 
     async findByIdWithChildren(parentId) {
         try {
@@ -54,9 +71,7 @@ class ParentRepository extends BaseRepository {
                 documents_approved: approved
             };
             
-            if (approvalDate) {
-                updateData.documents_approval_date = approvalDate;
-            }
+            updateData.documents_approval_date = approvalDate;
             
             return await this.model.update(updateData, {
                 where: { id: parentId }
@@ -65,6 +80,9 @@ class ParentRepository extends BaseRepository {
             throw new DatabaseError(error);
         }
     }
+
+  
+      
 }
 
 module.exports = new ParentRepository();

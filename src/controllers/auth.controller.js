@@ -29,7 +29,7 @@ const getEmailVerificationExpiration = () => {
 const authController = {
   register: async (req, res, next) => {
     try {
-      logger.info("Registration attempt");
+      logger.debug("Registration attempt");
 
       // Validation is already handled by the validate middleware in routes
       const { email, password, account_type } = req.body;
@@ -58,7 +58,7 @@ const authController = {
         is_verified: !emailVerificationRequired, // Set to true if verification not required
       });
 
-      logger.info("Account registered successfully", {
+      logger.debug("Account registered successfully", {
         account_id: account.id,
         email,
         account_type: userAccountType,
@@ -94,7 +94,7 @@ const authController = {
           expiryMinutes: process.env.EMAIL_VERIFICATION_EXP_MINS || 30,
         });
 
-        logger.info(`Email verification code sent to ${email}`);
+        logger.debug(`Email verification code sent to ${email}`);
 
         if (req.fromAdminCreation) {
           req.account = {
@@ -122,28 +122,7 @@ const authController = {
       });
       const { token } = jwtResponse;
 
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        path: "/",
-      };
-
-      if (process.env.SERVER_JWT_USE_EXPIRY === "true") {
-        cookieOptions.maxAge = Number(process.env.SERVER_JWT_TIMEOUT);
-      }
-
-      res.cookie("token", token, cookieOptions);
-
       if (jwtResponse.refreshToken) {
-        res.cookie("refresh_token", jwtResponse.refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          maxAge: Number(process.env.SERVER_JWT_REFRESH_MAX_AGE),
-          sameSite: "strict",
-          path: "/",
-        });
-
         return res.success("Account registered successfully", {
           account: {
             id: account.id,
@@ -246,7 +225,7 @@ const authController = {
   login: async (req, res, next) => {
     try {
       const { email, password, account_type } = req.body;
-      logger.info(
+      logger.debug(
         `Login attempt for: ${email} as ${account_type || "unspecified type"}`
       );
 
@@ -320,33 +299,12 @@ const authController = {
 
       const { token } = jwtResponse;
 
-      logger.info(`Login successful for account: ${email}`, {
+      logger.debug(`Login successful for account: ${email}`, {
         account_id: account.id,
         profile_complete: profileComplete,
       });
 
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        path: "/",
-      };
-
-      if (process.env.SERVER_JWT_USE_EXPIRY === "true") {
-        cookieOptions.maxAge = Number(process.env.SERVER_JWT_TIMEOUT);
-      }
-
-      res.cookie("token", token, cookieOptions);
-
       if (jwtResponse.refreshToken) {
-        res.cookie("refresh_token", jwtResponse.refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          maxAge: Number(process.env.SERVER_JWT_REFRESH_MAX_AGE),
-          sameSite: "strict",
-          path: "/",
-        });
-
         return res.success("Login successful", {
           account: {
             id: account.id,
@@ -380,7 +338,7 @@ const authController = {
 
   me: async (req, res, next) => {
     try {
-      logger.info("Profile retrieval attempt", { accountId: req.userId });
+      logger.debug("Profile retrieval attempt", { accountId: req.userId });
 
       const account = await AccountRepository.findByIdExcludeProps(req.userId, [
         "password",
@@ -453,29 +411,12 @@ const authController = {
         throw new BadRequestError("Refresh token functionality is not enabled");
       }
 
-      let refreshToken = req.cookies.refresh_token;
-
-      if (!refreshToken && req.body.refresh_token) {
-        refreshToken = req.body.refresh_token;
-      }
+      const refreshToken = req.body.refresh_token;
 
       if (!refreshToken)
         throw new BadRequestError("Refresh token is required!");
 
       const token = JwtService.jwtRefreshToken(refreshToken);
-
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        path: "/",
-      };
-
-      if (process.env.SERVER_JWT_USE_EXPIRY === "true") {
-        cookieOptions.maxAge = Number(process.env.SERVER_JWT_TIMEOUT);
-      }
-
-      res.cookie("token", token, cookieOptions);
 
       res.success("Refresh token exchanged successfully", { token });
     } catch (error) {
@@ -502,12 +443,6 @@ const authController = {
         logger.warn("No valid token found during logout", {
           error: error.message,
         });
-      }
-
-      // Always clear cookies regardless of token presence
-      res.clearCookie("token");
-      if (process.env.SERVER_JWT_REFRESH_ENABLED === "true") {
-        res.clearCookie("refresh_token");
       }
 
       res.success("Logged out successfully!");

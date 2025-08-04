@@ -3,15 +3,17 @@ const SchoolRepository = require("../data-access/school")
 const schoolRepository = require("../data-access/school")
 const CityRepository = require("../data-access/city")
 const loggingService = require("../services/logging.service")
+
 const { BadRequestError, NotFoundError, ForbiddenError } = require("../utils/errors/types/Api.error")
-const { where } = require("sequelize")
+const { Op } = require("sequelize")
+
 const logger = loggingService.getLogger()
 
 const schoolController = {
   getSchools: async (req, res, next) => {
     try {
       const { page, limit } = req.query
-      logger.info("Schools retrieval attempt", { accountId: req.userId })
+      logger.debug("Schools retrieval attempt", { accountId: req.userId })
 
       const account = await AccountRepository.findById(req.userId)
       if (!account) {
@@ -28,7 +30,7 @@ const schoolController = {
         }
       })
 
-      logger.info("Schools retrieved successfully", schools)
+      logger.debug("Schools retrieved successfully", schools)
 
       return res.success("Schools retrieved successfully", schools)
     } catch (error) {
@@ -39,9 +41,31 @@ const schoolController = {
       next(error)
     }
   },
-  createschool: async (req, res, next) => {
+
+  getAllSchools: async (req, res, next) => {
     try {
-      logger.info("School profile creation attempt", { accountId: req.userId })
+      const { search } = req.query
+
+      const schools = await SchoolRepository.findAll({
+        include: {
+          association: "city"
+        },
+        where: search ? { school_name: { [Op.like]: `%${search}%` } } : {}
+      })
+
+      return res.success("Schools retrieved successfully", schools)
+      
+    } catch (error) {
+      logger.error("Failed to fetch all schools", {
+        error: error.message,
+        stack: error.stack
+      })
+      next(error)
+    }
+  },
+  createSchool: async (req, res, next) => {
+    try {
+      logger.debug("School profile creation attempt", { accountId: req.userId })
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId)
@@ -77,7 +101,7 @@ const schoolController = {
         lng: lng
       })
 
-      logger.info("School created successfully", school)
+      logger.debug("School created successfully", school)
 
       // Return success with School profile
       return res.success("School profile created successfully", school)
@@ -89,9 +113,9 @@ const schoolController = {
       next(error)
     }
   },
-  getschoolForCity: async (req, res, next) => {
+  getSchoolForCity: async (req, res, next) => {
     try {
-      logger.info("chidlens get creation attempt", { accountId: req.userId })
+      logger.debug("chidlens get creation attempt", { accountId: req.userId })
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId)
@@ -121,7 +145,7 @@ const schoolController = {
         ]
       })
 
-      logger.info("school retrieved successfully", schools)
+      logger.debug("school retrieved successfully", schools)
 
       // Return success with School profile
       return res.success("schools retrieved successfully", schools)
@@ -133,9 +157,9 @@ const schoolController = {
       next(error)
     }
   },
-  updateschool: async (req, res, next) => {
+  updateSchool: async (req, res, next) => {
     try {
-      logger.info("School profile Update attempt", { accountId: req.userId })
+      logger.debug("School profile Update attempt", { accountId: req.userId })
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId)
@@ -173,7 +197,7 @@ const schoolController = {
       if (!newSchool) {
         throw new NotFoundError("School profile not found")
       }
-      logger.info("School Update successfully", newSchool)
+      logger.debug("School Update successfully", newSchool)
 
       // Return success with School profile
       return res.success("School Update successfully", newSchool)
@@ -185,9 +209,9 @@ const schoolController = {
       next(error)
     }
   },
-  getschoolByID: async (req, res, next) => {
+  getSchoolById: async (req, res, next) => {
     try {
-      logger.info("School retrieved by id attempt", { accountId: req.userId })
+      logger.debug("School retrieved by id attempt", { accountId: req.userId })
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId)
@@ -206,7 +230,7 @@ const schoolController = {
       if (!school) {
         throw new NotFoundError("School profile not found")
       }
-      logger.info("School retrieved by id successfully", school)
+      logger.debug("School retrieved by id successfully", school)
 
       // Return success with School profile
       return res.success("School retrieved by id successfully", school)
@@ -218,9 +242,9 @@ const schoolController = {
       next(error)
     }
   },
-  deleteSchollByID: async (req, res, next) => {
+  deleteSchoolById: async (req, res, next) => {
     try {
-      logger.info("School Delete attempt", { accountId: req.userId })
+      logger.debug("School Delete attempt", { accountId: req.userId })
 
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId)
@@ -242,7 +266,7 @@ const schoolController = {
 
       await schoolRepository.delete(id)
 
-      logger.info("School Delete successfully")
+      logger.debug("School Delete successfully")
 
       // Return success with School profile
       return res.success("School Delete successfully")

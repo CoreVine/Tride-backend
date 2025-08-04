@@ -508,7 +508,7 @@ const chatController = {
           recipient_id: req.userId,
         },
         { is_read: true }
-      ); // Emit event to update client-side
+      );
 
       getIo().to(`user_${req.userId}`).emit("notifications_read", {
         notificationIds,
@@ -520,27 +520,7 @@ const chatController = {
       next(error);
     }
   },
-  // getNotifications: async (req, res, next) => {
-  //   try {
-  //     const { limit = 20, offset = 0, is_read } = req.query;
-  //     const query = { recipient_id: req.user.id };
-
-  //     if (is_read !== undefined) {
-  //       query.is_read = is_read === "true";
-  //     }
-
-  //     const notifications = await Notification.find(query)
-  //       .sort({ created_at: -1 })
-  //       .skip(parseInt(offset))
-  //       .limit(parseInt(limit));
-
-  //     return res.success("Notifications fetched successfully", notifications);
-  //   } catch (error) {
-  //     logger.error("Error fetching notifications:", error.message);
-  //     next(error);
-  //   }
-  // },
-
+  
   /**
    * Mark a notification as read
    */
@@ -662,9 +642,9 @@ const chatController = {
         const recipientConnection = await redisService.getUserConnection(recipientId);
         if (recipientConnection && recipientConnection.socketId) {
           io.to(recipientConnection.socketId).emit("new_notification", notification);
-          logger.info(`[Chat] Notification sent to user ${recipientId} via socket ${recipientConnection.socketId}`);
+          logger.debug(`[Chat] Notification sent to user ${recipientId} via socket ${recipientConnection.socketId}`);
         } else {
-          logger.info(`[Chat] User ${recipientId} not connected - notification saved for later delivery`);
+          logger.debug(`[Chat] User ${recipientId} not connected - notification saved for later delivery`);
         }
       } catch (socketError) {
         logger.error(`[Chat] Error sending real-time notification: ${socketError.message}`);
@@ -699,7 +679,6 @@ const chatController = {
     try {
       const { type, title, message, related_entity_type, related_entity_id, metadata } = req.body;
             
-      
       sendNotificationTo({
         accountIds: [req.userId],
         type,

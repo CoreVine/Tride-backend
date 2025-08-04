@@ -68,7 +68,7 @@ function setupConnection(io) {
 
     // Store user connection in Redis
     await redisService.storeUserConnection(socket.userId, socket.id, socket.accountType);
-    logger.info(`[Socket.IO] User connected and stored in Redis: ${socket.id} for user ${socket.userId}`);
+    logger.debug(`[Socket.IO] User  connected and stored in Redis: ${socket.id} for user ${socket.userId}`);
 
     next();
     } catch (error) {
@@ -80,13 +80,13 @@ function setupConnection(io) {
 
 function setupDisconnection(socket) {
     socket.on("disconnect", async () => {
-        logger.info(`[Socket.IO] User disconnected: ${socket.id}`);
+        logger.debug(`[Socket.IO] User disconnected: ${socket.id}`);
         
         try {
             // Remove user connection from Redis
             if (socket.userId) {
                 await redisService.removeUserConnection(socket.userId);
-                logger.info(`[Socket.IO] Socket ${socket.id} removed from Redis for user ${socket.userId}`);
+                logger.debug(`[Socket.IO] Socket ${socket.id} removed from Redis for user ${socket.userId}`);
             }
         } catch (error) {
             logger.error(`[Socket.IO] Error removing user connection from Redis: ${error.message}`);

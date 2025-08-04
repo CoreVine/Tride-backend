@@ -5,8 +5,6 @@ const chatRoomSchema = new mongoose.Schema({
   ride_group_id: {
     type: Number,
     required: false,
-    unique: true,
-    index: true,
   },
   room_type: {
     type: String,
@@ -59,6 +57,10 @@ const chatRoomSchema = new mongoose.Schema({
     default: true,
   },
 });
+
+// Add a sparse unique index for ride_group_id
+// This ensures uniqueness only when the field exists
+chatRoomSchema.index({ ride_group_id: 1 }, { unique: true, sparse: true });
 
 // Update timestamps
 chatRoomSchema.pre("save", function (next) {

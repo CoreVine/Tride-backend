@@ -9,7 +9,7 @@ const cityController = {
   // Get all cities
   getAllCities: async (req, res, next) => {
     try {
-      logger.info("Fetching all cities")
+      logger.debug("Fetching all cities")
 
       const cities = await CityRepository.findAll()
 
@@ -24,7 +24,7 @@ const cityController = {
   },
   getAllCitiesPaginated: async (req, res, next) => {
     try {
-      logger.info("Fetching all cities")
+      logger.debug("Fetching all cities")
       const { page, limit } = req.query
 
       const cities = await CityRepository.findAllPaginated(page, limit, {
@@ -45,7 +45,7 @@ const cityController = {
   getCityById: async (req, res, next) => {
     try {
       const { id } = req.params
-      logger.info("Fetching city by id", { cityId: id })
+      logger.debug("Fetching city by id", { cityId: id })
 
       const city = await CityRepository.findById(id)
 
@@ -67,7 +67,7 @@ const cityController = {
   getCitiesByGovernorate: async (req, res, next) => {
     try {
       const { governorateId } = req.params
-      logger.info("Fetching cities by governorate", { governorateId })
+      logger.debug("Fetching cities by governorate", { governorateId })
 
       // Check if governorate exists
       const governorate = await GovernorateRepository.findById(governorateId)
@@ -99,7 +99,7 @@ const cityController = {
   async createCity(req, res, next) {
     try {
       const { name, governorate_id } = req.body
-      logger.info(`Creating new city: ${name} for country ID: ${governorate_id}`)
+      logger.debug(`Creating new city: ${name} for country ID: ${governorate_id}`)
 
       if (!name) {
         throw new BadRequestError("City name is required")
@@ -123,7 +123,7 @@ const cityController = {
         include: [{ association: "governorate" }]
       })
 
-      logger.info(`City created successfully with ID: ${city.id}`)
+      logger.debug(`City created successfully with ID: ${city.id}`)
       return res.success("City created successfully", cityWithCountry, null, 201)
     } catch (error) {
       logger.error("Error creating city", {
@@ -141,7 +141,7 @@ const cityController = {
     try {
       const { id } = req.params
       const { name, governorate_id } = req.body
-      logger.info(`Updating city with ID: ${id}`)
+      logger.debug(`Updating city with ID: ${id}`)
 
       if (!name && !governorate_id) {
         throw new BadRequestError("At least one field to update is required (name or governorate_id)")
@@ -173,7 +173,7 @@ const cityController = {
         include: [{ association: "governorate" }]
       })
 
-      logger.info(`City updated successfully: ${updatedCity.name}`)
+      logger.debug(`City updated successfully: ${updatedCity.name}`)
       return res.success("City updated successfully", updatedCity)
     } catch (error) {
       logger.error("Error updating city", {
@@ -190,7 +190,7 @@ const cityController = {
   async deleteCity(req, res, next) {
     try {
       const { id } = req.params
-      logger.info(`Deleting city with ID: ${id}`)
+      logger.debug(`Deleting city with ID: ${id}`)
 
       const city = await CityRepository.findById(id)
 
@@ -213,7 +213,7 @@ const cityController = {
 
       await CityRepository.delete(id)
 
-      logger.info(`City deleted successfully with ID: ${id}`)
+      logger.debug(`City deleted successfully with ID: ${id}`)
       return res.success("City deleted successfully", null, null, 200)
     } catch (error) {
       logger.error("Error deleting city", {
@@ -230,7 +230,7 @@ const cityController = {
   async searchCities(req, res, next) {
     try {
       const { name } = req.query
-      logger.info(`Searching cities with name: ${name}`)
+      logger.debug(`Searching cities with name: ${name}`)
 
       if (!name) {
         throw new BadRequestError("Name query parameter is required")
@@ -238,7 +238,7 @@ const cityController = {
 
       const cities = await CityRepository.findByName(name)
 
-      logger.info(`Found ${cities.length} cities matching search criteria`)
+      logger.debug(`Found ${cities.length} cities matching search criteria`)
       return res.success("Cities retrieved successfully", cities)
     } catch (error) {
       logger.error("Error searching cities", {

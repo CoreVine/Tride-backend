@@ -353,7 +353,7 @@ function createUploader(options = {}) {
         if (req.file) {
           // Process the file with cloudinary metadata
           cloudinaryConfig.processUploadedFile(req.file, { resourceType, folder });
-          logger.info(`[CLOUDINARY] File uploaded: ${req.file.originalname} -> ${req.file.path}`);
+          logger.debug(`[CLOUDINARY] File uploaded: ${req.file.originalname} -> ${req.file.path}`);
         }
         
         // For multiple file uploads
@@ -364,7 +364,7 @@ function createUploader(options = {}) {
               cloudinaryConfig.processUploadedFile(file, { resourceType, folder });
             });
             
-            logger.info(`[CLOUDINARY] ${req.files.length} files uploaded to ${folder}`);
+            logger.debug(`[CLOUDINARY] ${req.files.length} files uploaded to ${folder}`);
           } 
           // Fields of files
           else {
@@ -374,7 +374,7 @@ function createUploader(options = {}) {
               });
               
               const totalFiles = Object.values(req.files).reduce((sum, files) => sum + files.length, 0);
-              logger.info(`[CLOUDINARY] ${totalFiles} files uploaded across ${Object.keys(req.files).length} fields to ${folder}`);
+              logger.debug(`[CLOUDINARY] ${totalFiles} files uploaded across ${Object.keys(req.files).length} fields to ${folder}`);
             });
           }
         }

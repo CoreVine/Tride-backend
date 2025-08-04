@@ -1,14 +1,11 @@
 // services/express.service.js
-
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
 const {
   globalErrorHandler,
   notFoundHandler,
 } = require("../middlewares/errorHandler.middleware");
 const responseMiddleware = require("../middlewares/response.middleware");
-// const path = require('path'); // No longer needed if not serving local static uploads
 const multerErrorHandler = require("../middlewares/multerErrorHandler.middleware");
 const apiRouter = require("../routes");
 const loggingService = require("./logging.service");
@@ -43,9 +40,6 @@ const expressService = {
 
       // Apply middleware
       app.use(bodyParser.json());
-
-      // Use cookie-parser middleware
-      app.use(cookieParser());
 
       if (process.env.NODE_ENV === "production") {
         // Apply rate limiting middleware to all requests

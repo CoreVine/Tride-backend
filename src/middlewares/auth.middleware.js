@@ -2,7 +2,7 @@ const loggingService = require("../services/logging.service");
 const JwtService = require("../services/jwt.service");
 const { BadTokenError } = require("../utils/errors/types/Api.error");
 const AdminRepository = require("../data-access/admin");
-
+const AccountRepository = require("../data-access/accounts");
 const logger = loggingService.getLogger();
 
 /**
@@ -27,6 +27,10 @@ const authMiddleware = async (req, res, next) => {
 
     try {
       const decoded = await JwtService.jwtVerify(token);
+      const isAccount = await AccountRepository.findById(decoded.id);
+
+      if (!isAccount)
+        throw new Error("Invalid account!");
       
       req.userId = decoded.id;
       req.accountType = decoded.accountType;

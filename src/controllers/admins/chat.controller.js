@@ -93,10 +93,6 @@ const chatController = {
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
   
-      if (!chatRooms || chatRooms.length === 0) {
-        throw new NotFoundError("No customer service chat rooms found");
-      }
-
       // Get parents and last message for each chat room
       const chatRoomsWithDetails = await Promise.all(chatRooms.map(async (room) => {
         const lastMessage = await room.getLastMessage();
@@ -166,10 +162,6 @@ const chatController = {
 
       const messages = await chatRoom.getMessagesPage(chatRoomId, page);
       const totalMessages = await chatRoom.getMessageCount(chatRoomId);
-
-      if (!messages || messages.length === 0) {
-        throw new NotFoundError("No messages found in this chat room");
-      }
 
       const pagination = createPagination(Number(page), 10, totalMessages);
 
