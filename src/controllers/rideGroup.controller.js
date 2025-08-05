@@ -313,7 +313,7 @@ const RideGroupController = {
 
       const { overallPrice, toPayPrice } = await subscriptionDomain.calculateOverallPrice({
         distance,
-        seatsTaken,
+        seatsTaken: rideGroup.group_type === 'premium' ? MAX_SEATS_CAR : seatsTaken,
         totalDays,
         planDetails,
       });
@@ -803,7 +803,7 @@ const RideGroupController = {
         // calculate the overall price based on the plan type        
         const { overallPrice, toPayPrice } = await subscriptionDomain.calculateOverallPrice({
           distance,
-          seatsTaken,
+          seatsTaken: rideGroup.group_type === 'premium' ? MAX_SEATS_CAR : seatsTaken,
           totalDays,
           planDetails: plan
         });

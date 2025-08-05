@@ -16,7 +16,7 @@ const calculateOverallPrice = async (details) => {
     } = details;
     const totalMonthlyDistance = distance * totalDays * 4;
     const pricePerKm = RIDE_PRICE_PER_KM(totalMonthlyDistance);
-    let overAllPrice = (distance * pricePerKm / MAX_SEATS_CAR) * seatsTaken;
+    let overAllPrice = (distance * 2 * pricePerKm / MAX_SEATS_CAR) * seatsTaken;
   
     overAllPrice *= totalDays * planDetails.months_count;
 
