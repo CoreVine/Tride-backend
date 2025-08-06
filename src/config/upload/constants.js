@@ -65,7 +65,7 @@ const RIDE_PRICE_PER_KM = (distance) => {
   else if (distance <= 1200)
     return 14000;
   else
-    return 11.5 * totalMonthlyDistance;
+    return 11.5 * distance;
 }; // Example price per km, adjust as needed
 /**
  * Get a transformation configuration
