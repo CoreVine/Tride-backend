@@ -57,15 +57,15 @@ const TRANSFORMATIONS = {
 const MAX_SEATS_CAR = 5;
 const RIDE_PRICE_PER_KM = (distance) => {
   if (distance <= 600)
-    return 15;
+    return 9000;
   else if (distance <= 800)
-    return 13.12;
+    return 10500;
   else if (distance <= 1000)
-    return 12.5;
+    return 12500;
   else if (distance <= 1200)
-    return 11.66;
+    return 14000;
   else if (distance <= 1500)
-    return 11.5;
+    return 17250;
   else
   throw new Error("DISTANCE IS LARGER THAN 1500!");
 }; // Example price per km, adjust as needed
