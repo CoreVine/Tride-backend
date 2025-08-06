@@ -14,16 +14,19 @@ const calculateOverallPrice = async (details) => {
       seatsTaken,
       totalDays,
     } = details;
-    const totalMonthlyDistance = distance * totalDays * 4;
-    const pricePerKm = RIDE_PRICE_PER_KM(totalMonthlyDistance);
-    let overAllPrice = (distance * 2 * pricePerKm / MAX_SEATS_CAR) * seatsTaken;
+    // Distance is already round trip, so we don't multiply by days again
+    const totalMonthlyDistance = distance * 4; // Only multiply by 4 weeks
+    const pricePerMonth = RIDE_PRICE_PER_KM(totalMonthlyDistance);
+    let overAllPrice = (pricePerMonth / MAX_SEATS_CAR) * seatsTaken;
   
-    overAllPrice *= totalDays * planDetails.months_count;
+    // Only multiply by months at the end
+    overAllPrice *= planDetails.months_count;
 
     if (isNaN(overAllPrice) || overAllPrice < 0) {
       throw new BadRequestError("Invalid calculation for overall price");
     }
-    overAllPrice = overAllPrice *2;
+    // Remove the ×2 multiplication
+    // overAllPrice = overAllPrice *2;
     // No discount applied - pay full amount
     const to_pay_price = overAllPrice * (1 - planDetails.discount_percentage);
   
