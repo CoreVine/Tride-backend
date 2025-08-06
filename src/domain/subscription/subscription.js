@@ -15,7 +15,7 @@ const calculateOverallPrice = async (details) => {
       totalDays,
     } = details;
     // Distance is already round trip, so we don't multiply by days again
-    const totalMonthlyDistance = distance * 4; // Only multiply by 4 weeks
+    const totalMonthlyDistance = distance * totalDays * 4; // Only multiply by 4 weeks
     const pricePerMonth = RIDE_PRICE_PER_KM(totalMonthlyDistance);
     let overAllPrice = (pricePerMonth / MAX_SEATS_CAR) * seatsTaken;
   
