@@ -14,7 +14,7 @@ module.exports = {
       { id: 3, name: "Oct Gardens", governorate_id: 1 },
     ];
 
-    const extractedSchools = [
+    const defaultSchools = [
       {
         id: 1,
         school_name: "The American International School in Egypt - West Campus",
