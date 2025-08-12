@@ -53,11 +53,6 @@ class Child extends Model {
       foreignKey: 'child_id',
       as: 'groupDetails'
     });
-    
-    this.hasMany(models.RideChildDelivered, {
-      foreignKey: 'child_id',
-      as: 'deliveries'
-    });
   }
 }
 

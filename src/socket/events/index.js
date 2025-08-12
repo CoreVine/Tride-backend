@@ -7,17 +7,20 @@ const { UnauthorizedError } = require("../../utils/errors/types/Api.error");
 const logger = require("../../services/logging.service").getLogger();
 const redisService = require("../../services/redis.service");
 
-function socketEventWrapper(socket, io) {
+function socketEventWrapper(socket, io) {  
     // chat sockets
     socket.on("join_room", async (room_id) => joinSocketController.verifyAndJoinRoom(socket, room_id));
     socket.on("leave_room", (room_id) => leaveSocketController.leaveRoom(socket, room_id));
     // ride sockets
-    socket.on("driver_join_ride", async () => rideSocketController.driverVerifyAndJoinRide(socket));
-    socket.on("parent_watch_ride", async () => rideSocketController.parentVerifyAndJoinRide(socket));
+    socket.on("driver_join_ride", async (payload) => rideSocketController.driverVerifyAndJoinRide(socket, payload));
+    socket.on("parent_watch_ride", async (ride_group_id) => rideSocketController.parentVerifyAndJoinRide(socket, ride_group_id));
     socket.on("driver_location_update", async (location) => rideSocketController.relayLocationUpdates(socket, location));
     // TODO: DRIVER SHOULD GET THE NEXT CHECKPOINT, WHICH SHOULD BE THE NEAREST TO HIM
     // TODO: DRIVER CAN CHANGE HIS MIND, AND AS SOON AS THE GEO-FENCING HITS ANY OF THE CHECKPOINTS, IT IS REGISTERED AUTOMATICALLY
     // socket.on("driver_checkpoint_update", async () => {});
+    
+    // FLAW: No handler for checkpoint confirmation
+    socket.on("driver_confirm_checkpoint", async (payload) => rideSocketController.confirmCheckPoint(socket, io, payload));
 }
 
 function setupConnection(io) {
@@ -64,6 +67,10 @@ function setupConnection(io) {
       socket.driver = {
         id: account.driver.id
       };
+    } else {
+      socket.parent = {
+        id: account.parent.id
+      };
     }
 
     // Store user connection in Redis
@@ -85,8 +92,16 @@ function setupDisconnection(socket) {
         try {
             // Remove user connection from Redis
             if (socket.userId) {
-                await redisService.removeUserConnection(socket.userId);
+                await redisService.removeUserSocketConnection(socket.userId, socket.id);
                 logger.debug(`[Socket.IO] Socket ${socket.id} removed from Redis for user ${socket.userId}`);
+            }
+
+            if (socket.rideRoomId) {
+              socket.to(socket.rideRoomId).emit("location_update", {
+                type: "DRIVER_STATUS",
+                message: "Driver has left!",
+                data: {}
+              })
             }
         } catch (error) {
             logger.error(`[Socket.IO] Error removing user connection from Redis: ${error.message}`);

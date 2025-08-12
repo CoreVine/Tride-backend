@@ -17,13 +17,28 @@ const rideController = {
                 throw new NotFoundError("Ride group is not found");
             }
 
-            // check if there is a ride instance currently in operation
-            const rideInstance = await RideInstanceRepository.findActiveInstanceByRideGroupId(ride_group_id, driver_id);
+            const existingRideInstance = await RideInstanceRepository.findActiveInstanceByRideGroupAndDriver(ride_group_id, driver_id);
 
-            if (rideInstance) {
-                return res.success("a ride instance is already created!", {
-                    rideInstance
+            if (existingRideInstance) {
+                logger.warn(`Driver ${driver_id} attempted to create duplicate ride instance for group ${ride_group_id}`, {
+                    existingInstanceId: existingRideInstance.id,
+                    status: existingRideInstance.status
                 });
+                
+                return res.success("A ride instance is already active for this group", {
+                    rideInstance: existingRideInstance,
+                    message: "Cannot create multiple ride instances. Please complete or cancel the existing ride first."
+                });
+            }
+
+            const driverActiveRides = await RideInstanceRepository.findActiveInstancesByDriver(driver_id);
+            
+            if (driverActiveRides && driverActiveRides.length > 0) {
+                logger.warn(`Driver ${driver_id} has active rides in other groups`, {
+                    activeRides: driverActiveRides.map(r => ({ id: r.id, groupId: r.group_id, status: r.status }))
+                });
+                
+                throw new BadRequestError(`You have ${driverActiveRides.length} active ride(s) in other groups. Please complete them before starting a new ride.`);
             }
 
             if (rideGroup.current_seats_taken !== MAX_SEATS_CAR) {

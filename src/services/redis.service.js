@@ -187,6 +187,33 @@ const redisService = {
   },
 
   /**
+   * Update last seen time for a user's socket connection
+   * @param {string} userId - User ID
+   * @param {string} socketId - Socket ID
+   */
+  updateUserSocketActivity: async (userId, socketId) => {
+    try {
+      const key = `user:${userId}:sockets`;
+      const socketData = await redisClient.hget(key, socketId);
+      
+      if (socketData) {
+        const parsedData = JSON.parse(socketData);
+        parsedData.lastSeen = Date.now();
+        
+        await redisClient.hset(key, socketId, JSON.stringify(parsedData));
+        
+        // Refresh TTL for both keys
+        await redisClient.expire(key, 86400);
+        const reverseKey = `socket:${socketId}`;
+        await redisClient.expire(reverseKey, 86400);
+      }
+    } catch (error) {
+      logger.error(`[REDIS] Error updating socket activity for userId ${userId}, socketId ${socketId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
    * Get all socket connections for a user
    * @param {string} userId - User ID
    * @returns {Promise<object|null>} User socket connections
@@ -241,19 +268,48 @@ const redisService = {
   removeUserSocketConnection: async (userId, socketId) => {
     try {
       const key = `user:${userId}:sockets`;
-      await redisClient.hdel(key, socketId);
-      
-      // Remove reverse mapping
       const reverseKey = `socket:${socketId}`;
-      await redisClient.del(reverseKey);
+      
+      // Use Redis pipeline for atomic operations
+      const pipeline = redisClient.pipeline();
+      pipeline.hdel(key, socketId);
+      pipeline.del(reverseKey);
+      
+      const results = await pipeline.exec();
       
       // Check if user has any remaining connections
       const remainingConnections = await redisClient.hlen(key);
       if (remainingConnections === 0) {
         await redisClient.del(key);
+        logger.debug(`[REDIS] Removed empty user socket hash for userId ${userId}`);
       }
+      
+      logger.debug(`[REDIS] Successfully removed socket ${socketId} for user ${userId}`);
     } catch (error) {
       logger.error(`[REDIS] Error removing socket connection for userId ${userId}, socketId ${socketId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Clean up orphaned socket mappings (utility function)
+   * @param {string} socketId - Socket ID to clean up
+   */
+  cleanupOrphanedSocket: async (socketId) => {
+    try {
+      const reverseKey = `socket:${socketId}`;
+      const data = await redisService.get(reverseKey);
+      
+      if (data && data.userId) {
+        await redisService.removeUserSocketConnection(data.userId, socketId);
+        logger.debug(`[REDIS] Cleaned up orphaned socket ${socketId} for user ${data.userId}`);
+      } else {
+        // Just remove the reverse mapping if no user data found
+        await redisClient.del(reverseKey);
+        logger.debug(`[REDIS] Removed orphaned reverse mapping for socket ${socketId}`);
+      }
+    } catch (error) {
+      logger.error(`[REDIS] Error cleaning up orphaned socket ${socketId}:`, error);
       throw error;
     }
   },
@@ -429,12 +485,97 @@ const redisService = {
     }
   },
 
-  setLocationUpdates: async (roomId, location) => {
+  setLocationUpdates: async (roomId, { lat, lng, ts }) => {
     try {
+      console.log(roomId, { lat, lng, ts });
+      
       // TODO: Take location update
-      await redis.set(roomId, JSON.stringify({ lat, lng, ts }));
+      await redisClient.set(roomId, JSON.stringify({ lat, lng, ts }));
     } catch (error) {
       logger.error(`[REDIS] Error setting location for room ${roomId}: ${error}`);
+      throw error;
+    }
+  },
+
+  getLatestLocationUpdate: async (roomId) => {
+    try {
+      const data = await redisClient.get(roomId);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      logger.error(`[REDIS] Error getting latest location for room ${roomId}:`, error);
+      throw error;
+    }
+  },
+
+  getRideOrderForRideInstance: async (rideInstanceId) => {
+    try {
+      const data = await redisClient.hgetall(`rideInstance:${rideInstanceId}:order`);
+
+      // Parse the JSON values
+      if (data && Object.keys(data).length > 0) {
+        const parsedOrder = {};
+        for (const [index, value] of Object.entries(data)) {
+          parsedOrder[index] = JSON.parse(value);
+        }
+        return parsedOrder;
+      }
+
+      return {};
+    } catch (error) {
+      logger.error(`[REDIS] Error getting ride instance order for room ${rideInstanceId}: ${error}`);
+      throw error;
+    }
+  },
+
+  setRideOrderForRideInstance: async (rideInstanceId, order, endIndex) => {
+    try {
+      await redisClient.del(`rideInstance:${rideInstanceId}:order`);
+
+      // Prepare field-value pairs for hset
+      const fieldValuePairs = [];
+      order.forEach((checkpoint, index) => fieldValuePairs.push(index, JSON.stringify(checkpoint)));
+
+      // Set the new values
+      if (fieldValuePairs.length > 0) {
+        await redisClient.hset(`rideInstance:${rideInstanceId}:order`, ...fieldValuePairs);
+      }
+    } catch (error) {
+      logger.error(`[REDIS] Error setting ride instance order for room ${rideInstanceId}: ${error}`);
+      throw error;
+    }
+  },
+
+  deleteRideOrderForRideInstance: async (rideInstanceId) => {
+    try {
+      await redisClient.del(`rideInstance:${rideInstanceId}:order`);
+    } catch (error) {
+      logger.error(`[REDIS] Error deleting ride instance order for room ${rideInstanceId}: ${error}`);
+      throw error;
+    }
+  },
+
+  updateRideInstanceCheckpoint: async (rideInstanceId, checkpointIndex, newCheckpoint) => {
+    try {
+      await redisClient.hset(`rideInstance:${rideInstanceId}:order`, checkpointIndex, JSON.stringify(newCheckpoint));
+    } catch (error) {
+      logger.error(`[REDIS] Error updating ride instance checkpoint for room ${rideInstanceId}: ${error}`);
+      throw error;
+    }
+  },
+
+  flushRideInstance: async (rideInstanceId, rideRoomId) => {
+    try {
+      // Delete ride order data
+      await redisClient.del(`rideInstance:${rideInstanceId}:order`);
+      
+      // Delete location updates for the ride room
+      if (rideRoomId) {
+        await redisClient.del(rideRoomId);
+      }
+      
+      logger.debug(`[REDIS] Successfully flushed data for ride instance ${rideInstanceId}`);
+    } catch (error) {
+      logger.error(`[REDIS] Error flushing ride instance data for ${rideInstanceId}: ${error}`);
       throw error;
     }
   },

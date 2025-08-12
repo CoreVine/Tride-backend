@@ -34,7 +34,7 @@ class RideInstance extends Model {
         allowNull: true
       },
       type: {
-        type: DataTypes.ENUM(["to_school", "from_school"]),
+        type: DataTypes.ENUM(["to_school", "to_home"]),
         allowNull: false
       },
       group_id: {

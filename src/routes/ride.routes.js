@@ -8,7 +8,7 @@ const validate = require("../middlewares/validation.middleware");
 const rideRouter = Router();
 
 const createRideInstanceSchema = Yup.object().shape({
-  type: Yup.string().oneOf(["to_school", "from_school"]).required(),
+  type: Yup.string().oneOf(["to_school", "to_home"]).required(),
   ride_group_id: Yup.number().integer().positive().required()
 });
 

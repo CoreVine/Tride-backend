@@ -114,13 +114,14 @@
       <div id="driver-status" class="status disconnected">Disconnected</div>
       
       <div class="controls">
-        <input type="text" id="driver-token" placeholder="JWT Token" value="">
+        <input type="text" id="driver-token" placeholder="JWT Token" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7ImlkIjozLCJhY2NvdW50VHlwZSI6ImRyaXZlciIsInByb2ZpbGVDb21wbGV0ZSI6dHJ1ZSwiYWNjb3VudFR5cGVJZCI6MX0sImlhdCI6MTc1MzcxNTQ2MCwianRpIjoiOWE5ZjM3NDItMzMxZS00MGQwLThkYWItNmFlZmY3NzhjZmUzIn0.91bu8A37_f-NCVoTQpLwN4gjNqeWQ0HSjt-Bi9VkB08">
         <button id="driver-connect">Connect</button>
         <button id="driver-disconnect" disabled>Disconnect</button>
       </div>
       
       <div class="controls">
         <button id="driver-join-ride" disabled>Join Ride</button>
+        <input type="number" id="ride-group-id" placeholder="Ride Group ID" value="1" style="width: 100px;">
       </div>
       
       <div class="controls">
@@ -149,13 +150,14 @@
       <div id="parent-status" class="status disconnected">Disconnected</div>
       
       <div class="controls">
-        <input type="text" id="parent-token" placeholder="JWT Token" value="">
+        <input type="text" id="parent-token" placeholder="JWT Token" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7ImlkIjoyLCJhY2NvdW50VHlwZSI6InBhcmVudCIsInByb2ZpbGVDb21wbGV0ZSI6dHJ1ZSwiYWNjb3VudFR5cGVJZCI6MX0sImlhdCI6MTc1MzE5MTEwMywianRpIjoiMDA4MTVmZGQtZTEwNi00ZDA0LWFmMjUtNmJkOThhMDkzNGVlIn0.MeTUNcmw5pWo9Wsm2L-4UkkaXgg4oFXSiUS2Qx6fBQw">
         <button id="parent-connect">Connect</button>
         <button id="parent-disconnect" disabled>Disconnect</button>
       </div>
       
       <div class="controls">
         <button id="parent-join-ride" disabled>Watch Ride</button>
+        <!-- Using the same ride group ID input from above -->
       </div>
       
       <div class="map-container" id="parent-map">
@@ -166,293 +168,7 @@
     </div>
   </div>
 
-  <script>
-    // Configuration
-    const SERVER_URL = 'http://localhost:3000'; // Update with your server URL
-    
-    // Driver variables
-    let driverSocket = null;
-    let driverConnected = false;
-    let driverJoinedRide = false;
-    let simulationInterval = null;
-    
-    // Parent variables
-    let parentSocket = null;
-    let parentConnected = false;
-    let parentJoinedRide = false;
-    
-    // DOM Elements - Driver
-    const driverStatusEl = document.getElementById('driver-status');
-    const driverTokenEl = document.getElementById('driver-token');
-    const driverConnectBtn = document.getElementById('driver-connect');
-    const driverDisconnectBtn = document.getElementById('driver-disconnect');
-    const driverJoinRideBtn = document.getElementById('driver-join-ride');
-    const driverLatEl = document.getElementById('driver-lat');
-    const driverLngEl = document.getElementById('driver-lng');
-    const driverSendLocationBtn = document.getElementById('driver-send-location');
-    const driverSimulateBtn = document.getElementById('driver-simulate');
-    const driverStopSimulationBtn = document.getElementById('driver-stop-simulation');
-    const driverLogEl = document.getElementById('driver-log');
-    const driverMarkerEl = document.getElementById('driver-marker');
-    const driverMapEl = document.getElementById('driver-map');
-    
-    // DOM Elements - Parent
-    const parentStatusEl = document.getElementById('parent-status');
-    const parentTokenEl = document.getElementById('parent-token');
-    const parentConnectBtn = document.getElementById('parent-connect');
-    const parentDisconnectBtn = document.getElementById('parent-disconnect');
-    const parentJoinRideBtn = document.getElementById('parent-join-ride');
-    const parentLogEl = document.getElementById('parent-log');
-    const parentMarkerEl = document.getElementById('parent-marker');
-    const parentMapEl = document.getElementById('parent-map');
-    
-    // Helper Functions
-    function logToDriver(message) {
-      const logEntry = document.createElement('div');
-      logEntry.className = 'log-entry';
-      logEntry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
-      driverLogEl.appendChild(logEntry);
-      driverLogEl.scrollTop = driverLogEl.scrollHeight;
-    }
-    
-    function logToParent(message) {
-      const logEntry = document.createElement('div');
-      logEntry.className = 'log-entry';
-      logEntry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
-      parentLogEl.appendChild(logEntry);
-      parentLogEl.scrollTop = parentLogEl.scrollHeight;
-    }
-    
-    function updateDriverMarker(lat, lng) {
-      // Convert lat/lng to position on the map container
-      const mapWidth = driverMapEl.clientWidth;
-      const mapHeight = driverMapEl.clientHeight;
-      
-      // Simple mapping from lat/lng to pixel position (for demo purposes)
-      // In a real app, you'd use a mapping library like Google Maps or Leaflet
-      const x = ((parseFloat(lng) + 180) / 360) * mapWidth;
-      const y = ((90 - parseFloat(lat)) / 180) * mapHeight;
-      
-      driverMarkerEl.style.left = `${x}px`;
-      driverMarkerEl.style.top = `${y}px`;
-      driverMarkerEl.style.display = 'block';
-      
-      logToDriver(`Updated marker position: ${lat}, ${lng}`);
-    }
-    
-    function updateParentMarker(lat, lng) {
-      const mapWidth = parentMapEl.clientWidth;
-      const mapHeight = parentMapEl.clientHeight;
-      
-      const x = ((parseFloat(lng) + 180) / 360) * mapWidth;
-      const y = ((90 - parseFloat(lat)) / 180) * mapHeight;
-      
-      parentMarkerEl.style.left = `${x}px`;
-      parentMarkerEl.style.top = `${y}px`;
-      parentMarkerEl.style.display = 'block';
-      
-      logToParent(`Received driver position: ${lat}, ${lng}`);
-    }
-    
-    function simulateMovement() {
-      const baseLatEl = driverLatEl;
-      const baseLngEl = driverLngEl;
-      
-      return setInterval(() => {
-        // Add small random movement
-        const lat = parseFloat(baseLatEl.value) + (Math.random() - 0.5) * 0.01;
-        const lng = parseFloat(baseLngEl.value) + (Math.random() - 0.5) * 0.01;
-        
-        baseLatEl.value = lat.toFixed(6);
-        baseLngEl.value = lng.toFixed(6);
-        
-        // Send the simulated location
-        if (driverSocket && driverJoinedRide) {
-          const location = { lat, lng };
-          driverSocket.emit('driver_location_update', location);
-          updateDriverMarker(lat, lng);
-        }
-      }, 2000); // Update every 2 seconds
-    }
-    
-    // Driver Socket Events
-    driverConnectBtn.addEventListener('click', () => {
-      const token = driverTokenEl.value.trim();
-      if (!token) {
-        alert('Please enter a valid JWT token for the driver');
-        return;
-      }
-      
-      driverSocket = io(SERVER_URL, {
-        auth: { token }
-      });
-      
-      driverSocket.on('connect', () => {
-        driverConnected = true;
-        driverStatusEl.textContent = 'Connected';
-        driverStatusEl.className = 'status connected';
-        
-        driverConnectBtn.disabled = true;
-        driverDisconnectBtn.disabled = false;
-        driverJoinRideBtn.disabled = false;
-        
-        logToDriver('Connected to server');
-      });
-      
-      driverSocket.on('disconnect', () => {
-        driverConnected = false;
-        driverJoinedRide = false;
-        driverStatusEl.textContent = 'Disconnected';
-        driverStatusEl.className = 'status disconnected';
-        
-        driverConnectBtn.disabled = false;
-        driverDisconnectBtn.disabled = true;
-        driverJoinRideBtn.disabled = true;
-        driverSendLocationBtn.disabled = true;
-        driverSimulateBtn.disabled = true;
-        driverStopSimulationBtn.disabled = true;
-        
-        if (simulationInterval) {
-          clearInterval(simulationInterval);
-          simulationInterval = null;
-        }
-        
-        logToDriver('Disconnected from server');
-      });
-      
-      driverSocket.on('ack', (message) => {
-        logToDriver(`Received acknowledgment: ${message}`);
-        
-        if (message.startsWith('OK:')) {
-          driverJoinedRide = true;
-          driverSendLocationBtn.disabled = false;
-          driverSimulateBtn.disabled = false;
-          logToDriver('Successfully joined ride');
-        }
-      });
-      
-      driverSocket.on('error', (error) => {
-        logToDriver(`Error: ${error}`);
-      });
-    });
-    
-    driverDisconnectBtn.addEventListener('click', () => {
-      if (driverSocket) {
-        driverSocket.disconnect();
-      }
-    });
-    
-    driverJoinRideBtn.addEventListener('click', () => {
-      if (driverSocket && driverConnected) {
-        driverSocket.emit('driver_join_ride');
-        logToDriver('Requested to join ride');
-      }
-    });
-    
-    driverSendLocationBtn.addEventListener('click', () => {
-      if (driverSocket && driverJoinedRide) {
-        const lat = parseFloat(driverLatEl.value);
-        const lng = parseFloat(driverLngEl.value);
-        
-        if (isNaN(lat) || isNaN(lng)) {
-          alert('Please enter valid latitude and longitude values');
-          return;
-        }
-        
-        const location = { lat, lng };
-        driverSocket.emit('driver_location_update', location);
-        updateDriverMarker(lat, lng);
-        logToDriver(`Sent location: ${lat}, ${lng}`);
-      }
-    });
-    
-    driverSimulateBtn.addEventListener('click', () => {
-      if (driverJoinedRide) {
-        simulationInterval = simulateMovement();
-        driverSimulateBtn.disabled = true;
-        driverStopSimulationBtn.disabled = false;
-        logToDriver('Started location simulation');
-      }
-    });
-    
-    driverStopSimulationBtn.addEventListener('click', () => {
-      if (simulationInterval) {
-        clearInterval(simulationInterval);
-        simulationInterval = null;
-        driverSimulateBtn.disabled = false;
-        driverStopSimulationBtn.disabled = true;
-        logToDriver('Stopped location simulation');
-      }
-    });
-    
-    // Parent Socket Events
-    parentConnectBtn.addEventListener('click', () => {
-      const token = parentTokenEl.value.trim();
-      if (!token) {
-        alert('Please enter a valid JWT token for the parent');
-        return;
-      }
-      
-      parentSocket = io(SERVER_URL, {
-        auth: { token }
-      });
-      
-      parentSocket.on('connect', () => {
-        parentConnected = true;
-        parentStatusEl.textContent = 'Connected';
-        parentStatusEl.className = 'status connected';
-        
-        parentConnectBtn.disabled = true;
-        parentDisconnectBtn.disabled = false;
-        parentJoinRideBtn.disabled = false;
-        
-        logToParent('Connected to server');
-      });
-      
-      parentSocket.on('disconnect', () => {
-        parentConnected = false;
-        parentJoinedRide = false;
-        parentStatusEl.textContent = 'Disconnected';
-        parentStatusEl.className = 'status disconnected';
-        
-        parentConnectBtn.disabled = false;
-        parentDisconnectBtn.disabled = true;
-        parentJoinRideBtn.disabled = true;
-        
-        logToParent('Disconnected from server');
-      });
-      
-      parentSocket.on('ack', (message) => {
-        logToParent(`Received acknowledgment: ${message}`);
-        
-        if (message.startsWith('OK:')) {
-          parentJoinedRide = true;
-          logToParent('Successfully joined ride watch');
-        }
-      });
-      
-      parentSocket.on('location_update', (locationData) => {
-        logToParent(`Received location update: ${JSON.stringify(locationData)}`);
-        updateParentMarker(locationData.lat, locationData.lng);
-      });
-      
-      parentSocket.on('error', (error) => {
-        logToParent(`Error: ${error}`);
-      });
-    });
-    
-    parentDisconnectBtn.addEventListener('click', () => {
-      if (parentSocket) {
-        parentSocket.disconnect();
-      }
-    });
-    
-    parentJoinRideBtn.addEventListener('click', () => {
-      if (parentSocket && parentConnected) {
-        parentSocket.emit('parent_watch_ride');
-        logToParent('Requested to watch ride');
-      }
-    });
-  </script>
+  <!-- Replace inline script with external JavaScript file -->
+  <script src="socket-test.js"></script>
 </body>
 </html>

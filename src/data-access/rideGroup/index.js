@@ -63,7 +63,7 @@ class RideGroupRepository extends BaseRepository {
 
   async findOneIfDriver(ride_group_id, drive_id) {
     try {
-      await this.model.findOne({
+      const rideGroup = await this.model.findOne({
         where: {
           id: ride_group_id,
           driver_id: drive_id
@@ -76,7 +76,7 @@ class RideGroupRepository extends BaseRepository {
           }
         ]
       });
-      return ride_group_id;
+      return rideGroup;
     } catch (error) {
       throw new DatabaseError(error);
     }
@@ -631,6 +631,8 @@ class RideGroupRepository extends BaseRepository {
         transaction: t
       });
 
+      console.log(groupSrc, groupDest);
+      
       if (!groupSrc || !groupDest) {
         throw new BadRequestError("Cannot merge groups: source or destination group not found.");
       }
@@ -726,9 +728,9 @@ class RideGroupRepository extends BaseRepository {
 
       if (groupDest.driver_id) {
         participants.push({
-          user_id: groupSrc.driver.account_id,
+          user_id: groupDest.driver.account_id,
           user_type: "driver",
-          name: groupSrc.driver.name || null
+          name: groupDest.driver.name || null
         });
       }
 
@@ -768,6 +770,35 @@ class RideGroupRepository extends BaseRepository {
                 attributes: ["account_id", "name"]
               }
             ],
+          }
+        ]
+      });
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
+  async getAllLocationsById(rideGroupId) {
+    try {
+      return await this.model.findOne({
+        where: {
+          id: rideGroupId
+        },
+        attributes: [],
+        include: [
+          {
+            association: "parentGroups",
+            attributes: ["parent_id", "home_lat", "home_lng"],
+            include: [
+              {
+                association: "parent",
+                attributes: ["account_id", "name"]
+              }
+            ],
+          },
+          {
+            association: "school",
+            attributes: ["id", "lat", "lng"]
           }
         ]
       });
