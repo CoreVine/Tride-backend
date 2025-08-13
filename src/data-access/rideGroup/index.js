@@ -793,6 +793,10 @@ class RideGroupRepository extends BaseRepository {
               {
                 association: "parent",
                 attributes: ["account_id", "name"]
+              },
+              {
+                association: "childDetails",
+                attributes: ["child_id"]
               }
             ],
           },

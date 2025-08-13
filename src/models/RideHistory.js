@@ -26,18 +26,8 @@ class RideHistory extends Model {
         type: DataTypes.ENUM(["school", "child", "garage"]),
         allowNull: false
       },
-      child_id: {
-        type: DataTypes.BIGINT.UNSIGNED,
-        allowNull: true,
-        references: {
-          model: 'child',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
-      },
       status: {
-        type: DataTypes.STRING(50),
+        type: DataTypes.STRING(70),
         allowNull: false
       },
       ride_instance_id: {
@@ -64,9 +54,9 @@ class RideHistory extends Model {
       as: 'rideInstance'
     });
 
-    this.belongsTo(models.Child, {
-      foreignKey: 'child_id',
-      as: 'child'
+    this.hasMany(models.RideChildDelivered, {
+      foreignKey: 'ride_history_id',
+      as: 'deliveries'
     });
   }
 }

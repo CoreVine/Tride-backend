@@ -33,40 +33,30 @@ class RideInstanceRepository extends BaseRepository {
       const transaction = await this.model.sequelize.transaction();
       
       try {
-      await this.model.update(
-        { status: "active" },
-        { 
-        where: { id: rideInstance.id },
-        transaction 
-        }
-      );
-      const newRideStart = rideInstance.type === "to_school" ? "deliver the children to school" : "pickup children from school";
-      // check if the driver is already at school and the type is: to_home
-      // const closeToSchool = isLocationCloseToCheckpoint({
-      //   location_lat: currentLocation.lat,
-      //   location_lng: currentLocation.lng
-      // }, {
-      //   checkpoint_lat: 
-      // })
+        await this.model.update(
+          { status: "active" },
+          { 
+          where: { id: rideInstance.id },
+          transaction 
+          }
+        );
+        const newRideStart = rideInstance.type === "to_school" ? "deliver the children to school" : "pickup children from school";
+        await RideHistoryRepository.create(
+          {
+            lat: currentLocation.lat,
+            lng: currentLocation.lng,
+            issued_at: new Date().toISOString().slice(0, 10),
+            type: rideInstance.type === "to_school" ? "garage" : "school",
+            status: `Started trip: ${newRideStart}`,
+            ride_instance_id: rideInstance.id
+          },
+          { transaction }
+        );
 
-      await RideHistoryRepository.create(
-        {
-          lat: currentLocation.lat,
-          lng: currentLocation.lng,
-          issued_at: new Date().toISOString().slice(0, 10),
-          type: rideInstance.type === "to_school" ? "garage" : "school",
-          status: `Started trip: ${newRideStart}`,
-          ride_instance_id: rideInstance.id
-        },
-        { transaction }
-      );
-      
-      // Commit the transaction
-      await transaction.commit();
+        await transaction.commit();
       } catch (error) {
-      // Rollback the transaction on error
-      await transaction.rollback();
-      throw error;
+        await transaction.rollback();
+        throw error;
       }
     } catch (error) {
       throw new DatabaseError(error.message);

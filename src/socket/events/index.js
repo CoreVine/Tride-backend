@@ -12,14 +12,9 @@ function socketEventWrapper(socket, io) {
     socket.on("join_room", async (room_id) => joinSocketController.verifyAndJoinRoom(socket, room_id));
     socket.on("leave_room", (room_id) => leaveSocketController.leaveRoom(socket, room_id));
     // ride sockets
+    socket.on("parent_watch_ride", async (payload) => rideSocketController.parentVerifyAndJoinRide(socket, payload));
     socket.on("driver_join_ride", async (payload) => rideSocketController.driverVerifyAndJoinRide(socket, payload));
-    socket.on("parent_watch_ride", async (ride_group_id) => rideSocketController.parentVerifyAndJoinRide(socket, ride_group_id));
     socket.on("driver_location_update", async (location) => rideSocketController.relayLocationUpdates(socket, location));
-    // TODO: DRIVER SHOULD GET THE NEXT CHECKPOINT, WHICH SHOULD BE THE NEAREST TO HIM
-    // TODO: DRIVER CAN CHANGE HIS MIND, AND AS SOON AS THE GEO-FENCING HITS ANY OF THE CHECKPOINTS, IT IS REGISTERED AUTOMATICALLY
-    // socket.on("driver_checkpoint_update", async () => {});
-    
-    // FLAW: No handler for checkpoint confirmation
     socket.on("driver_confirm_checkpoint", async (payload) => rideSocketController.confirmCheckPoint(socket, io, payload));
 }
 

@@ -48,7 +48,7 @@ async function getOptimizedRouteWithSteps(
     direction = "to_school") {
     try {
         const isToSchool = direction === "to_school";
-
+        
         // 1. Construct jobs - only house jobs, school handled manually
         const jobs = houses.map((house, index) => ({
             id: index + 1,
@@ -57,7 +57,8 @@ async function getOptimizedRouteWithSteps(
             location: [house.lng, house.lat],
             metadata: {
                 type: "child",
-                id: house.parent_id
+                id: house.parent_id,
+                children: house.children || [] // Include children data
             }
         }));
 
@@ -124,7 +125,8 @@ async function getOptimizedRouteWithSteps(
                     lat: step.location[1],
                     lng: step.location[0],
                     type: jobMeta?.type,
-                    id: jobMeta?.id
+                    id: jobMeta?.id,
+                    children: jobMeta?.children || [] // Include children in route
                 });
             }
         });
