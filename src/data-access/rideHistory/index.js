@@ -23,6 +23,48 @@ class RideHistoryRepository extends BaseRepository {
     }
   }
 
+  async findAllByRideInstanceId(rideInstanceId) {
+    try {
+      return await this.model.findAll({
+        where: {
+          ride_instance_id: rideInstanceId
+        },
+        include: [
+          {
+            association: "deliveries",
+            attributes: ["child_id"],
+            include: [
+              {
+                association: "child",
+                attributes: ["id", "parent_id"]
+              }
+            ]
+          }
+        ],
+        order: [['issued_at', 'ASC']]
+      });
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
+  async getDeliveredChildrenByHistoryId(historyId) {
+    try {
+      const history = await this.model.findByPk(historyId, {
+        include: [
+          {
+            association: "deliveredChildren",
+            attributes: ["child_id"]
+          }
+        ]
+      });
+      
+      return history ? history.deliveredChildren : [];
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
   /**
    * Create ride history with optional children delivery records
    * @param {Object} rideHistoryData - Ride history data

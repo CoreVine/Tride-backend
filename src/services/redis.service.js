@@ -487,9 +487,6 @@ const redisService = {
 
   setLocationUpdates: async (roomId, { lat, lng, ts }) => {
     try {
-      console.log(roomId, { lat, lng, ts });
-      
-      // TODO: Take location update
       await redisClient.set(roomId, JSON.stringify({ lat, lng, ts }));
     } catch (error) {
       logger.error(`[REDIS] Error setting location for room ${roomId}: ${error}`);

@@ -57,6 +57,43 @@ const driverVerifyAndJoinRide = async (socket, payload) => {
 
             // driver location is a finished checkpoint already
             order[0].status = "done";
+
+            // Check if this ride instance has existing history (Redis data loss scenario)
+            const existingHistory = await RideHistoryRepository.findAllByRideInstanceId(rideInstance.id);
+            
+            if (existingHistory && existingHistory.length > 0) {
+                // Reconstruct order status based on ride history
+                for (const historyRecord of existingHistory) {
+                    // Find corresponding checkpoint in order
+                    const checkpointIndex = Object.keys(order).find(index => {
+                        const checkpoint = order[index];
+                        const typeMatch = checkpoint.type === historyRecord.type;
+
+                        // For child checkpoints, match by parent ID from delivered children
+                        if (historyRecord.type === 'child' && historyRecord.deliveredChildren?.length > 0) {
+                            // Get parent ID from the first delivered child (all children at same house have same parent)
+                            const parentId = historyRecord.deliveredChildren[0].child?.parent_id;
+                            return typeMatch && checkpoint.id === parentId;
+                        }
+
+                        // For school and driver checkpoints, just match by type
+                        return typeMatch;
+                    });
+
+                    if (checkpointIndex !== undefined) {
+                        // Mark checkpoint as done
+                        order[checkpointIndex].status = "done";
+
+                        // If this is a child or school checkpoint, add confirmed children data
+                        if (["child", "school"].includes(historyRecord.type)) {
+                            const deliveredChildren = historyRecord.deliveredChildren || [];
+                            if (deliveredChildren.length > 0) {
+                                order[checkpointIndex].confirmed_children = deliveredChildren.map(dc => dc.child_id);
+                            }
+                        }
+                    }
+                }
+            }
    
             await redisService.setRideOrderForRideInstance(rideInstance.id, order, order.length);
         }
@@ -75,6 +112,9 @@ const driverVerifyAndJoinRide = async (socket, payload) => {
             return socket.emit("ack", { type: "LOCATION_UPDATE_ERROR", message: "Invalid GPS coordinates detected!", data: null });
         }
 
+        socket.rideRoomId = uid;
+        socket.rideInstanceId = rideInstance.id;
+
         await redisService.setLocationUpdates(socket.rideRoomId, locationMap);
 
         socket.driver.location = locationMap;
@@ -88,9 +128,6 @@ const driverVerifyAndJoinRide = async (socket, payload) => {
                 checkpointOrder: order
             }
         });
-    
-        socket.rideRoomId = uid;
-        socket.rideInstanceId = rideInstance.id;
     
         return socket.emit("ack", { type: "DRIVER_JOIN_SUCCESS", message: "Driver successfully joined ride", data: { uid, order, direction: rideInstance.type } });
     } catch (error) {
@@ -204,6 +241,13 @@ const relayLocationUpdates = async (socket, payload) => {
         });
 
         if (nearestOriginalIndex !== -1) {
+            // TODO: SEND NOTIFICATIONS UNDER THE CIRCUMSTANCES MENTIONED BELOW
+            /** send a notification in the following cases:
+             * 1. If the driver has reached the parent's house
+             * 2. If the driver has reached the school
+             * 3. If the driver has started a ride
+             * 4. If the next checkpoint is the parent's house
+            */
             return socket.to(socket.rideRoomId).emit("location_update", {
                 type: "CHECKPOINT_REACHED",
                 message: "Driver is near a checkpoint",
@@ -283,9 +327,7 @@ const confirmCheckPoint = async (socket, io, payload) => {
             if (!children_ids || children_ids.length === 0) {
                 return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: MUST SPECIFY CHILDREN BEING PICKED UP/DELIVERED!", data: null });
             }
-        }
 
-        if (currentCheckpoint.type === "child") {
             const checkpointChildren = currentCheckpoint.children || [];
             const invalidChildren = children_ids.filter(childId => !checkpointChildren.includes(childId));
 
@@ -296,7 +338,9 @@ const confirmCheckPoint = async (socket, io, payload) => {
                     data: null 
                 });
             }
+        }
 
+        if (currentCheckpoint.type === "child") {
             // Verify children exist in the parent group (double-check against database)
             try {
                 const locations = await RideGroupRepository.getAllLocationsById(rideInstance.group_id);
@@ -367,7 +411,7 @@ const confirmCheckPoint = async (socket, io, payload) => {
         const newCheckpoint = {
            ...order[current_index],
            status: "done",
-           confirmed_children: currentCheckpoint.type === "child" ? children_ids : undefined
+           confirmed_children: ["school", "child"].includes(currentCheckpoint.type) ? children_ids : undefined
         };
 
         await redisService.updateRideInstanceCheckpoint(rideInstance.id, current_index, newCheckpoint);

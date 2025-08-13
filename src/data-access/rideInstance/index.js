@@ -46,7 +46,7 @@ class RideInstanceRepository extends BaseRepository {
             lat: currentLocation.lat,
             lng: currentLocation.lng,
             issued_at: new Date().toISOString().slice(0, 10),
-            type: rideInstance.type === "to_school" ? "garage" : "school",
+            type: "garage",
             status: `Started trip: ${newRideStart}`,
             ride_instance_id: rideInstance.id
           },
@@ -82,7 +82,7 @@ class RideInstanceRepository extends BaseRepository {
     try {      
       return await this.model.update({
         status: "ended",
-        ended_at: new Date().toISOString().slice(0, 10)
+        ended_at: new Date().toISOString()
       }, {
         where: {
           id: rideInstanceId

@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { BadRequestError } = require('./errors');
+const logger = require("../services/logging.service").getLogger();
 
 async function getDistanceForRide(points) {
     try {
@@ -113,7 +114,8 @@ async function getOptimizedRouteWithSteps(
                 lat: school.lat,
                 lng: school.lng,
                 type: "school",
-                id: school.id
+                id: school.id,
+                children: houses.flatMap(house => house.children || [])
             });
         }
 
@@ -126,7 +128,7 @@ async function getOptimizedRouteWithSteps(
                     lng: step.location[0],
                     type: jobMeta?.type,
                     id: jobMeta?.id,
-                    children: jobMeta?.children || [] // Include children in route
+                    children: jobMeta?.children || []
                 });
             }
         });
@@ -137,15 +139,16 @@ async function getOptimizedRouteWithSteps(
                 lat: school.lat,
                 lng: school.lng,
                 type: "school",
-                id: school.id
+                id: school.id,
+                children: houses.flatMap(house => house.children || [])
             });
         }
 
         return orderedRoute;
 
     } catch (error) {
-        console.error('Error fetching optimized route from Open Routes Service:', error.response.data?.error);
-        throw new BadRequestError(`Failed to get optimized route: ${error.response.data?.error}`);
+        logger.warn(`Error fetching optimized route from Open Routes Service: ${error.response?.data?.error || error}`);
+        throw new BadRequestError(`Failed to get optimized route: ${error.response?.data?.error || error}`);
     }
 }
 
