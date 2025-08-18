@@ -7,11 +7,11 @@ const logger = require("../../services/logging.service").getLogger();
 const rideGroupController = {
     getRideGroups: async (req, res, next) => {
         try {
-          const { page = 1, limit = 10, name, seats, type, school_id } = req.query;
+          const { page = 1, limit = 10, name, seats, type, school_id,ride_group_id } = req.query;
             const { count, rows: rideGroups } = await RideGroupRepository.findAllDetailedPaginated(
             parseInt(page, 10) || 1,
             parseInt(limit, 10) || 10,
-            { name, seats: parseInt(seats, 10) || 0, type, school_id }
+            { name, seats: parseInt(seats, 10) || 0, type, school_id, ride_group_id }
             );
     
           if (!rideGroups || rideGroups.length === 0) {
@@ -83,6 +83,45 @@ const rideGroupController = {
               }
             }
 
+            return res.success("Ride groups merged successfully.");
+        } catch (error) {
+            console.error("Error merging ride groups:", error);
+            return next(error);
+        }
+    },
+
+    mergeManyRideGroups: async (req, res, next) => {
+        try {
+            const { group_src_list, group_dest } = req.body;
+          
+            if (group_src_list.includes(group_dest)) {
+                throw new BadRequestError("Source and destination groups cannot be the same");
+            }
+    
+            const { participants, groupName } = await RideGroupRepository.mergeRideGroupsArray(group_src_list, group_dest);
+    
+            // Delete chat rooms for merged groups
+            await ChatRoom.deleteMany({ ride_group_id: { $in: group_src_list }, room_type: "ride_group" });
+    
+            // Handle chat room for destination group
+            const chatRoom = await ChatRoom.findOne({
+                ride_group_id: group_dest,
+                room_type: "ride_group"
+            });
+    
+            if (!chatRoom) {
+                await ChatRoom.create({
+                    ride_group_id: group_dest,
+                    room_type: "ride_group",
+                    name: groupName,
+                    participants: participants
+                });
+            } else {
+                for (const participant of participants) {
+                    await chatRoom.addParticipant(participant.user_id, participant.user_type, participant.name);
+                }
+            }
+    
             return res.success("Ride groups merged successfully.");
         } catch (error) {
             console.error("Error merging ride groups:", error);

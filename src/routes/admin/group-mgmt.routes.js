@@ -25,6 +25,16 @@ groupRouter.put("/manage/ride/group/merge",
   rideGroupController.mergeRideGroups
 );
 
+groupRouter.put("/manage/ride/group/merge/many", 
+  authMiddleware,
+  isAdminWithRole(ADMIN_ROLE_SUPER_ADMIN),
+  validate(Yup.object().shape({
+    group_src_list: Yup.array().of(Yup.string().required()).required(),
+    group_dest: Yup.string().required()
+  })),
+  rideGroupController.mergeManyRideGroups
+);
+
 groupRouter.get('/manage/ride/groups/',
   authMiddleware,
   validate(getRideGroupsSchema),

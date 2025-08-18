@@ -442,6 +442,10 @@ class RideGroupRepository extends BaseRepository {
         filter.school_id = filters.school_id;
       }
 
+      if (filters.ride_group_id) {
+        filter.id = filters.ride_group_id;
+      }
+
       const { count, rows } = await this.model.findAndCountAll({
         where: filter,
         include: [
@@ -651,15 +655,24 @@ class RideGroupRepository extends BaseRepository {
       const remainingParentGroups = groupSrc.parentGroups.filter(pg => !destParentIds.has(pg.parent_id));
       
       if (duplicateParents.length > 0) {
-        // For each duplicate parent, merge their data into the existing parent group in destination
         for (const duplicateParent of duplicateParents) {
           const existingParentGroup = groupDest.parentGroups.find(pg => pg.parent_id === duplicateParent.parent_id);
           
           if (existingParentGroup && duplicateParent.childDetails?.length > 0) {
-            // Update child details to point to the existing parent group in destination
             for (const childDetail of duplicateParent.childDetails) {
               childDetail.parent_group_id = existingParentGroup.id;
-              await childDetail.save({ transaction: t });
+              try {
+                await childDetail.save({ transaction: t });
+              } catch (error) {
+                if (
+                  error.name === 'SequelizeUniqueConstraintError' ||
+                  (error.parent && error.parent.code === 'ER_DUP_ENTRY')
+                ) {
+                  await childDetail.destroy({ transaction: t });
+                } else {
+                  throw error;
+                }
+              }
             }
             
             // Update the existing parent group's seat count
@@ -746,6 +759,180 @@ class RideGroupRepository extends BaseRepository {
       return {
         participants,
         groupName: groupDest.group_name || `Chat Room for ${groupDest.id}`,
+      };
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
+  }
+
+  async mergeRideGroupsArray(srcGroupIds, destGroupId) {
+    if (!Array.isArray(srcGroupIds) || srcGroupIds.length === 0) {
+      throw new BadRequestError("Provide at least one group ID to merge.");
+    }
+    const t = await this.model.sequelize.transaction();
+    try {
+      const groupDest = await this.model.findByPk(destGroupId, {
+        include: [
+          {
+            association: "parentGroups",
+            include: [
+              { association: "childDetails" },
+              { association: "parent", attributes: ["account_id", "name"] }
+            ]
+          },
+          { association: "driver", attributes: ["account_id", "name"] }
+        ],
+        transaction: t
+      });
+  
+      if (!groupDest) throw new BadRequestError("Destination group not found.");
+      if (groupDest.group_type === "premium") {
+        throw new BadRequestError("Cannot merge premium groups");
+      }
+  
+      let totalSeats = groupDest.current_seats_taken;
+      let allParticipants = [
+        ...groupDest.parentGroups.map(pg => ({
+          user_id: pg.parent.account_id,
+          user_type: "parent",
+          name: pg.parent.name || null
+        }))
+      ];
+      if (groupDest.driver_id) {
+        allParticipants.push({
+          user_id: groupDest.driver.account_id,
+          user_type: "driver",
+          name: groupDest.driver.name || null
+        });
+      }
+  
+      for (const groupSrcId of srcGroupIds) {
+        const groupSrc = await this.model.findByPk(groupSrcId, {
+          include: [
+            {
+              association: "parentGroups",
+              include: [
+                { association: "childDetails", include: ["child"] },
+                { association: "parent", attributes: ["account_id", "name"] }
+              ]
+            },
+            "parent_group_subscription",
+            "dayDates",
+            "rideInstances"
+          ],
+          transaction: t
+        });
+  
+        if (!groupSrc) throw new BadRequestError(`Source group ${groupSrcId} not found.`);
+        if (groupSrc.group_type === "premium") {
+          throw new BadRequestError("Cannot merge premium groups");
+        }
+  
+        // Check seat limit
+        totalSeats += groupSrc.current_seats_taken;
+        if (totalSeats > MAX_SEATS_CAR) {
+          throw new BadRequestError("Unable to merge groups: total seats exceed maximum allowed");
+        }
+  
+        // Duplicate parent handling
+        const destParentIds = new Set(groupDest.parentGroups.map(pg => pg.parent_id));
+        const duplicateParents = groupSrc.parentGroups.filter(pg => destParentIds.has(pg.parent_id));
+        const remainingParentGroups = groupSrc.parentGroups.filter(pg => !destParentIds.has(pg.parent_id));
+  
+        if (duplicateParents.length > 0) {
+          for (const duplicateParent of duplicateParents) {
+            const existingParentGroup = groupDest.parentGroups.find(pg => pg.parent_id === duplicateParent.parent_id);
+            if (existingParentGroup && duplicateParent.childDetails?.length > 0) {
+              for (const childDetail of duplicateParent.childDetails) {
+                childDetail.parent_group_id = existingParentGroup.id;
+                try {
+                  await childDetail.save({ transaction: t });
+                } catch (error) {
+                  if (
+                    error.name === "SequelizeUniqueConstraintError" ||
+                    (error.parent && error.parent.code === "ER_DUP_ENTRY")
+                  ) {
+                    await childDetail.destroy({ transaction: t });
+                  } else {
+                    throw error;
+                  }
+                }
+              }
+              existingParentGroup.current_seats_taken += duplicateParent.current_seats_taken;
+              await existingParentGroup.save({ transaction: t });
+            }
+            await duplicateParent.destroy({ transaction: t });
+          }
+        }
+  
+        for (const parentGroup of remainingParentGroups) {
+          parentGroup.group_id = groupDest.id;
+          await parentGroup.save({ transaction: t });
+        }
+  
+        // Handle subscriptions
+        const remainingParentIds = new Set(remainingParentGroups.map(pg => pg.parent_id));
+        const subscriptionsToMove = groupSrc.parent_group_subscription.filter(sub => remainingParentIds.has(sub.parent_id));
+        for (const subscription of subscriptionsToMove) {
+          subscription.ride_group_id = groupDest.id;
+          await subscription.save({ transaction: t });
+        }
+        const duplicateSubscriptions = groupSrc.parent_group_subscription.filter(sub => !remainingParentIds.has(sub.parent_id));
+        for (const subscription of duplicateSubscriptions) {
+          await subscription.destroy({ transaction: t });
+        }
+  
+        // Move dayDates
+        for (const dayDate of groupSrc.dayDates) {
+          try {
+            dayDate.ride_group_detailsid = groupDest.id;
+            await dayDate.save({ transaction: t });
+          } catch (error) {
+            if (error.name === "SequelizeUniqueConstraintError") {
+              await dayDate.destroy({ transaction: t });
+            } else {
+              throw error;
+            }
+          }
+        }
+  
+        // Move rideInstances
+        for (const rideInstance of groupSrc.rideInstances) {
+          rideInstance.group_id = groupDest.id;
+          await rideInstance.save({ transaction: t });
+        }
+  
+        // Add participants from this source group
+        allParticipants.push(
+          ...remainingParentGroups.map(pg => ({
+            user_id: pg.parent.account_id,
+            user_type: "parent",
+            name: pg.parent.name || null
+          }))
+        );
+  
+        // Update destination seats
+        groupDest.current_seats_taken += groupSrc.current_seats_taken;
+        await groupDest.save({ transaction: t });
+  
+        // Remove source group
+        await groupSrc.destroy({ transaction: t });
+      }
+  
+      await t.commit();
+  
+      // Remove duplicate participants (by user_id + user_type)
+      const uniqueParticipants = Object.values(
+        allParticipants.reduce((acc, p) => {
+          acc[`${p.user_id}:${p.user_type}`] = p;
+          return acc;
+        }, {})
+      );
+  
+      return {
+        participants: uniqueParticipants,
+        groupName: groupDest.group_name || `Chat Room for ${groupDest.id}`
       };
     } catch (error) {
       await t.rollback();

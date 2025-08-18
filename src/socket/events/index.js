@@ -1,11 +1,14 @@
-const jwt = require("jsonwebtoken");
+const { UnauthorizedError } = require("../../utils/errors/types/Api.error");
+
 const AccountRepository = require("../../data-access/accounts");
+
 const joinSocketController = require("../../socket/controllers/join.sock-controller");
 const rideSocketController = require("../../socket/controllers/ride.sock-controller");
 const leaveSocketController = require("../../socket/controllers/leave.sock-controller");
-const { UnauthorizedError } = require("../../utils/errors/types/Api.error");
-const logger = require("../../services/logging.service").getLogger();
+
 const redisService = require("../../services/redis.service");
+const logger = require("../../services/logging.service").getLogger();
+const jwt = require("jsonwebtoken");
 
 function socketEventWrapper(socket, io) {  
     // chat sockets
@@ -16,6 +19,7 @@ function socketEventWrapper(socket, io) {
     socket.on("parent_watch_ride", async (payload) => rideSocketController.parentVerifyAndJoinRide(socket, payload));
     socket.on("driver_join_ride", async (payload) => rideSocketController.driverVerifyAndJoinRide(socket, payload));
     socket.on("admin_watch_ride", async (payload) => rideSocketController.adminVerifyAndJoinRide(socket, payload));
+    socket.on("admin_watch_rides", async (payload) => rideSocketController.adminVerifyAndViewAll(socket));
     socket.on("driver_location_update", async (location) => rideSocketController.relayLocationUpdates(socket, location));
     socket.on("driver_confirm_checkpoint", async (payload) => rideSocketController.confirmCheckPoint(socket, io, payload));
     socket.on("driver_cancel_ride", async (location) => rideSocketController.driverCancelActiveRide(socket));

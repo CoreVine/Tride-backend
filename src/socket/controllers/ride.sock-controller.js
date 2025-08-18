@@ -1,14 +1,13 @@
 const RideInstanceRepository = require("../../data-access/rideInstance");
 const RideGroupRepository = require("../../data-access/rideGroup");
 const RideHistoryRepository = require("../../data-access/rideHistory");
+
 const redisService = require("../../services/redis.service");
 const logger = require("../../services/logging.service").getLogger();
-const { 
-    ROLE_PERMISSION_CHAT_WITH_PARENT, 
-    ROLE_PERMISSION_CHAT_WITH_DRIVER 
-} = require("../../utils/constants/admin-permissions");
-const { getDistanceBetweenLocations, isLocationCloseToCheckpoint } = require("../../domain/checkpoint/detector");
+
+const { getDistanceBetweenLocations } = require("../../domain/checkpoint/detector");
 const { getOptimizedRouteWithSteps } = require("../../utils/openRoutesService");
+
 const { CHECKPOINT_RADIUS } = require("../../utils/constants/ride");
 
 const driverVerifyAndJoinRide = async (socket, payload) => { 
@@ -494,6 +493,38 @@ const adminVerifyAndJoinRide = async (socket, payload) => {
     }
 }
 
+const adminVerifyAndViewAll = async (socket) => {
+    try {
+
+        if (socket.accountType !== "admin")
+            return socket.emit("ack", { type: "ADMIN_FETCH_ALL_ERROR", message: "Unauthorized!", data: null });
+    
+        const rideInstances = await RideInstanceRepository.findAllActiveInstances();
+    
+        if (!rideInstances)
+            return socket.emit("ack", { type: "ADMIN_FETCH_ALL_ERROR", message: "NO ACTIVE INSTANCES, WAIT FOR DRIVERS TO START!", data: null });
+        
+        const rideData = await Promise.all(rideInstances.map(async (rideInstance) => {
+            const uid = `driver:${rideInstance.driver_id}:${rideInstance.group_id}:${rideInstance.id}`;
+            const order = await redisService.getRideOrderForRideInstance(rideInstance.id);
+            const location = await redisService.getLatestLocationUpdate(uid);
+            
+            return {
+                rideInstance,
+                uid,
+                driverLocation: location || {},
+                checkpointOrder: order
+            };
+        }))
+
+        return socket.emit("ack", { type: "ADMIN_FETCH_ALL_SUCCESS", message: "Active rides fetched successfully", data: rideData });
+        
+    } catch (error) {
+        logger.warn(error);
+        return socket.emit("ack", { type: "ADMIN_JOIN_ERROR", message: `ERROR: ${error.message || 'Unknown error'}`, data: null });
+    }
+}
+
 const driverCancelActiveRide = async (socket) => {
     try {
         if (socket.accountType !== "driver")
@@ -533,5 +564,6 @@ module.exports = {
     relayLocationUpdates,
     confirmCheckPoint,
     adminVerifyAndJoinRide,
-    driverCancelActiveRide
+    driverCancelActiveRide,
+    adminVerifyAndViewAll
 };

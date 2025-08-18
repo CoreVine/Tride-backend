@@ -153,13 +153,38 @@ class RideInstanceRepository extends BaseRepository {
       throw new DatabaseError(error);
     }
   }
-
   
   async findActiveInstanceByGroup(rideGroupId) {
     try {      
       return await this.model.findOne({
         where: {
           group_id: rideGroupId,
+          status: {
+            [Op.in]: ["started", "active"]
+          }
+        },
+        include: [
+          {
+            association: "group",
+            required: true,
+            include: [
+              {
+                association: "parentGroups",
+                required: true,
+              }
+            ]
+          }
+        ]
+      });
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
+  async findAllActiveInstances() {
+    try {      
+      return await this.model.findAll({
+        where: {
           status: {
             [Op.in]: ["started", "active"]
           }
