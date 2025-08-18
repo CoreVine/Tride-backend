@@ -11,4 +11,7 @@ module.exports = {
   define: {
     timestamps: true
   },
+  dialectOptions: {
+    decimalNumbers: true,
+  },
 };

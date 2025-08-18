@@ -37,8 +37,6 @@ function init(httpServer) {
     const userId = socket.userId;
 
     try {
-      // Store user connection in Redis (already handled in setupConnection)
-      // Just join the user-specific room for notifications
       socket.join(`user_${userId}`);
       logger.debug(`[Socket.IO] Socket ${socket.id} joined room user_${userId}`);
       
@@ -48,11 +46,28 @@ function init(httpServer) {
       logger.debug(
         `[Socket.IO] Socket ${socket.id} associated with user_${userId}. Total sockets for user: ${connectionCount}`
       );
+
+      // Clean up on disconnect
+      socket.on('disconnect', async () => {
+        try {
+          await redisService.removeUserSocketConnection(userId, socket.id);
+          logger.debug(`[Socket.IO] Cleaned up Redis data for disconnected socket ${socket.id}, user ${userId}`);
+        } catch (error) {
+          logger.error(`[Socket.IO] Error cleaning up Redis data on disconnect: ${error.message}`);
+          // Fallback cleanup
+          try {
+            await redisService.cleanupOrphanedSocket(socket.id);
+          } catch (fallbackError) {
+            logger.error(`[Socket.IO] Fallback cleanup also failed: ${fallbackError.message}`);
+          }
+        }
+      });
+
     } catch (error) {
       logger.error(`[Socket.IO] Error managing user connection for ${userId}: ${error.message}`);
     }
 
-    socketEventWrapper(socket);
+    socketEventWrapper(socket, io);
     setupDisconnection(socket);
   });
 

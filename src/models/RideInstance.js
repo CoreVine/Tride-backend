@@ -1,4 +1,4 @@
-const { Model, DataTypes } = require('sequelize');
+const { Model, DataTypes, Sequelize } = require('sequelize');
 
 class RideInstance extends Model {
   static init(sequelize) {
@@ -21,6 +21,20 @@ class RideInstance extends Model {
       },
       started_at: {
         type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
+      },
+      status: {
+        type: DataTypes.ENUM(["started", "active", "ended"]),
+        allowNull: false,
+        defaultValue: "started"
+      },
+      ended_at: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
+      type: {
+        type: DataTypes.ENUM(["to_school", "to_home"]),
         allowNull: false
       },
       group_id: {

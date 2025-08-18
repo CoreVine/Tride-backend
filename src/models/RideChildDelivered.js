@@ -28,10 +28,6 @@ class RideChildDelivered extends Model {
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
-      },
-      delivered_at: {
-        type: DataTypes.DATE,
-        allowNull: false
       }
     }, {
       sequelize,

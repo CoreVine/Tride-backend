@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tride Socket.io Testing</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+    }
+    .user-panel {
+      flex: 1;
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      background-color: #f8f8f8;
+      min-height: 20px;
+    }
+    .connected {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .disconnected {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .controls {
+      margin: 15px 0;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    input {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-right: 5px;
+    }
+    .log-container {
+      margin-top: 15px;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+    }
+    .log-entry {
+      margin-bottom: 5px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+    .map-container {
+      height: 300px;
+      background-color: #e9e9e9;
+      border-radius: 4px;
+      margin-top: 15px;
+      position: relative;
+    }
+    .map-marker {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: red;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .simulate-controls {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tride Socket.io Test Page</h1>
+  
+  <div class="container">
+    <!-- Driver Panel -->
+    <div class="user-panel" id="driver-panel">
+      <h2>Driver</h2>
+      <div id="driver-status" class="status disconnected">Disconnected</div>
+      
+      <div class="controls">
+        <input type="text" id="driver-token" placeholder="JWT Token" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7ImlkIjozLCJhY2NvdW50VHlwZSI6ImRyaXZlciIsInByb2ZpbGVDb21wbGV0ZSI6dHJ1ZSwiYWNjb3VudFR5cGVJZCI6MX0sImlhdCI6MTc1MzcxNTQ2MCwianRpIjoiOWE5ZjM3NDItMzMxZS00MGQwLThkYWItNmFlZmY3NzhjZmUzIn0.91bu8A37_f-NCVoTQpLwN4gjNqeWQ0HSjt-Bi9VkB08">
+        <button id="driver-connect">Connect</button>
+        <button id="driver-disconnect" disabled>Disconnect</button>
+      </div>
+      
+      <div class="controls">
+        <button id="driver-join-ride" disabled>Join Ride</button>
+        <input type="number" id="ride-group-id" placeholder="Ride Group ID" value="1" style="width: 100px;">
+      </div>
+      
+      <div class="controls">
+        <h4>Manual Location Update</h4>
+        <input type="number" id="driver-lat" placeholder="Latitude" value="40.7128">
+        <input type="number" id="driver-lng" placeholder="Longitude" value="-74.0060">
+        <button id="driver-send-location" disabled>Send Location</button>
+      </div>
+      
+      <div class="simulate-controls">
+        <h4>Simulate Movement</h4>
+        <button id="driver-simulate" disabled>Start Simulation</button>
+        <button id="driver-stop-simulation" disabled>Stop Simulation</button>
+      </div>
+      
+      <div class="map-container" id="driver-map">
+        <div class="map-marker" id="driver-marker" style="display: none;"></div>
+      </div>
+      
+      <div class="log-container" id="driver-log"></div>
+    </div>
+    
+    <!-- Parent Panel -->
+    <div class="user-panel" id="parent-panel">
+      <h2>Parent</h2>
+      <div id="parent-status" class="status disconnected">Disconnected</div>
+      
+      <div class="controls">
+        <input type="text" id="parent-token" placeholder="JWT Token" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7ImlkIjoyLCJhY2NvdW50VHlwZSI6InBhcmVudCIsInByb2ZpbGVDb21wbGV0ZSI6dHJ1ZSwiYWNjb3VudFR5cGVJZCI6MX0sImlhdCI6MTc1MzE5MTEwMywianRpIjoiMDA4MTVmZGQtZTEwNi00ZDA0LWFmMjUtNmJkOThhMDkzNGVlIn0.MeTUNcmw5pWo9Wsm2L-4UkkaXgg4oFXSiUS2Qx6fBQw">
+        <button id="parent-connect">Connect</button>
+        <button id="parent-disconnect" disabled>Disconnect</button>
+      </div>
+      
+      <div class="controls">
+        <button id="parent-join-ride" disabled>Watch Ride</button>
+        <!-- Using the same ride group ID input from above -->
+      </div>
+      
+      <div class="map-container" id="parent-map">
+        <div class="map-marker" id="parent-marker" style="display: none;"></div>
+      </div>
+      
+      <div class="log-container" id="parent-log"></div>
+    </div>
+  </div>
+
+  <!-- Replace inline script with external JavaScript file -->
+  <script src="socket-test.js"></script>
+</body>
+</html>

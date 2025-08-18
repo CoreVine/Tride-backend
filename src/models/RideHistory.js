@@ -22,8 +22,12 @@ class RideHistory extends Model {
         allowNull: false,
         defaultValue: DataTypes.NOW
       },
+      type: {
+        type: DataTypes.ENUM(["school", "child", "garage"]),
+        allowNull: false
+      },
       status: {
-        type: DataTypes.STRING(50),
+        type: DataTypes.STRING(70),
         allowNull: false
       },
       ride_instance_id: {
@@ -49,7 +53,7 @@ class RideHistory extends Model {
       foreignKey: 'ride_instance_id',
       as: 'rideInstance'
     });
-    
+
     this.hasMany(models.RideChildDelivered, {
       foreignKey: 'ride_history_id',
       as: 'deliveries'
