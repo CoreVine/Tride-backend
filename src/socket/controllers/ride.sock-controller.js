@@ -459,17 +459,79 @@ const confirmCheckPoint = async (socket, io, payload) => {
     }
 }
 
-const adminVerifyAndJoinRide = async (socket) => {
-    // EMPTY FUNCTION - NOT IMPLEMENTED
+const adminVerifyAndJoinRide = async (socket, payload) => {
+    try {
+        if (socket.rideRoomId && socket.rideInstanceId)
+            return socket.emit("ack", { type: "ADMIN_JOIN_ERROR", message: "ALREADY JOINED RIDE", data: null });
+
+        const jsonPayload = JSON.parse(payload) || {};
+
+        if (!jsonPayload.ride_group_id)
+            return socket.emit("ack", { type: "ADMIN_JOIN_ERROR", message: "BAD REQUEST, MISSING ride_group_id!", data: null });
+        if (socket.accountType !== "admin")
+            return socket.emit("ack", { type: "ADMIN_JOIN_ERROR", message: "Unauthorized!", data: null });
+    
+        const rideInstance = await RideInstanceRepository.findActiveInstanceByGroup(jsonPayload.ride_group_id);
+    
+        if (!rideInstance)
+            return socket.emit("ack", { type: "ADMIN_JOIN_ERROR", message: "NO ACTIVE INSTANCES, WAIT FOR DRIVER TO START!", data: null });
+    
+        const uid = `driver:${rideInstance.driver_id}:${rideInstance.group_id}:${rideInstance.id}`;
+        
+        socket.join(uid);
+    
+        socket.rideRoomId = uid;
+        socket.rideInstanceId = rideInstance.id;
+    
+        const order = await redisService.getRideOrderForRideInstance(rideInstance.id);
+    
+        const location = await redisService.getLatestLocationUpdate(uid);
+    
+        return socket.emit("ack", { type: "ADMIN_JOIN_SUCCESS", message: "Parent successfully joined ride", data: { uid, driverLocation: location || {}, checkpointOrder: order } });
+    } catch (error) {
+        logger.warn(error);
+        return socket.emit("ack", { type: "ADMIN_JOIN_ERROR", message: `ERROR: ${error.message || 'Unknown error'}`, data: null });
+    }
 }
 
 const driverCancelActiveRide = async (socket) => {
-    // EMPTY FUNCTION - NOT IMPLEMENTED
+    try {
+        if (socket.accountType !== "driver")
+            return socket.emit("ack", { type: "DRIVER_CANCEL_ERROR", message: "Unauthorized!", data: null });
+        if (!socket.rideRoomId || !socket.rideInstanceId)
+            return socket.emit("ack", { type: "DRIVER_CANCEL_ERROR", message: "You must join a ride first!", data: null });
+
+        const rideInstance = await RideInstanceRepository.findActiveInstanceById(socket.rideInstanceId);
+        
+        if (!rideInstance)
+            return socket.emit("ack", { type: "DRIVER_CANCEL_ERROR", message: "No active ride found!", data: null });
+
+        await RideInstanceRepository.cancelRideInstance(rideInstance.id);
+
+        await redisService.flushRideInstance(rideInstance.id, socket.rideRoomId);
+
+        socket.to(socket.rideRoomId).emit("location_update", {
+            type: "RIDE_CANCELLED",
+            message: "Driver has cancelled the ride",
+            data: {}
+        });
+
+        socket.leave(socket.rideRoomId);
+        socket.rideRoomId = null;
+        socket.rideInstanceId = null;
+
+        return socket.emit("ack", { type: "RIDE_CANCEL_SUCCESS", message: "Ride cancelled successfully", data: {} });
+    } catch (error) {
+        logger.warn(error);
+        return socket.emit("ack", { type: "DRIVER_CANCEL_ERROR", message: `ERROR: ${error.message || 'Unknown error'}`, data: null });
+    }
 }
 
 module.exports = {
     driverVerifyAndJoinRide,
     parentVerifyAndJoinRide,
     relayLocationUpdates,
-    confirmCheckPoint
+    confirmCheckPoint,
+    adminVerifyAndJoinRide,
+    driverCancelActiveRide
 };

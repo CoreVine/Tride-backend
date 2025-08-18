@@ -11,11 +11,14 @@ function socketEventWrapper(socket, io) {
     // chat sockets
     socket.on("join_room", async (room_id) => joinSocketController.verifyAndJoinRoom(socket, room_id));
     socket.on("leave_room", (room_id) => leaveSocketController.leaveRoom(socket, room_id));
+
     // ride sockets
     socket.on("parent_watch_ride", async (payload) => rideSocketController.parentVerifyAndJoinRide(socket, payload));
     socket.on("driver_join_ride", async (payload) => rideSocketController.driverVerifyAndJoinRide(socket, payload));
+    socket.on("admin_watch_ride", async (payload) => rideSocketController.adminVerifyAndJoinRide(socket, payload));
     socket.on("driver_location_update", async (location) => rideSocketController.relayLocationUpdates(socket, location));
     socket.on("driver_confirm_checkpoint", async (payload) => rideSocketController.confirmCheckPoint(socket, io, payload));
+    socket.on("driver_cancel_ride", async (location) => rideSocketController.driverCancelActiveRide(socket));
 }
 
 function setupConnection(io) {
