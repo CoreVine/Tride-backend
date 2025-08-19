@@ -122,11 +122,19 @@ router.get(
 router.get(
   "/ride-group/rooms",
   authMiddleware,
-  //verifiedEmailRequired,
-  // checkValidSubscription,
-   
-  chatController.getChatRooms
+   chatController.getRideGroupChatRooms
 );
+router.get(
+  "/customer-support/rooms",
+  authMiddleware,
+   chatController.getCustomerSupportChatRooms
+);
+router.get(
+  "/private/rooms",
+  authMiddleware,
+   chatController.getPrivateChatRooms
+);
+
 
 // Get chat messages
 router.get(
