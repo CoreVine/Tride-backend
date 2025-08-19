@@ -486,7 +486,7 @@ const adminVerifyAndJoinRide = async (socket, payload) => {
     
         const location = await redisService.getLatestLocationUpdate(uid);
     
-        return socket.emit("ack", { type: "ADMIN_JOIN_SUCCESS", message: "Parent successfully joined ride", data: { uid, driverLocation: location || {}, checkpointOrder: order } });
+        return socket.emit("ack", { type: "ADMIN_JOIN_SUCCESS", message: "Admin successfully joined ride", data: { uid, driverLocation: location || {}, checkpointOrder: order } });
     } catch (error) {
         logger.warn(error);
         return socket.emit("ack", { type: "ADMIN_JOIN_ERROR", message: `ERROR: ${error.message || 'Unknown error'}`, data: null });
