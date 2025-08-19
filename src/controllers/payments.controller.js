@@ -1,4 +1,5 @@
 const parentGroupSubscriptionRepository = require("../data-access/parentGroupSubscription");
+
 const { createPagination } = require("../utils/responseHandler");
 const { exportPaymentsToExcel } = require("../utils/export/exceljs");
 
@@ -35,6 +36,7 @@ const paymentsController = {
             return next(error);
         }
     },
+    
     exportAllPayments: async (req, res, next) => {
         const { from, to } = req.query;
 

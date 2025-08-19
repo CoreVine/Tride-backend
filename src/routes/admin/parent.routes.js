@@ -4,9 +4,7 @@ const adminParentController = require("../../controllers/admins/parent.controlle
 const authMiddleware = require("../../middlewares/auth.middleware")
 const validate = require("../../middlewares/validation.middleware")
 
-const { ADMIN_ROLE_SUPER_ADMIN } = require("../../utils/constants/admin-roles")
 const { isAdmin } = require("../../middlewares/isAccount.middleware")
-
 const { Router } = require("express")
 
 const updateParentSchema = {
@@ -28,6 +26,7 @@ const filterParentsSchema = {
 const adminParentRouter = Router()
 
 adminParentRouter.get("/admins/parents", authMiddleware, isAdmin, validate(filterParentsSchema), adminParentController.getAllParents)
+adminParentRouter.get("/admins/parents/export", authMiddleware, isAdmin, adminParentController.exportParents)
 adminParentRouter.get("/admins/parents/:parentId", authMiddleware, isAdmin, adminParentController.getParentById)
 adminParentRouter.get("/admins/parents/:parentId/ride-groups", authMiddleware, isAdmin, adminParentController.getParentRideGroups)
 adminParentRouter.patch("/admins/parents/:parentId", authMiddleware, isAdmin, validate(updateParentSchema), adminParentController.updateParent)

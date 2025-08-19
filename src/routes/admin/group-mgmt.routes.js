@@ -1,16 +1,81 @@
-const { Router } = require("express");
-const authMiddleware = require("../../middlewares/auth.middleware");
-const validate = require("../../middlewares/validation.middleware");
 const Yup = require("yup");
+
+const rideGroupController = require("../../controllers/admins/rideGroup.controller");
+
+const validate = require("../../middlewares/validation.middleware");
+const authMiddleware = require("../../middlewares/auth.middleware");
+
+const { Router } = require("express");
+
 const { isAdminWithRole, isAdmin, isAdminWithPermissions } = require("../../middlewares/isAccount.middleware");
 const { ADMIN_ROLE_SUPER_ADMIN } = require("../../utils/constants/admin-roles");
-const rideGroupController = require("../../controllers/admins/rideGroup.controller");
+
 
 const getRideGroupsSchema = Yup.object().shape({
   page: Yup.number().integer().min(1).default(1),
   limit: Yup.number().integer().min(1).max(100).default(10),
   name: Yup.string().optional(),
   seats: Yup.number().integer().optional()
+});
+
+const createGroupSchema = Yup.object().shape({
+  school_id: Yup.string().required(),
+  parent_id: Yup.string().required(),
+  home: Yup.object().shape({
+    home_lat: Yup.string().required(),
+    home_lng: Yup.string().required(),
+  }),
+  children: Yup.array().of(Yup.object().shape({
+    child_id: Yup.string().required(),
+    timing_from: Yup.string().required(),
+    timing_to: Yup.string().required()
+  }))
+  .test(
+    'unique-children',
+    'Duplicate children are not allowed',
+    (children) => {
+      if (!children) return true;
+      const childIds = children.map(c => c.child_id);
+      return childIds.length === new Set(childIds).size;
+    }
+  ),
+  days: Yup.array().of(Yup.string().required())
+    .min(1).max(6).required()
+    .test(
+      'unique-days',
+      'Duplicate days are not allowed',
+      (days) => {
+        if (!days) return true;
+        return days.length === new Set(days).size;
+      }
+    ),
+  group_type: Yup.string().oneOf(['regular', 'premium']).default('regular')
+    .required()
+});
+
+const addChildToGroupSchema = Yup.object().shape({
+  parent_id: Yup.string().required(),
+  group_id: Yup.string().required(),
+  children: Yup.array().of(Yup.object().shape({
+    child_id: Yup.string().required(),
+    timing_from: Yup.string().required(),
+    timing_to: Yup.string().required()
+  }))
+  .test(
+    'unique-children',
+    'Duplicate children are not allowed',
+    (children) => {
+      if (!children) return true;
+      const childIds = children.map(c => c.child_id);
+      return childIds.length === new Set(childIds).size;
+    }
+  )
+  .required()
+});
+
+const deleteChildrenFromGroup = Yup.object().shape({
+  id: Yup.string().required(),
+  parent_group_id: Yup.string().required(),
 });
 
 const groupRouter = Router();
@@ -41,6 +106,15 @@ groupRouter.get('/manage/ride/groups/',
   isAdminWithPermissions([{type: "group", value: "Payments"}]), 
   rideGroupController.getRideGroups);
 
+groupRouter.post('/manage/ride/groups/',
+  authMiddleware,
+  isAdmin,
+
+  validate(createGroupSchema),
+  rideGroupController.createRideGroup
+);
+
+
 groupRouter.get('/manage/ride/groups/:rideGroupId',
   authMiddleware,
   validate({
@@ -63,6 +137,20 @@ validate({
 }),
 isAdmin, 
 rideGroupController.assignDriverToRideGroup);
+
+groupRouter.post('/manage/ride/parent-groups/manage-children',
+  validate(addChildToGroupSchema),
+  authMiddleware,
+  isAdmin,
+  rideGroupController.manageChildrenOffGroup
+);
+
+groupRouter.patch('/manage/ride/parent-groups/manage-children',
+  validate(deleteChildrenFromGroup),
+  authMiddleware,
+  isAdmin,
+  rideGroupController.deleteChildrenFromGroup
+);
 
 groupRouter.get("/manage/ride/groups/:rideGroupId/locations",
   authMiddleware,
