@@ -7,7 +7,7 @@ const logger = require("../../services/logging.service").getLogger();
 const rideGroupController = {
     getRideGroups: async (req, res, next) => {
         try {
-          const { page = 1, limit = 10, name, seats, type, school_id,ride_group_id } = req.query;
+          const { page = 1, limit = 10, name, seats, type, school_id, ride_group_id } = req.query;
             const { count, rows: rideGroups } = await RideGroupRepository.findAllDetailedPaginated(
             parseInt(page, 10) || 1,
             parseInt(limit, 10) || 10,
