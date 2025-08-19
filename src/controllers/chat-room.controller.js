@@ -162,6 +162,27 @@ const chatController = {
       next(error);
     }
   },
+  getChatRooms: async (req, res, next) => {
+    try {
+      const userId = req.account.id; // Use correct user ID
+      const userType = req.account.account_type;
+      
+      // Find all rooms where user is a participant
+      const chatRooms = await ChatRoom.find({
+        participants: {
+          $elemMatch: {
+            user_id: userId,
+            user_type: userType
+          }
+        }
+      }).populate("last_message");
+      
+      return res.success("Chat rooms retrieved successfully", { data: chatRooms });
+    } catch (error) {
+      logger.error("Error getting user chat rooms:", error.message);
+      next(error);
+    }
+  },
   getChatMessages: async (req, res, next) => {
     try {
       const { rideGroupId } = req.params;

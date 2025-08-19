@@ -118,6 +118,15 @@ router.get(
   validate(rideGroupIdSchema, "params"), // Validate rideGroupId in params
   chatController.getChatRoom
 );
+// Get or create chat room for a ride group
+router.get(
+  "/ride-group/rooms",
+  authMiddleware,
+  //verifiedEmailRequired,
+  // checkValidSubscription,
+   
+  chatController.getChatRooms
+);
 
 // Get chat messages
 router.get(
