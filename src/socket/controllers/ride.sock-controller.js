@@ -521,7 +521,7 @@ const adminVerifyAndViewAll = async (socket) => {
         
     } catch (error) {
         logger.warn(error);
-        return socket.emit("ack", { type: "ADMIN_JOIN_ERROR", message: `ERROR: ${error.message || 'Unknown error'}`, data: null });
+        return socket.emit("ack", { type: "ADMIN_FETCH_ALL_ERROR", message: `ERROR: ${error.message || 'Unknown error'}`, data: null });
     }
 }
 
