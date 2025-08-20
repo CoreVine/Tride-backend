@@ -311,11 +311,11 @@ const profileController = {
       }
 
       // Check for required profile picture
-      if (!req.file) {
+      /* if (!req.file) {
         throw new BadRequestError(
           "Profile picture is required for driver registration"
         );
-      }
+      } */
 
       const cityExists = await CityRepository.exists(req.body.city_id);
       if (!cityExists) {
@@ -329,7 +329,7 @@ const profileController = {
       }
 
       // Get profile picture URL from uploaded file
-      const profilePicUrl = req.file.path;
+      const profilePicUrl = req.file ? req.file.path : null;
 
       // Create driver profile
       const driver = await DriverRepository.create({
@@ -408,7 +408,9 @@ const profileController = {
         "front_side_national",
         "back_side_national",
         "driver_license",
+        "driver_license_back",
         "car_license",
+        "car_license_back",
       ];
       const missingFields = [];
 
@@ -440,8 +442,10 @@ const profileController = {
         car_model: req.body.car_model,
         car_model_year: req.body.car_model_year,
         driver_license_url: req.files.driver_license[0].path,
+        driver_license_back_url: req.files.driver_license_back[0].path,
         driver_license_exp_date: req.body.driver_license_exp_date,
         car_license_url: req.files.car_license[0].path,
+        car_license_back_url: req.files.car_license_back[0].path,
         car_license_exp_date: req.body.car_license_exp_date,
         face_auth_complete: req.body.face_auth_complete,
         approved: false, // Default to not approved, admin will review
