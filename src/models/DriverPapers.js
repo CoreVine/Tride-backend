@@ -39,11 +39,19 @@ class DriverPapers extends Model {
         type: DataTypes.STRING(2048),
         allowNull: false
       },
+      driver_license_back_url: {
+        type: DataTypes.STRING(2048),
+        allowNull: false
+      },
       driver_license_exp_date: {
         type: DataTypes.DATEONLY,
         allowNull: false
       },
       car_license_url: {
+        type: DataTypes.STRING(2048),
+        allowNull: false
+      },
+      car_license_back_url: {
         type: DataTypes.STRING(2048),
         allowNull: false
       },

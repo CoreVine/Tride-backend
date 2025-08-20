@@ -4,6 +4,8 @@ const schoolRepository = require("../data-access/school")
 const CityRepository = require("../data-access/city")
 const loggingService = require("../services/logging.service")
 
+const { exportSchoolsToExcel } = require("../utils/export/exceljs");
+
 const { BadRequestError, NotFoundError, ForbiddenError } = require("../utils/errors/types/Api.error")
 const { Op } = require("sequelize")
 
@@ -63,6 +65,7 @@ const schoolController = {
       next(error)
     }
   },
+
   createSchool: async (req, res, next) => {
     try {
       logger.debug("School profile creation attempt", { accountId: req.userId })
@@ -113,6 +116,7 @@ const schoolController = {
       next(error)
     }
   },
+
   getSchoolForCity: async (req, res, next) => {
     try {
       logger.debug("chidlens get creation attempt", { accountId: req.userId })
@@ -157,6 +161,7 @@ const schoolController = {
       next(error)
     }
   },
+
   updateSchool: async (req, res, next) => {
     try {
       logger.debug("School profile Update attempt", { accountId: req.userId })
@@ -209,6 +214,7 @@ const schoolController = {
       next(error)
     }
   },
+
   getSchoolById: async (req, res, next) => {
     try {
       logger.debug("School retrieved by id attempt", { accountId: req.userId })
@@ -242,6 +248,7 @@ const schoolController = {
       next(error)
     }
   },
+
   deleteSchoolById: async (req, res, next) => {
     try {
       logger.debug("School Delete attempt", { accountId: req.userId })
@@ -277,6 +284,28 @@ const schoolController = {
       })
       next(error)
     }
+  },
+
+  exportSchools: async(req, res, next) => {
+		try {
+      const data = await SchoolRepository.findAll({
+				include: [
+					{
+						association: "city",
+						include: [ { association: "governorate" } ]
+					}
+				]
+			});
+
+      const exportBuffer = await exportSchoolsToExcel(data);
+			const fileName = `schools_data.xlsx`;
+          
+			res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+			res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+			res.send(exportBuffer);
+		} catch (error) {
+			return next(error);
+		}
   }
 }
 

@@ -2,12 +2,12 @@ const ChildGroupDetailsModel = require('../../models/ChildGroupDetails');
 const ChildRepository = require('../child');
 const BaseRepository = require('../base.repository');
 const { NotFoundError } = require('../../utils/errors/types/Api.error');
+const { DatabaseError } = require('../../utils/errors/types/Sequelize.error');
 
 class ChildGroupDetailsRepository extends BaseRepository {
     constructor() {
         super(ChildGroupDetailsModel);
     }
-
 
     async addChildrenToParentGroup(parentId, parentGroupId, children, options = {}, { parentGroup, rideGroup } = {}) {
         if (!children || !children.length)
@@ -114,6 +114,17 @@ class ChildGroupDetailsRepository extends BaseRepository {
                     }
                 ]
             });
+        } catch (error) {
+            throw new DatabaseError(error);
+        }
+    }
+
+    async deleteChild(parentGroupId, childId) {
+        try {
+            return await this.model.deleteWhere({
+                parent_group_id: parentGroupId,
+                child_id: childId
+            })
         } catch (error) {
             throw new DatabaseError(error);
         }

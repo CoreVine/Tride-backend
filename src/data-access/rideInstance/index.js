@@ -122,7 +122,7 @@ class RideInstanceRepository extends BaseRepository {
         });
         throw error;
       }
-    },
+  }
 
   async findActiveInstanceByParentAndGroup(parentId, rideGroupId) {
     try {      
@@ -151,6 +151,81 @@ class RideInstanceRepository extends BaseRepository {
       });
     } catch (error) {
       throw new DatabaseError(error);
+    }
+  }
+  
+  async findActiveInstanceByGroup(rideGroupId) {
+    try {      
+      return await this.model.findOne({
+        where: {
+          group_id: rideGroupId,
+          status: {
+            [Op.in]: ["started", "active"]
+          }
+        },
+        include: [
+          {
+            association: "group",
+            required: true,
+            include: [
+              {
+                association: "parentGroups",
+                required: true,
+              }
+            ]
+          }
+        ]
+      });
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
+  async findAllActiveInstances() {
+    try {      
+      return await this.model.findAll({
+        where: {
+          status: {
+            [Op.in]: ["started", "active"]
+          }
+        },
+        include: [
+          {
+            association: "group",
+            required: true,
+            include: [
+              {
+                association: "parentGroups",
+                required: true,
+              }
+            ]
+          }
+        ]
+      });
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
+  async cancelRideInstance(rideInstanceId) {
+    try {
+      const rideInstance = await this.model.findByPk(rideInstanceId);
+      if (!rideInstance) {
+        throw new DatabaseError(`Ride instance with ID ${rideInstanceId} not found`);
+      }
+
+      if (rideInstance.status === "ended") {
+        throw new DatabaseError(`Ride instance with ID ${rideInstanceId} is already ended`);
+      }
+      
+      await this.model.update(
+        { status: "ended" },
+        { where: { id: rideInstanceId } }
+      );
+
+      return true;
+    } catch (error) {
+      throw new DatabaseError(error.message);
     }
   }
 }

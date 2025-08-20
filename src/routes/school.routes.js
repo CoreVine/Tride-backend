@@ -2,7 +2,7 @@ const { Router } = require("express")
 const schoolController = require("../controllers/school.controller")
 const authMiddleware = require("../middlewares/auth.middleware")
 const verifiedEmailRequired = require("../middlewares/verifiedEmailRequired.middleware")
-const { isParent } = require("../middlewares/isAccount.middleware")
+const { isParent, isAdmin } = require("../middlewares/isAccount.middleware")
 const validate = require("../middlewares/validation.middleware")
 
 const Yup = require("yup")
@@ -47,6 +47,7 @@ schoolRoutes.use("/school", authMiddleware, verifiedEmailRequired)
 schoolRoutes.route("/school").get(schoolController.getSchoolForCity).post(validate(schoolSchema), schoolController.createSchool)
 schoolRoutes.get("/school/paginated", authMiddleware, schoolController.getSchools)
 schoolRoutes.get("/school/all", authMiddleware, schoolController.getAllSchools)
+schoolRoutes.get("/school/export", authMiddleware, isAdmin, schoolController.exportSchools)
 schoolRoutes.route("/school/:id").get(schoolController.getSchoolById).put(validate(schoolUpdateSchema), schoolController.updateSchool).delete(schoolController.deleteSchoolById)
 
 module.exports = schoolRoutes

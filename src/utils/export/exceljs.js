@@ -110,6 +110,120 @@ const exportPaymentsToExcel = async (data, options = {}) => {
     return buffer;
 }
 
+/**
+ * Exports data to Excel with static headers for parents data
+ * @param {Array} data - The data to export
+ * @param {Object} options - Options for controlling the export
+ * @returns {Object} - Object containing the Excel buffer
+ */
+const exportParentsToExcel = async (data, options = {}) => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('All Parents');
+    
+    // Static headers for grouped payment data
+    const headers = [
+        { header: 'Account ID', key: 'account_id', width: 20 },
+        { header: 'Parent Email', key: 'parent_email', width: 25 },
+        { header: 'Parent Name', key: 'parent_name', width: 20 },
+        { header: 'Parent Phone', key: 'parent_phone', width: 15 },
+        { header: 'City', key: 'city_name', width: 20 },
+        { header: 'Location', key: 'location', width: 20 },
+        { header: 'Is Verified', key: 'is_verified', width: 20 },
+        { header: 'Gender', key: 'gender', width: 20 },
+        { header: 'Children', key: 'children', width: 20 },
+        { header: 'Groups', key: 'groups', width: 20 },
+        { header: 'Joined At', key: 'joined_at', width: 20 },
+    ];
+
+    worksheet.columns = headers;
+    worksheet.getRow(1).font = { bold: true };
+
+    // Group data by parent email to reduce redundancy
+    if (data && data.length > 0) {
+        const groupedData = {};
+        
+        // Group subscriptions by parent email
+        data.forEach(item => {
+            const parentEmail = item?.account?.email || 'Unknown';
+            if (!groupedData[parentEmail]) {
+                groupedData[parentEmail] = [];
+            }
+            groupedData[parentEmail].push(item);
+        });
+
+        // Add rows with parent info only on first occurrence
+        Object.keys(groupedData).forEach(parentEmail => {
+            const parents = groupedData[parentEmail];
+            
+            parents.forEach((item, index) => {
+                const mapsUrl = (item.lat && item.lng)  ? `https://www.google.com/maps?q=${item.lat},${item.lng}` : 'N/A';
+                worksheet.addRow({
+                    account_id: item?.account?.id || 'N/A',
+                    parent_email: item?.account?.email || 'N/A',
+                    parent_name: item?.name || 'N/A',
+                    parent_phone: item?.phone || 'N/A',
+                    city_name: item?.city?.name || 'N/A',
+                    location: mapsUrl || 'N/A',
+                    verified: item?.account?.is_verified ? 'Yes' : 'No',
+                    gender: item?.gender || 'N/A',
+                    children: item?.children?.length + ' Child' || 0,
+                    groups: item?.groups?.length + ' Group' || 0,
+                    joined_at: item?.created_at || 'N/A',
+                });
+            });
+            
+        });
+    }
+    // Return the workbook as a buffer
+    const buffer = await workbook.xlsx.writeBuffer();
+    return buffer;
+}
+
+/**
+ * Exports data to Excel with static headers for schools data
+ * @param {Array} data - The data to export
+ * @param {Object} options - Options for controlling the export
+ * @returns {Object} - Object containing the Excel buffer
+ */
+const exportSchoolsToExcel = async (data, options = {}) => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('All Schools');
+    
+    // Static headers for grouped payment data
+    const headers = [
+        { header: 'Name', key: 'school_name', width: 20 },
+        { header: 'Governorate', key: 'governorate', width: 20 },
+        { header: 'City', key: 'city_name', width: 20 },
+        { header: 'Map URL', key: 'map_url', width: 20 },
+    ];
+
+    worksheet.columns = headers;
+    worksheet.getRow(1).font = { bold: true };
+
+    // Group data by parent email to reduce redundancy
+    if (data && data.length > 0) {
+        // Add rows with parent info only on first occurrence
+        Object.keys(data).forEach(x => {
+            data.forEach((item, index) => {
+                const mapsUrl = (item.lat && item.lng)  ? `https://www.google.com/maps?q=${item.lat},${item.lng}` : 'N/A';
+                worksheet.addRow({
+                    school_name: item?.school_name || 'N/A',
+                    city_name: item?.city?.name || 'N/A',
+                    governorate: item?.city?.governorate?.governorate_name || 'N/A',
+                    map_url: mapsUrl,
+                });
+            });
+            
+        });
+    }
+    // Return the workbook as a buffer
+    const buffer = await workbook.xlsx.writeBuffer();
+    return buffer;
+}
+
+
 module.exports = {
-    exportPaymentsToExcel
+    exportPaymentsToExcel,
+    exportParentsToExcel,
+    exportSchoolsToExcel
 };

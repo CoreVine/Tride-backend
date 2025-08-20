@@ -1,11 +1,13 @@
 const { BadRequestError, NotFoundError } = require("../../utils/errors");
 
+const { exportParentsToExcel } = require("../../utils/export/exceljs");
+
 const ParentRepository = require("../../data-access/parent");
 const RideGroupRepository = require("../../data-access/rideGroup");
 const Sequelize = require('sequelize');
 
 const adminParentController = {
-  	getAllParents: async (req, res, next) => {
+	getAllParents: async (req, res, next) => {
 		try {
 			const { page = 1, limit = 10, name, school_id } = req.query;
 			const schoolQuery = school_id ? {
@@ -43,6 +45,7 @@ const adminParentController = {
 				next(error)
 		}
 	},
+
 	getParentById: async (req, res, next) => {
 		try {
 			const { parentId } = req.params;
@@ -67,6 +70,7 @@ const adminParentController = {
 			next(error);
 		}
 	},
+
 	getParentRideGroups: async (req, res, next) => {
 		try {
 			const { parentId } = req.params;
@@ -84,6 +88,7 @@ const adminParentController = {
 			next(error);
 		}
 	},
+
 	updateParent: async (req, res, next) => {
 		try {
 			const { parentId } = req.params;
@@ -96,6 +101,28 @@ const adminParentController = {
 			console.error(`Error in adminParentController.updateParent: ${error.message}`);
 			next(error);
 		}
+	},
+
+	exportParents: async(req, res, next) => {
+		try {
+			const data = await ParentRepository.findAll({
+				include: [
+					{ association: 'children', attributes: ['id'] },
+					{ association: 'account', attributes: ['id', 'email', 'is_verified', 'auth_method'] },
+					{ association: 'groups', attributes: ['id'] },
+					{ association: 'city' }
+				]
+			});
+
+			const exportBuffer = await exportParentsToExcel(data);
+			const fileName = `parents_data.xlsx`;
+			
+			res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+			res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+			res.send(exportBuffer);
+	} catch (error) {
+			return next(error);
+	}
 	}
 };
 

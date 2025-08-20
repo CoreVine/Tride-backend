@@ -81,7 +81,6 @@ const addChildToGroupSchema = Yup.object().shape({
   .required()
 });
 
-
 const subscribeSchema = {
   body: Yup.object().shape({
     plan_type: Yup.string().oneOf(["monthly", "term", "double-terms"]).required()
