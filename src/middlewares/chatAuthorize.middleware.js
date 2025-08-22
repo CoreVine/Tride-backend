@@ -5,12 +5,15 @@ const { ROLE_PERMISSION_CHAT_WITH_PARENT, ROLE_PERMISSION_CHAT_WITH_DRIVER } = r
 
 const isInsideChat = async (req, res, next) => {
     try {
-        const { chatRoomId, rideGroupId } = req.params;
+        const { chatRoomId, rideGroupId, roomId } = req.params;
         const userId = req.userId;
+        
+        // Use roomId, chatRoomId, or rideGroupId depending on which is provided
+        const actualRoomId = roomId || chatRoomId;
     
         const chatRoom = await ChatRoom.findOne({ 
             $or: [
-            { _id: chatRoomId }, 
+            { _id: actualRoomId }, 
             { ride_group_id: rideGroupId }
             ]
         });
@@ -43,14 +46,30 @@ const isInsideChat = async (req, res, next) => {
             }
         }
 
-        const group = await RideGroupRepository.findIfAccountIdInsideGroup(
-            chatRoom.ride_group_id, userId, req.accountType);
-        
-        if (!group) {
-            throw new NotFoundError("You are not authorized to access this chat room");
+        if (chatRoom.room_type === "ride_group") {
+            logger.info(`[isInsideChat] Ride group room - checking membership`);
+            const group = await RideGroupRepository.findIfAccountIdInsideGroup(
+                chatRoom.ride_group_id, userId, req.accountType);
+            
+            if (!group) {
+                throw new NotFoundError("You are not authorized to access this chat room");
+            }
+            return next();
         }
-    
-        return next();
+
+        if (chatRoom.room_type === "private") {
+            const isParticipant = chatRoom.participants.some(
+                (p) => p.user_id === userId && p.user_type === req.accountType
+            );
+            
+            if (!isParticipant) {
+                throw new ForbiddenError("You are not authorized to access this chat room");
+            }
+            return next();
+        }
+
+        // Fallback for unknown room types
+        throw new ForbiddenError("Unknown room type");
     } catch (error) {
         console.error("Error in isInsideChat middleware:", error);
         return next(error);

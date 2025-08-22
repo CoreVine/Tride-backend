@@ -165,7 +165,9 @@ const chatController = {
   getRideGroupChatRooms: async (req, res, next) => {
     try {
       const userId = req.userId; // Use correct user ID
-     
+      const accountType = req.accountType;
+
+      logger.info(`Getting chat rooms for user ${userId} (${accountType})`);
       
       // Find all rooms where user is a participant
       const chatRooms = await ChatRoom.find({
@@ -176,6 +178,43 @@ const chatController = {
           }
         }
       }).populate("last_message");
+
+      logger.info(`Found ${chatRooms.length} existing chat rooms for user ${userId}`);
+
+      // If no chat rooms found, check if user has access to any ride groups
+      if (chatRooms.length === 0) {
+        logger.info(`No chat rooms found, checking ride group memberships for user ${userId}`);
+        
+        // Get user's ride groups to suggest available chats
+        let rideGroups = [];
+        if (accountType === 'parent') {
+          // For parents, need to get their parent ID first
+          const parent = await ParentRepository.findByAccountId(userId);
+          if (parent) {
+            rideGroups = await RideGroupRepository.findAllIfParent(parent.id);
+          }
+        } else if (accountType === 'driver') {
+          // For drivers, get by account ID directly
+          const driver = await DriverRepository.findByAccountId(userId);
+          if (driver) {
+            rideGroups = await RideGroupRepository.findAll({
+              where: { driver_id: driver.id }
+            });
+          }
+        }
+        
+        logger.info(`User ${userId} is member of ${rideGroups.length} ride groups`);
+        
+        return res.success("Chat rooms retrieved successfully", { 
+          data: chatRooms,
+          availableRideGroups: rideGroups.map(group => ({
+            id: group.id,
+            name: group.group_name,
+            hasChat: false,
+            chatRoomUrl: `/api/chat/ride-group/${group.id}/room`
+          }))
+        });
+      }
       
       return res.success("Chat rooms retrieved successfully", { data: chatRooms });
     } catch (error) {
@@ -267,6 +306,53 @@ getPrivateChatRooms: async (req, res, next) => {
       );
     } catch (error) {
       logger.error(`Error fetching messages: ${error.message}`);
+      next(error);
+    }
+  },
+  // New generic method that works with any room type using room ID
+  getRoomMessages: async (req, res, next) => {
+    try {
+      const { roomId } = req.params;
+      const { page = 1 } = req.query;
+      
+      const account = await AccountRepository.findById(req.userId);
+
+      if (!account) {
+        throw new NotFoundError("Account not found");
+      }
+
+      if (!account.is_verified) {
+        throw new ForbiddenError(
+          "Account email must be verified before accessing chat"
+        );
+      }
+
+      // Find chat room by ID (works for all room types)
+      const chatRoom = await ChatRoom.findById(roomId);
+      if (!chatRoom) {
+        throw new NotFoundError("Chat room not found");
+      }
+
+      // Get messages with pagination
+      const messages = await chatRoom.getMessagesPage(roomId, page);
+      const totalMessages = await chatRoom.getMessageCount(roomId);
+
+      const pagination = createPagination(Number(page), 10, totalMessages);
+
+      return res.success(
+        "Messages retrieved successfully", {
+          pagination,
+          messages,
+          room: {
+            _id: chatRoom._id,
+            name: chatRoom.name,
+            room_type: chatRoom.room_type,
+            ride_group_id: chatRoom.ride_group_id
+          }
+        }
+      );
+    } catch (error) {
+      logger.error(`Error fetching room messages: ${error.message}`);
       next(error);
     }
   },

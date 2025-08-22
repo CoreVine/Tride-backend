@@ -24,10 +24,19 @@ const rideGroupIdSchema = Yup.object().shape({
 });
 const chatRoomIdSchema = Yup.object().shape({
   chatRoomId: Yup.string()
-    .required("Ride Group ID is required.")
+    .required("Chat Room ID is required.")
     .matches(
       /^[a-fA-F0-9]{24}$/,
-      "Ride Group ID must be a valid Mongo ObjectId"
+      "Chat Room ID must be a valid Mongo ObjectId"
+    ),
+});
+
+const roomIdSchema = Yup.object().shape({
+  roomId: Yup.string()
+    .required("Room ID is required.")
+    .matches(
+      /^[a-fA-F0-9]{24}$/,
+      "Room ID must be a valid Mongo ObjectId"
     ),
 });
 const messageIdIdSchema = Yup.object().shape({
@@ -112,7 +121,7 @@ const notificationSchema = Yup.object().shape({
 
 // Get or create chat room for a ride group
 router.get(
-  "/ride-group/:rideGroupId/room",
+  "/chat/ride-group/:rideGroupId/room",
   authMiddleware,
   // checkValidSubscription,
   validate(rideGroupIdSchema, "params"), // Validate rideGroupId in params
@@ -120,25 +129,25 @@ router.get(
 );
 // Get or create chat room for a ride group
 router.get(
-  "/ride-group/rooms",
+  "/chat/ride-group/rooms",
   authMiddleware,
    chatController.getRideGroupChatRooms
 );
 router.get(
-  "/customer-support/rooms",
+  "/chat/customer-support/rooms",
   authMiddleware,
    chatController.getCustomerSupportChatRooms
 );
 router.get(
-  "/private/rooms",
+  "/chat/private/rooms",
   authMiddleware,
    chatController.getPrivateChatRooms
 );
 
 
-// Get chat messages
+// Get chat messages (legacy endpoint for ride groups)
 router.get(
-  "/ride-group/:rideGroupId/messages",
+  "/chat/ride-group/:rideGroupId/messages",
   authMiddleware,
   isInsideChat,
   // checkValidSubscription,
@@ -146,9 +155,23 @@ router.get(
   chatController.getChatMessages
 );
 
+// Get messages for any room type using room ID (NEW GENERIC ENDPOINT)
+router.get(
+  "/chat/room/:roomId/messages",
+  (req, res, next) => {
+    console.log(`[ROUTE] Hit /chat/room/${req.params.roomId}/messages with query:`, req.query);
+    next();
+  },
+  authMiddleware,
+  isInsideChat,
+  // checkValidSubscription,
+  validate(roomIdSchema, "params"), // Validate roomId in params
+  chatController.getRoomMessages
+);
+
 // Upload chat media
 router.post(
-  "/messages/upload",
+  "/chat/messages/upload",
   authMiddleware,
   // checkValidSubscription,
   upload.single("file"), // `upload` here is the Multer instance from destructuring
@@ -157,7 +180,7 @@ router.post(
 
 // Create a message
 router.post(
-  "/messages/:chatRoomId/media",
+  "/chat/messages/:chatRoomId/media",
   authMiddleware,
   // checkValidSubscription,
   validate(chatRoomIdSchema, "params"),
@@ -167,7 +190,7 @@ router.post(
   chatController.createMessage
 );
 router.post(
-  "/messages/:chatRoomId/message",
+  "/chat/messages/:chatRoomId/message",
   authMiddleware,
   (req, res, next) => {
     req.resourceRequested = "chat";
@@ -183,7 +206,7 @@ router.post(
 );
 // Delete a message
 router.delete(
-  "/messages/:messageId",
+  "/chat/messages/:messageId",
   validate(messageIdIdSchema, "params"),
   // checkValidSubscription,
   authMiddleware,
@@ -193,7 +216,7 @@ router.delete(
 // Notification Endpoints (same as before, but enhanced with socket integration)
 // Test notification endpoints
 router.post(
-  "/test/notification",
+  "/chat/test/notification",
   authMiddleware,
   isAdminWithRole(ADMIN_ROLE_SUPER_ADMIN),
   validate(notificationSchema, "body"),
@@ -201,7 +224,7 @@ router.post(
 );
 
 router.get(
-  "/me/notifications",
+  "/chat/me/notifications",
   authMiddleware,
   validate(notificationFetchSchema),
   chatController.getNotificationsPaginated
@@ -210,12 +233,12 @@ router.get(
 
 // Customer service
 router.post(
-  "/customer-support/room",
+  "/chat/customer-support/room",
   authMiddleware,
   isOneOf("parent", "driver"),
   chatController.createCustomerServiceRoom
 );
-router.get("/customer-support/room", 
+router.get("/chat/customer-support/room", 
   authMiddleware,
   isOneOf("parent", "driver"),
   chatController.getCustomerSupportMessages
