@@ -17,7 +17,7 @@ const parentProfileUploader = createUploader({
   storageType: "cloudinary",
   uploadPath: "profiles",
   fileFilter: "images",
-  fileSize: 5 * 1024 * 1024,
+  fileSize: 10 * 1024 * 1024,
   cloudinaryOptions: {
     resourceType: cloudinaryResourceTypes.IMAGE,
     accountType: cloudinaryAccountTypes.PARENT,
@@ -45,7 +45,7 @@ const driverProfileUploader = createUploader({
   storageType: "cloudinary",
   uploadPath: "profiles",
   fileFilter: "images",
-  fileSize: 5 * 1024 * 1024,
+  fileSize: 10 * 1024 * 1024,
   cloudinaryOptions: {
     resourceType: cloudinaryResourceTypes.IMAGE,
     accountType: cloudinaryAccountTypes.DRIVER,

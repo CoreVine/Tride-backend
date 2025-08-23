@@ -1,6 +1,8 @@
 const RideInstanceRepository = require("../../data-access/rideInstance");
+const RideInstanceLocationRepository = require("../../data-access/rideInstanceLocation");
 const RideGroupRepository = require("../../data-access/rideGroup");
 const RideHistoryRepository = require("../../data-access/rideHistory");
+
 
 const redisService = require("../../services/redis.service");
 const logger = require("../../services/logging.service").getLogger();
@@ -188,6 +190,13 @@ const relayLocationUpdates = async (socket, payload) => {
             lng: parseFloat(jsonPayload.location.lng),
             ts: Date.now()
         };
+
+        await RideInstanceLocationRepository.create({
+            ride_instance_id: socket.rideInstanceId,
+            lat: locationMap.lat,
+            lng: locationMap.lng,
+        })
+  
 
         if (Math.abs(locationMap.lat) > 90 || Math.abs(locationMap.lng) > 180) {
             return socket.emit("ack", { type: "LOCATION_UPDATE_ERROR", message: "Invalid GPS coordinates detected!", data: null });
@@ -460,8 +469,8 @@ const confirmCheckPoint = async (socket, io, payload) => {
 
 const adminVerifyAndJoinRide = async (socket, payload) => {
     try {
-        if (socket.rideRoomId && socket.rideInstanceId)
-            return socket.emit("ack", { type: "ADMIN_JOIN_ERROR", message: "ALREADY JOINED RIDE", data: null });
+        /* if (socket.rideRoomId && socket.rideInstanceId)
+            return socket.emit("ack", { type: "ADMIN_JOIN_ERROR", message: "ALREADY JOINED RIDE", data: null }); */
 
         const jsonPayload = JSON.parse(payload) || {};
 
