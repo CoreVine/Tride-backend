@@ -28,10 +28,6 @@ const rideGroupController = {
             { name, seats: parseInt(seats, 10) || 0, type, school_id, ride_group_id }
             );
     
-          if (!rideGroups || rideGroups.length === 0) {
-            return res.success("No ride groups found for this parent", { rideGroups: [] });
-          }
-
           const pagination = createPagination(page, limit, count);
     
           return res.success("Ride groups fetched successfully", { pagination, rideGroups });

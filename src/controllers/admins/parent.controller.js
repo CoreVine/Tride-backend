@@ -120,9 +120,9 @@ const adminParentController = {
 			res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
 			res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 			res.send(exportBuffer);
-	} catch (error) {
-			return next(error);
-	}
+		} catch (error) {
+				return next(error);
+		}
 	}
 };
 

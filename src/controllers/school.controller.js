@@ -12,9 +12,10 @@ const { Op } = require("sequelize")
 const logger = loggingService.getLogger()
 
 const schoolController = {
+  
   getSchools: async (req, res, next) => {
     try {
-      const { page, limit } = req.query
+      const { page, limit, name } = req.query
       logger.debug("Schools retrieval attempt", { accountId: req.userId })
 
       const account = await AccountRepository.findById(req.userId)
@@ -26,11 +27,21 @@ const schoolController = {
         throw new ForbiddenError("Account email must be verified before creating a profile")
       }
 
-      const schools = await SchoolRepository.findAllPaginated(page, limit, {
+      // 1. Define the base query options
+      const queryOptions = {
         include: {
           association: "city"
+        },
+        where: {}
+      }
+
+      if (name) {
+        queryOptions.where.school_name = {
+          [Op.like]: `%${name}%`
         }
-      })
+      }
+
+      const schools = await SchoolRepository.findAllPaginated(page, limit, queryOptions)
 
       logger.debug("Schools retrieved successfully", schools)
 
@@ -46,13 +57,13 @@ const schoolController = {
 
   getAllSchools: async (req, res, next) => {
     try {
-      const { search } = req.query
+      const { name } = req.query
 
       const schools = await SchoolRepository.findAll({
         include: {
           association: "city"
         },
-        where: search ? { school_name: { [Op.like]: `%${search}%` } } : {}
+        where: name ? { school_name: { [Op.like]: `%${name}%` } } : {}
       })
 
       return res.success("Schools retrieved successfully", schools)

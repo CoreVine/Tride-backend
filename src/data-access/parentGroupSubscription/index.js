@@ -1,6 +1,7 @@
 const ParentGroupSubscriptionModel = require('../../models/ParentGroupSubscription');
 const BaseRepository = require('../base.repository');
 const { DatabaseError, Op } = require("sequelize");
+const { BadRequestError } = require('../../utils/errors');
 const PaymentHistoryRepository = require('../paymentHistory');
 
 class ParentGroupSubscriptionRepository extends BaseRepository {
@@ -28,6 +29,39 @@ class ParentGroupSubscriptionRepository extends BaseRepository {
         }
     }
 
+    
+    async createNewCashSubscriptionRecord(payload) {
+        const t = await this.model.sequelize.transaction();
+        
+        try {
+            const subscription = await this.create({
+                ride_group_id: payload.ride_group_id,
+                parent_id: payload.parent_id,
+                current_seats_taken: payload.current_seats_taken,
+                pickup_days_count: payload.pickup_days_count,
+                started_at: payload.started_at,
+                valid_until: payload.valid_until,
+                plan_id: payload.plan_id,
+                total_amount: payload.total_amount,
+                status: payload.status
+            }, { transaction: t });
+
+            const paymentPayload = {
+                paymob_receipt_id: `CASH${subscription.id}`,
+                paid_at: new Date(),
+                amount: subscription.total_amount,
+                parent_subscription_id: subscription.id
+            };
+    
+            await PaymentHistoryRepository.create(paymentPayload, { transaction: t });
+            await t.commit();
+        } catch (error) {
+            await t.rollback();
+            throw new DatabaseError(error);
+        }
+    }
+
+
     async addNewPaymentHistory(payload) {
         const { subscription_id, payment } = payload;
 
@@ -47,7 +81,7 @@ class ParentGroupSubscriptionRepository extends BaseRepository {
                 where: {
                     parent_id: parentId,
                     ride_group_id: groupId,
-                    status: 'active',
+                    status: 'paid',
                     valid_until: {
                         [Op.gte]: new Date() // Check expiration date
                     }
