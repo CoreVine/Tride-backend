@@ -13,15 +13,19 @@
 const RideInstanceRepository = require("../data-access/rideInstance");
 const RideGroupRepository = require("../data-access/rideGroup");
 const ChatRoom = require("../mongo-model/ChatRoom");
-const sequelize = require("../config/database");
+const sequelizeService = require("../services/sequelize.service");
+const mongodbService = require("../config/monogodb");
 
 async function setupLiveTrackingTest() {
   try {
     console.log("🚀 Setting up Live Tracking Test Environment...");
 
-    // Connect to database
-    await sequelize.authenticate();
-    console.log("✅ Database connected");
+    // Connect to databases
+    await sequelizeService.init();
+    console.log("✅ MySQL connected");
+    
+    await mongodbService.init();
+    console.log("✅ MongoDB connected");
 
     // 1. Check if ride group exists
     const rideGroup = await RideGroupRepository.findById(1001);
@@ -38,7 +42,7 @@ async function setupLiveTrackingTest() {
     const existingInstance = await RideInstanceRepository.findOne({
       where: {
         group_id: 1001,
-        status: ["created", "started"]
+        status: ["started", "active"]
       }
     });
 
@@ -51,7 +55,7 @@ async function setupLiveTrackingTest() {
         type: "to_school",
         driver_id: 101, // ahmed driver
         group_id: 1001, // test-school group
-        status: "created"
+        status: "started" // Valid enum value
       });
       console.log(`✅ Created ride instance (ID: ${rideInstance.id})`);
     }
@@ -140,9 +144,18 @@ async function setupLiveTrackingTest() {
     console.error("❌ Error setting up live tracking test:", error);
     process.exit(1);
   } finally {
-    // Close database connection
-    await sequelize.close();
-    console.log("📝 Database connection closed");
+    // Close database connections
+    if (sequelizeService.connection) {
+      await sequelizeService.connection.close();
+      console.log("📝 MySQL connection closed");
+    }
+    
+    // Close MongoDB connection
+    const mongoose = require("mongoose");
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.close();
+      console.log("📝 MongoDB connection closed");
+    }
   }
 }
 
