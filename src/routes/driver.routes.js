@@ -1,11 +1,15 @@
 const { Router } = require("express")
-const { isAdmin } = require("../middlewares/isAccount.middleware")
+const { isAdmin, isDriver, isDriverApproved } = require("../middlewares/isAccount.middleware")
 
 const driverController = require("../controllers/drivers.controller")
 const authMiddleware = require("../middlewares/auth.middleware")
 
 const driverRouter = Router()
 
+// Driver endpoints
+driverRouter.get("/driver/my-ride-groups", authMiddleware, isDriver, isDriverApproved, driverController.getMyRideGroups)
+
+// Admin endpoints
 // TODO: Move all admin routes to admin folder
 driverRouter.get("/drivers", authMiddleware, isAdmin, driverController.getAllDrivers)
 driverRouter.get("/drivers/:driverId", authMiddleware, isAdmin, driverController.getDriver)
