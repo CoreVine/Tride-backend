@@ -3,11 +3,32 @@ const { Router } = require('express');
 const fs = require('fs');
 const path = require('path');
 
+const ChatRoom = require('../mongo-model/ChatRoom')
+
 const router = Router();
 
 // Health check route
 router.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Server is running' });
+});
+
+router.get('/creating-test', async (req, res, next) => {
+  try {
+    const c = new ChatRoom({
+      ride_group_id: 1001,
+      name: "Chat Room For Testing",
+      room_type: "ride_group",
+      participants: [
+        { user_id: 1002, name: "ParentName", user_type: "parent" },
+        { user_id: 1003, name: "ParentName", user_type: "parent" },
+        { user_id: 1001, name: "DriverName", user_type: "driver" }
+      ]
+    })
+    c.save()
+    res.status(200).json({ status: c });
+  } catch (error) {
+    return next(error)
+  }
 });
 
 // Default route
