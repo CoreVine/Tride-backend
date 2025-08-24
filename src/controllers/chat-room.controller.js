@@ -223,48 +223,49 @@ const chatController = {
     }
   },
 
-getCustomerSupportChatRooms: async (req, res, next) => {
-  try {
-    const userId = req.userId; // Use correct user ID
-   
+  getCustomerSupportChatRooms: async (req, res, next) => {
+    try {
+      const userId = req.userId; // Use correct user ID
     
-    // Find all rooms where user is a participant
-    const chatRooms = await ChatRoom.find({
-      room_type: "customer_support",
-      participants: {
-        $elemMatch: {
-          user_id: userId,
+      
+      // Find all rooms where user is a participant
+      const chatRooms = await ChatRoom.find({
+        room_type: "customer_support",
+        participants: {
+          $elemMatch: {
+            user_id: userId,
+          }
         }
-      }
-    }).populate("last_message");
+      }).populate("last_message");
+      
+      return res.success("Chat rooms retrieved successfully", { data: chatRooms });
+    } catch (error) {
+      logger.error("Error getting user chat rooms:", error.message);
+      next(error);
+    }
+  },
+  getPrivateChatRooms: async (req, res, next) => {
+    try {
+      const userId = req.userId; // Use correct user ID
     
-    return res.success("Chat rooms retrieved successfully", { data: chatRooms });
-  } catch (error) {
-    logger.error("Error getting user chat rooms:", error.message);
-    next(error);
-  }
-},
-getPrivateChatRooms: async (req, res, next) => {
-  try {
-    const userId = req.userId; // Use correct user ID
-   
-    
-    // Find all rooms where user is a participant
-    const chatRooms = await ChatRoom.find({
-      room_type: "private",
-      participants: {
-        $elemMatch: {
-          user_id: userId,
+      
+      // Find all rooms where user is a participant
+      const chatRooms = await ChatRoom.find({
+        room_type: "private",
+        participants: {
+          $elemMatch: {
+            user_id: userId,
+          }
         }
-      }
-    }).populate("last_message");
-    
-    return res.success("Chat rooms retrieved successfully", { data: chatRooms });
-  } catch (error) {
-    logger.error("Error getting user chat rooms:", error.message);
-    next(error);
-  }
-},
+      }).populate("last_message");
+      
+      return res.success("Chat rooms retrieved successfully", { data: chatRooms });
+    } catch (error) {
+      logger.error("Error getting user chat rooms:", error.message);
+      next(error);
+    }
+  },
+
   getChatMessages: async (req, res, next) => {
     try {
       const { rideGroupId } = req.params;
@@ -309,7 +310,6 @@ getPrivateChatRooms: async (req, res, next) => {
       next(error);
     }
   },
-  // New generic method that works with any room type using room ID
   getRoomMessages: async (req, res, next) => {
     try {
       const { roomId } = req.params;
@@ -356,6 +356,7 @@ getPrivateChatRooms: async (req, res, next) => {
       next(error);
     }
   },
+  
   uploadFile: async (req, res, next) => {
     try {
       if (!req.file) {

@@ -3,6 +3,9 @@ const RideGroupRepository = require("../data-access/rideGroup");
 const ChatRoom = require("../mongo-model/ChatRoom");
 const { ROLE_PERMISSION_CHAT_WITH_PARENT, ROLE_PERMISSION_CHAT_WITH_DRIVER } = require("../utils/constants/admin-permissions");
 
+const loggingService = require("../services/logging.service")
+const logger = loggingService.getLogger()
+
 const isInsideChat = async (req, res, next) => {
     try {
         const { chatRoomId, rideGroupId, roomId } = req.params;
