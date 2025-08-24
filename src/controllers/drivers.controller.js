@@ -6,7 +6,43 @@ const { createPagination } = require("../utils/responseHandler")
 
 const { Op } = require("sequelize")
 
+const RideGroupRepository = require("../data-access/rideGroup");
+
 const driversController = {
+  // Get ride groups assigned to the authenticated driver
+  getMyRideGroups: async (req, res, next) => {
+    try {
+      const driverId = req.account.driver.id;
+
+      const rideGroups = await RideGroupRepository.findAll({
+        where: { driver_id: driverId },
+        include: [
+          {
+            association: "school",
+            attributes: ["id", "school_name", "lat", "lng"]
+          },
+          {
+            association: "parentGroups",
+            attributes: ["id", "parent_id", "current_seats_taken", "status"],
+            include: [
+              {
+                association: "parent",
+                attributes: ["id", "name", "phone"]
+              }
+            ]
+          }
+        ]
+      });
+
+      return res.success("Ride groups retrieved successfully", {
+        rideGroups,
+        total: rideGroups.length
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+
   getAllDrivers: async (req, res, next) => {
     try {
       const { page = 1, limit = 10, search } = req.query
