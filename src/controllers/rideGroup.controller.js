@@ -423,43 +423,31 @@ const RideGroupController = {
 
   getRideGroupsByParentId: async (req, res, next) => {
     try {
-      // Verify account exists and is verified
-      const account = await AccountRepository.findById(req.userId);
-      if (!account) {
-        throw new NotFoundError("Account not found");
-      }
-
-      if (!account.is_verified) {
-        throw new ForbiddenError(
-          "Account email must be verified before accessing ride groups"
-        );
-      }
-
+      const currentUserId = req.userId; // from authMiddleware
+  
       // Check if parent profile exists
-      const parentProfile = await ParentRepository.findByAccountId(req.userId);
+      const parentProfile = await ParentRepository.findByAccountId(currentUserId);
       if (!parentProfile) {
-        throw new BadRequestError("Parent profile not exists for this account");
+        throw new BadRequestError("Parent profile does not exist for this account");
       }
-
-      const rideGroups = await RideGroupRepository.findAllIfParent(
-        parentProfile.id
-      );
-
-      if (!rideGroups) {
-        throw new NotFoundError("Ride group not found");
+  
+      // Fetch ride groups where this parent belongs (based on parent_groups)
+      const rideGroups = await RideGroupRepository.findAllByParentGroups(parentProfile.id);
+  
+      if (!rideGroups || rideGroups.length === 0) {
+        throw new NotFoundError("No ride groups found for this parent");
       }
-
-      return res.success("Ride group details fetched successfully", {
-        rideGroups,
-      });
+  
+      return res.success("Ride group details fetched successfully", { rideGroups });
     } catch (error) {
-      logger.error("Error fetching ride group by ID", {
+      logger.error("Error fetching ride groups by parentId", {
         error: error.message,
         stack: error.stack,
       });
       return next(error);
     }
   },
+  
 
   createRideGroup: async (req, res, next) => {
     try {

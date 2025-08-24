@@ -81,7 +81,6 @@ class RideGroupRepository extends BaseRepository {
       throw new DatabaseError(error);
     }
   }
-
   async findAllIfParent(parentId, options = {}) {
     try {
       const queryOptions = {
@@ -95,39 +94,9 @@ class RideGroupRepository extends BaseRepository {
           {
             association: "parentGroups",
             where: {
-              status: {
-                [Op.ne]: "removed"
-              }
+              parent_id: parentId,
             },
             required: true,
-          },
-          {
-            association: "creator",
-            attributes: { exclude: ["created_at", "updated_at"] },
-          },
-          {
-            association: "driver",
-            attributes: { exclude: ["created_at", "updated_at"] },
-          },
-          {
-            association: "school",
-          },
-          {
-            association: "parent_group_subscription",
-            attributes: { exclude: [
-                "id",
-                "parent_id",
-                "ride_group_id",
-                "current_seats_taken",
-                "pickup_days_count",
-                "started_at",
-                "valid_until",
-                "plan_id",
-                "total_amount",
-            ] },
-          },
-          {
-            association: "parentGroups",
             include: [
               {
                 association: "parent",
@@ -136,16 +105,48 @@ class RideGroupRepository extends BaseRepository {
               {
                 association: "childDetails",
                 include: [
-                  {
-                    association: "child",
-                  },
+                  { association: "child" },
                 ],
               },
             ],
           },
+          { association: "creator" },
+          { association: "driver" },
+          { association: "school" },
+          { association: "parent_group_subscription" },
+          { association: "dayDates" },
+        ],
+        ...options,
+      };
+      return await this.model.findAll(queryOptions);
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
+  async findAllByParentGroups(parentId, options = {}) {
+    try {
+      const queryOptions = {
+        include: [
           {
-            association: "dayDates",
+            association: "parentGroups",
+            where: { parent_id: parentId, status: { [Op.ne]: "removed" } },
+            required: true,
+            include: [
+              {
+                association: "parent",
+                attributes: { exclude: ["created_at", "updated_at"] },
+              },
+              {
+                association: "childDetails",
+                include: [{ association: "child" }],
+              },
+            ],
           },
+          { association: "creator" },
+          { association: "driver" },
+          { association: "school" },
+          { association: "dayDates" },
         ],
         ...options,
       };
