@@ -122,7 +122,7 @@ class RideInstanceRepository extends BaseRepository {
         });
         throw error;
       }
-    },
+  }
 
   async findActiveInstanceByParentAndGroup(parentId, rideGroupId) {
     try {      

@@ -219,19 +219,7 @@ module.exports = {
       }
     ];
 
-    // Default plans for ride groups
-    const defaultPlans = [
-      {
-        id: 1001,
-        plan_name: "Live Tracking Test Plan",
-        price: 500,
-        duration_days: 30,
-        description: "Test plan for live tracking functionality",
-        is_active: true,
-        created_at: now,
-        updated_at: now,
-      }
-    ];
+    // Note: Plans not needed for live tracking testing
 
     try {
       console.log("🚀 Starting Live Tracking Test Data Seeding...");
@@ -283,12 +271,6 @@ module.exports = {
         ignoreDuplicates: true 
       });
       console.log("✅ Live tracking children seeded");
-
-      // Insert plans
-      await queryInterface.bulkInsert("plan", defaultPlans, { 
-        ignoreDuplicates: true 
-      });
-      console.log("✅ Live tracking plans seeded");
 
       // Insert ride groups
       await queryInterface.bulkInsert("ride_group", liveTrackingRideGroups, { 
@@ -359,10 +341,6 @@ module.exports = {
       });
 
       await queryInterface.bulkDelete("ride_group", {
-        id: 1001
-      });
-
-      await queryInterface.bulkDelete("plan", {
         id: 1001
       });
 

@@ -6,7 +6,7 @@ This guide provides a complete test environment for the live tracking functional
 
 ```bash
 # 1. Run the live tracking seeder
-npm run db:seed:specific -- --seed 20250123000000-live-tracking-test-data.js
+npx sequelize-cli db:seed --seed 20250123000000-live-tracking-test-data.js
 
 # 2. Complete the setup (create ride instance + chat room)
 node src/scripts/setup-live-tracking-test.js
