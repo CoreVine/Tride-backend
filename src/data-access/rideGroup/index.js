@@ -375,6 +375,13 @@ class RideGroupRepository extends BaseRepository {
         ];
       } else if (accountType === "driver") {
         whereClause["$driver.account_id$"] = accountId;
+        includeOptions = [
+          {
+            association: "driver",
+            required: true,
+            where: { account_id: accountId },
+          },
+        ];
       } else if (accountType === "admin") {
         return null;
       } else {
