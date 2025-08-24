@@ -149,7 +149,7 @@ router.get(
 router.get(
   "/chat/ride-group/:rideGroupId/messages",
   authMiddleware,
-  isInsideChat,
+  //isInsideChat,
   // checkValidSubscription,
   validate(rideGroupIdSchema, "params"), // Validate rideGroupId in params
   chatController.getChatMessages
@@ -163,7 +163,7 @@ router.get(
     next();
   },
   authMiddleware,
-  isInsideChat,
+  //isInsideChat,
   // checkValidSubscription,
   validate(roomIdSchema, "params"), // Validate roomId in params
   chatController.getRoomMessages
@@ -199,7 +199,7 @@ router.post(
     next();
   },
   // checkValidSubscription,
-  isInsideChat,
+  //isInsideChat,
   validate(chatRoomIdSchema, "params"),
   validate(chatMessageValidationSchema, "body"),
   chatController.createMessage
