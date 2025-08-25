@@ -298,7 +298,7 @@ const rideGroupController = {
         }).populate("last_message");
     
         if (!chatRoom) {
-          return res.error("Chat room not found", 404);
+          return res.success("No chat room found for this ride group", null);
         }
     
         let data = chatRoom.toObject();
