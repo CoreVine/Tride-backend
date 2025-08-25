@@ -483,6 +483,12 @@ const adminVerifyAndJoinRide = async (socket, payload) => {
     
         if (!rideInstance)
             return socket.emit("ack", { type: "ADMIN_JOIN_ERROR", message: "NO ACTIVE INSTANCES, WAIT FOR DRIVER TO START!", data: null });
+        
+        const previousLocations = await RideInstanceLocationRepository.findAll({
+            where: {
+                ride_instance_id: rideInstance.id
+            }
+        })
     
         const uid = `driver:${rideInstance.driver_id}:${rideInstance.group_id}:${rideInstance.id}`;
         
@@ -495,7 +501,7 @@ const adminVerifyAndJoinRide = async (socket, payload) => {
     
         const location = await redisService.getLatestLocationUpdate(uid);
     
-        return socket.emit("ack", { type: "ADMIN_JOIN_SUCCESS", message: "Admin successfully joined ride", data: { uid, driverLocation: location || {}, checkpointOrder: order } });
+        return socket.emit("ack", { type: "ADMIN_JOIN_SUCCESS", message: "Admin successfully joined ride", data: { uid, driverLocation: location || {}, checkpointOrder: order, previousLocations } });
     } catch (error) {
         logger.warn(error);
         return socket.emit("ack", { type: "ADMIN_JOIN_ERROR", message: `ERROR: ${error.message || 'Unknown error'}`, data: null });

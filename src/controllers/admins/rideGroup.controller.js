@@ -3,9 +3,10 @@ require("dotenv").config();
 const { BadRequestError, NotFoundError, ForbiddenError } = require("../../utils/errors/types/Api.error");
 const { createPagination } = require("../../utils/responseHandler");
 
-const ChatRoom = require("../../mongo-model/ChatRoom");
 const AccountRepository = require("../../data-access/accounts");
-const ParentRepository = require("../../data-access/parent");
+const RideInstanceRepository = require("../../data-access/rideInstance");
+const RideInstanceLocationRepository = require("../../data-access/rideInstanceLocation");
+const DriverRepository = require("../../data-access/driver");
 const RideGroupRepository = require("../../data-access/rideGroup");
 const ParentGroupRepository = require("../../data-access/parentGroup");
 const ChildrenGroupDetailsRepository = require("../../data-access/childGroupDetails");
@@ -13,6 +14,8 @@ const loggingService = require("../../services/logging.service");
 const SchoolRepository = require("../../data-access/school");
 const openRouteUtil = require("../../utils/openRoutesService");
 const subscriptionDomain = require("../../domain/subscription/subscription");
+
+const ChatRoom = require("../../mongo-model/ChatRoom");
 
 const { RIDE_PRICE_PER_KM, MAX_SEATS_CAR } = require("../../config/upload/constants");
 
@@ -57,6 +60,184 @@ const rideGroupController = {
             });
             return next(error);
         }
+    },
+
+    getRideGroupInstances: async (req, res, next) => {
+      try {
+        const { rideGroupId, page = 1, limit = 10 } = req.params;
+        
+        const rideGroup = await RideGroupRepository.findById(rideGroupId);
+        if (!rideGroup) throw new NotFoundError("Ride group not found");
+
+        if (isNaN(+page) || isNaN(+limit)) throw new BadRequestError("Invalid pagination parameters");
+
+        const data = await RideInstanceRepository.findAllPaginated(page, limit, {
+          where: {
+            group_id: rideGroupId,
+            status: 'ended'
+          },
+          include: [
+            { association: 'group' },
+            { association: 'driver' }
+          ]
+        });
+
+        return res.success("Ride group instances fetched successfully", data);
+        
+      } catch (error) {
+        logger.error("Error fetching ride group instances", {
+          error: error.message,
+          stack: error.stack,
+        });
+        return next(error);
+      }
+    },
+
+    getRideGroupInstanceDetails: async (req, res, next) => {
+      try {
+        const { rideGroupId, instanceId } = req.params;
+        const rideGroup = await RideGroupRepository.findById(rideGroupId);
+        if (!rideGroup) throw new NotFoundError("Ride group not found");
+
+        const instance = await RideInstanceRepository.findById(instanceId, {
+          include: [
+            { association: 'group' },
+            { association: 'driver' }
+          ]
+        })
+        if (!instance) throw new NotFoundError("Ride instance not found");
+
+        const locations = await RideInstanceLocationRepository.findAll({
+          where: { ride_instance_id: instanceId },
+          order: [['id', 'ASC']],
+        });
+
+        return res.success("Ride group instance details fetched successfully", {
+          instance,
+          locations
+        });
+
+      } catch (error) {
+        logger.error("Error fetching ride group instance details", {
+          error: error.message,
+          stack: error.stack,
+        });
+        return next(error);
+      }
+    },
+
+    getRideGroupChat: async (req, res, next) => {
+      try {
+        const { rideGroupId } = req.params;
+        const rideGroup = await RideGroupRepository.findById(rideGroupId);
+    
+        if (!rideGroup) {
+          return res.error("Ride group not found", 404);
+        }
+    
+        const chatRoom = await ChatRoom.findOne({
+          ride_group_id: rideGroupId,
+          room_type: "ride_group"
+        }).populate("last_message");
+    
+        if (!chatRoom) {
+          return res.error("Chat room not found", 404);
+        }
+    
+        let data = chatRoom.toObject();
+    
+        data.participants = await Promise.all(
+          data.participants.map(async (part) => {
+            const user = await AccountRepository.findByIdIncludeDetails(part.user_id);
+            let name = '';
+            if (part.user_type === 'driver') {
+              name = user?.driver?.name || 'N/A'
+            } else if (part.user_type === 'parent') {
+              name = user?.parent?.name || 'N/A';
+            } else if (part.user_type === 'admin') {
+              name = user?.admin?.name || 'N/A';
+            } else {
+              name = 'Unknown';
+            }
+
+            return {
+              ...part,
+              name,
+            };
+          })
+        );
+    
+        return res.success("Ride group details fetched successfully", data);
+      } catch (error) {
+        logger.error("Error fetching ride group details", {
+          error: error.message,
+          stack: error.stack,
+        });
+        return next(error);
+      }
+    },
+
+    createRideGroupChat: async (req, res, next) => {
+      try {
+        const { rideGroupId } = req.params;
+        const rideGroup = await RideGroupRepository.findById(rideGroupId);
+
+        if (!rideGroup) throw new NotFoundError("Ride group not found");
+
+        let chatRoom = await ChatRoom.findOne({
+          ride_group_id: rideGroupId,
+          room_type: "ride_group"
+        });
+
+        if (chatRoom) throw new BadRequestError("Chat room already exists for this ride group");
+
+        const driver = await DriverRepository.findById(rideGroup.driver_id);
+
+        let participants = []
+
+        if (driver) {
+          participants.push({
+            user_id: driver.id,
+            user_type: "driver",
+            name: driver.name,
+            last_seen: null,
+          });
+        }
+
+        const parentGroups = await ParentGroupRepository.findAll({
+          where: {
+            group_id: rideGroupId,
+          },
+          include: [
+            { association: 'parent', attributes: ['name', 'id'] },
+            { association: 'group', attributes: ['id', 'group_name'] }
+          ]
+        })
+
+
+        if (parentGroups && parentGroups.length > 0) {
+          parentGroups.map(item => {
+            participants.push({
+              user_id: item.parent.id,
+              user_type: "parent",
+              name: item.parent.name,
+              last_seen: null,
+            });
+          })
+        }
+
+        chatRoom = await ChatRoom.create({
+          ride_group_id: rideGroupId,
+          room_type: "ride_group",
+          name: rideGroup.group_name,
+          participants,
+        }); 
+
+
+        return res.success("Chat room created successfully", chatRoom);
+      } catch (error) {
+        return next(error)
+      }
     },
 
     mergeRideGroups: async (req, res, next) => {

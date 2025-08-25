@@ -448,70 +448,79 @@ const RideGroupController = {
   createRideGroup: async (req, res, next) => {
     try {
       logger.debug("ride group creation attempt", { accountId: req.userId });
-
+  
       // Verify account exists and is verified
       const account = await AccountRepository.findById(req.userId);
       if (!account) {
         throw new NotFoundError("Account not found");
       }
-
+  
       if (!account.is_verified) {
         throw new ForbiddenError(
           "Account email must be verified before creating a profile"
         );
       }
-
+  
       // Check if parent profile already exists BEFORE processing files
       const parentProfile = await ParentRepository.findByAccountId(req.userId);
-
       if (!parentProfile) {
         throw new BadRequestError("Parent profile not exists for this account");
       }
-
-      // Generate a unique invite code for the group
+  
+      // Generate invite code if premium
       let inviteCode = "";
-      if (req.body.group_type === 'premium') {
+      if (req.body.group_type === "premium") {
         inviteCode = await RideGroupRepository.generateUniqueInviteCode();
       }
-
-      // check before creation if the distance can be calculated
+  
+      // Validate school
       const school = await SchoolRepository.findById(req.body.school_id);
-
       if (!school) {
         throw new NotFoundError("School not found");
       }
-
       if (!school.lat || !school.lng) {
         throw new BadRequestError("School location is not set");
       }
-      
-      const countGroupsInSchool = await RideGroupRepository.countRideGroupsBySchoolId(school.id);
+  
+      const countGroupsInSchool =
+        await RideGroupRepository.countRideGroupsBySchoolId(school.id);
+  
       const points = {
         lat_lng_house: [
-          parseFloat(req.body.home.home_lng),
-          parseFloat(req.body.home.home_lat),
+          parseFloat(req.body.home.home_lng), // lng first
+          parseFloat(req.body.home.home_lat), // lat second
         ],
         lat_lng_school: [
-          parseFloat(school.lng),
-          parseFloat(school.lat),
+          parseFloat(school.lng), // lng first
+          parseFloat(school.lat), // lat second
         ],
       };
-
+  
+      // calculate distance
       const dailyRideDistance = await openRouteUtil.getDistanceForRide(points);
-
-      if (isNaN(dailyRideDistance) || dailyRideDistance <= 0 || !dailyRideDistance) {
+  
+      if (!dailyRideDistance || isNaN(dailyRideDistance) || dailyRideDistance <= 0) {
         throw new BadRequestError("Invalid distance calculated for the ride");
       }
-
+  
+      // monthly distance check
       try {
-        const totalDays =  req.body.days.length || 0;
+        const totalDays = req.body.days.length || 0;
         const totalMonthlyDistance = dailyRideDistance * totalDays * 4;
         const pricePerKm = RIDE_PRICE_PER_KM(totalMonthlyDistance);
+  
+        if (totalMonthlyDistance > 1500) {
+          throw new BadRequestError(
+            "Distance is too large. You can't create a group with a distance that exceeds 1500km monthly"
+          );
+        }
       } catch (error) {
-        throw new BadRequestError("Distance is too large. You can't create a group with a distance that exceeds 1500km monthly");
+        throw new BadRequestError(
+          "Distance is too large. You can't create a group with a distance that exceeds 1500km monthly"
+        );
       }
-
-      // create a new ride group
+  
+      // create payload
       const payload = {
         rideGroupPayload: {
           parent_creator_id: parentProfile.id,
@@ -519,8 +528,8 @@ const RideGroupController = {
           school_id: req.body.school_id,
           current_seats_taken: req.body.children.length || 0,
           invite_code: inviteCode || null,
-          group_type: req.body.group_type || 'regular', // Default to 'regular' if not provided
-          status: "new"
+          group_type: req.body.group_type || "regular",
+          status: "new",
         },
         parentGroupPayload: {
           parent_id: parentProfile.id,
@@ -538,12 +547,11 @@ const RideGroupController = {
           status: "new",
         },
       };
-
+  
       const rideGroup = await RideGroupRepository.createNewRideGroup(payload);
-
+  
       logger.debug("A new ride group is created successfully");
-
-      // Return success with parent profile
+  
       return res.success("A new ride group has been created successfully", {
         rideGroup: rideGroup.dataValues || rideGroup,
       });

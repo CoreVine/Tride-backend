@@ -122,8 +122,43 @@ groupRouter.get('/manage/ride/groups/:rideGroupId',
       rideGroupId: Yup.string().required()
     })
   }),
-  isAdminWithPermissions([{type: "group", value: "Payments"}]), 
   rideGroupController.getRideGroupDetails);
+
+groupRouter.get('/manage/ride/groups/:rideGroupId/instances',
+  authMiddleware,
+  validate({
+    params: Yup.object().shape({
+      rideGroupId: Yup.string().required()
+    })
+  }),
+  rideGroupController.getRideGroupInstances);
+
+groupRouter.get('/manage/ride/groups/:rideGroupId/instances/:instanceId',
+  authMiddleware,
+  validate({
+    params: Yup.object().shape({
+      rideGroupId: Yup.string().required()
+    })
+  }),
+  rideGroupController.getRideGroupInstanceDetails);
+
+groupRouter.get('/manage/ride/groups/:rideGroupId/chat',
+  authMiddleware,
+  validate({
+    params: Yup.object().shape({
+      rideGroupId: Yup.string().required()
+    })
+  }),
+  rideGroupController.getRideGroupChat);
+
+groupRouter.post('/manage/ride/groups/:rideGroupId/chat',
+  authMiddleware,
+  validate({
+    params: Yup.object().shape({
+      rideGroupId: Yup.string().required()
+    })
+  }),
+  rideGroupController.createRideGroupChat);
   
 groupRouter.patch('/manage/ride/groups/:rideGroupId/assign-driver',
 authMiddleware,
