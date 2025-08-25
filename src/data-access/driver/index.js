@@ -91,6 +91,28 @@ class DriverRepository extends BaseRepository {
 
     return { count, rows }
   }
+
+  async getDriverPayments (driverId, page = 1, limit = 10) {
+    const offset = (page - 1) * limit
+
+    try {
+      const data = await this.model.findByPk(driverId, {
+        include: [
+          {
+            association: "payments",
+            attributes: { exclude: ["created_at", "updated_at"] },
+            limit,
+            offset
+          }
+        ],
+        distinct: true
+      })
+
+      return data
+    } catch (error) {
+      throw new DatabaseError(error)
+    }
+  }
 }
 
 module.exports = new DriverRepository()

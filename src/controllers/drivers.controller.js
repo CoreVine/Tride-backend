@@ -1,7 +1,7 @@
 const driverRepository = require("../data-access/driver")
 const driverPapersRepository = require("../data-access/driverPapers")
 
-const { NotFoundError } = require("../utils/errors/types/Api.error")
+const { NotFoundError, BadRequestError } = require("../utils/errors/types/Api.error")
 const { createPagination } = require("../utils/responseHandler")
 
 const { Op } = require("sequelize")
@@ -97,6 +97,19 @@ const driversController = {
       const updatedPapers = await driverPapersRepository.updateApprovalStatus(paper.id, approved, approved ? new Date() : null)
 
       return res.success("Driver papers status updated successfully", { papers: paper })
+    } catch (error) {
+      return next(error)
+    }
+  },
+
+  getDriverPayments: async (req, res, next) => {
+    try {
+      const { driverId, page = 1 } = req.params
+      if (isNaN(+page)) throw new BadRequestError("Page must be a number")
+
+      const payments = await driverRepository.getDriverPayments(driverId, Number(page))
+
+      return res.success("Driver payments retrieved successfully", { payments })
     } catch (error) {
       return next(error)
     }
