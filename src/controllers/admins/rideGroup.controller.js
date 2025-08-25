@@ -123,6 +123,34 @@ const rideGroupController = {
       }
     },
 
+    getSingleParentGroupForAdmin: async (req, res, next) => {
+      try {
+        const { rideGroupId, parentId } = req.params;
+        
+        const rideGroup = await RideGroupRepository.findById(rideGroupId);
+        if (!rideGroup) throw new NotFoundError("Ride group not found");
+
+        const data = await ParentGroupRepository.findAll({
+          where: {
+            group_id: rideGroupId,
+          },
+          include: [
+            { association: 'group' },
+            { association: 'parent' }
+          ]
+        });
+
+        return res.success("parents groups fetched successfully", data);
+        
+      } catch (error) {
+        logger.error("Error fetching parent grooups", {
+          error: error.message,
+          stack: error.stack,
+        });
+        return next(error);
+      }
+    },
+
     getGroupSubscriptionOfParentFromAdmin: async (req, res, next) => {
       try {
         const { rideGroupId, parentId } = req.params;

@@ -7,17 +7,37 @@ const AccountRepository = require("../../data-access/accounts");
 const chatController = {
   getChatRooms: async (req, res, next) => {
     try {
-      const { page = 1, limit = 10 } = req.query;
-
-      // Fetch chat rooms based on user type
-      const chatRooms = await ChatRoom.find({
-        room_type: "ride_group",
-      })
-      .sort({ updated_at: -1, created_at: -1 })
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit));
-
-      return res.success("Chat rooms retrieved successfully", {data: chatRooms});
+      const { page = 1, limit = 10, name = "" } = req.query;
+  
+      // Build name filter
+      let filter = { room_type: "ride_group" };
+  
+      if (name && name.trim() !== "") {
+        const regex = new RegExp(name, "i"); // case-insensitive
+        filter.$or = [
+          { name: regex },
+          { "participants.name": regex }
+        ];
+      }
+  
+      // Fetch chat rooms with pagination + name
+      const chatRooms = await ChatRoom.find(filter)
+        .sort({ updated_at: -1, created_at: -1 })
+        .skip((page - 1) * parseInt(limit))
+        .limit(parseInt(limit));
+  
+      // Get total count for pagination (useful for frontend)
+      const totalCount = await ChatRoom.countDocuments(filter);
+  
+      return res.success("Chat rooms retrieved successfully", {
+        data: chatRooms,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+        },
+      });
     } catch (error) {
       console.error("Error getting chat rooms:", error);
       return next(error);

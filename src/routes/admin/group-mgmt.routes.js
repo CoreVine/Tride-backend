@@ -19,7 +19,7 @@ const getRideGroupsSchema = Yup.object().shape({
 });
 
 const updateParentGroupStatusSchema = Yup.object().shape({
-  status: Yup.string().oneOf(['new', 'active', 'inactive', 'removed', 'expired', 'pending']).required()
+  status: Yup.string().oneOf(['new', 'active', 'inactive', 'ready', 'removed', 'expired', 'pending']).required()
 });
 const updateParentGroupSubscriptionStatusSchema = Yup.object().shape({
   status: Yup.string().oneOf(['new', 'pending', 'paid', 'expired']).required()
