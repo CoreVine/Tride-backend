@@ -390,19 +390,15 @@ const RideGroupController = {
   getRideGroupById: async (req, res, next) => {
     const { rideGroupId } = req.params;
     try {
-      if (!req.account.is_verified || !req.account.parent) {
-        throw new ForbiddenError(
-          "Account email must be verified before creating a group"
-        );
-      }
-
-      const rideGroup = await RideGroupRepository.findByIdIfParent(
-        req.account.parent.id,
-        rideGroupId
+      // Check if the user has access to this ride group based on their account type
+      const rideGroup = await RideGroupRepository.findIfAccountIdInsideGroup(
+        rideGroupId,
+        req.userId,
+        req.accountType
       );
 
       if (!rideGroup) {
-        throw new NotFoundError("Ride group not found");
+        throw new NotFoundError("Ride group not found or you don't have access to it");
       }
 
       // Get all details for a ride group
@@ -417,7 +413,7 @@ const RideGroupController = {
         error: error.message,
         stack: error.stack,
       });
-      return next(new NotFoundError("Ride group not found"));
+      return next(error);
     }
   },
 
