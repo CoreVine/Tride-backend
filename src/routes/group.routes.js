@@ -108,7 +108,7 @@ groupRoutes.put('/ride/group/parent-group/:parentGroupId/status',
   isParent,
   RideGroupController.updateParentGroupStatus
 );
-groupRoutes.get('/ride/group/:rideGroupId', authMiddleware, isParent, RideGroupController.getRideGroupById); //send stats
+groupRoutes.get('/ride/group/:rideGroupId', authMiddleware, RideGroupController.getRideGroupById); //send stats
 groupRoutes.get('/ride/groups/by-parent', authMiddleware, isParent, arePapersVerified, RideGroupController.getRideGroupsByParentId);
 groupRoutes.post('/ride/group/create',
   isParent,
