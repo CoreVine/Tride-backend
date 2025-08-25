@@ -9,6 +9,8 @@ const RideInstanceLocationRepository = require("../../data-access/rideInstanceLo
 const DriverRepository = require("../../data-access/driver");
 const RideGroupRepository = require("../../data-access/rideGroup");
 const ParentGroupRepository = require("../../data-access/parentGroup");
+const ParentRepository = require("../../data-access/parent");
+const ParentGroupSubscriptionRepository = require("../../data-access/parentGroupSubscription");
 const ChildrenGroupDetailsRepository = require("../../data-access/childGroupDetails");
 const loggingService = require("../../services/logging.service");
 const SchoolRepository = require("../../data-access/school");
@@ -86,6 +88,133 @@ const rideGroupController = {
         
       } catch (error) {
         logger.error("Error fetching ride group instances", {
+          error: error.message,
+          stack: error.stack,
+        });
+        return next(error);
+      }
+    },
+
+    getParentGroupsOfRideGroup: async (req, res, next) => {
+      try {
+        const { rideGroupId } = req.params;
+        
+        const rideGroup = await RideGroupRepository.findById(rideGroupId);
+        if (!rideGroup) throw new NotFoundError("Ride group not found");
+
+        const data = await ParentGroupRepository.findAll({
+          where: {
+            group_id: rideGroupId,
+          },
+          include: [
+            { association: 'group' },
+            { association: 'parent' }
+          ]
+        });
+
+        return res.success("parents groups fetched successfully", data);
+        
+      } catch (error) {
+        logger.error("Error fetching parent grooups", {
+          error: error.message,
+          stack: error.stack,
+        });
+        return next(error);
+      }
+    },
+
+    getGroupSubscriptionOfParentFromAdmin: async (req, res, next) => {
+      try {
+        const { rideGroupId, parentId } = req.params;
+        
+        const rideGroup = await RideGroupRepository.findById(rideGroupId);
+        if (!rideGroup) throw new NotFoundError("Ride group not found");
+
+        const parent = await ParentRepository.findById(parentId);
+        if (!parent) throw new NotFoundError("Parent not found");
+
+        const data = await ParentGroupSubscriptionRepository.findOne({
+          where: {
+            ride_group_id: rideGroupId,
+            parent_id: parentId
+          },
+          include: [
+            { association: 'rideGroup', include: [{ association: 'school' }] },
+            { association: 'parent' },
+            { association: 'plan' }
+          ]
+        });
+
+        return res.success("parents groups fetched successfully", data);
+        
+      } catch (error) {
+        logger.error("Error fetching parent grooups", {
+          error: error.message,
+          stack: error.stack,
+        });
+        return next(error);
+      }
+    },
+
+    updateParentGroupStatusFromAdmin: async (req, res, next) => {
+      try {
+        const { rideGroupId, parentId } = req.params;
+        
+        const rideGroup = await RideGroupRepository.findById(rideGroupId);
+        if (!rideGroup) throw new NotFoundError("Ride group not found");
+
+        const parent = await ParentRepository.findById(parentId);
+        if (!parent) throw new NotFoundError("Parent not found");
+
+        const data = await ParentGroupRepository.findOne({
+          where: {
+            group_id: rideGroupId,
+            parent_id: parentId
+          }
+        });
+        if (!data) throw new NotFoundError("Parent group not found");
+
+        await ParentGroupRepository.update(data.id, {
+          status: req.body.status
+        });
+
+        return res.success("Parent Group Status Updated Successfully", data);
+        
+      } catch (error) {
+        logger.error("Error fetching parent grooups", {
+          error: error.message,
+          stack: error.stack,
+        });
+        return next(error);
+      }
+    },
+
+    updateParentGroupSubscriptionStatus: async (req, res, next) => {
+      try {
+        const { rideGroupId, parentId } = req.params;
+        
+        const rideGroup = await RideGroupRepository.findById(rideGroupId);
+        if (!rideGroup) throw new NotFoundError("Ride group not found");
+
+        const parent = await ParentRepository.findById(parentId);
+        if (!parent) throw new NotFoundError("Parent not found");
+
+        const data = await ParentGroupSubscriptionRepository.findOne({
+          where: {
+            ride_group_id: rideGroupId,
+            parent_id: parentId
+          }
+        });
+        if (!data) throw new NotFoundError("No subscription was found");
+
+        await ParentGroupSubscriptionRepository.update(data.id, {
+          status: req.body.status
+        });
+
+        return res.success("Subscription updated successfully", data);
+        
+      } catch (error) {
+        logger.error("Error fetching parent grooups", {
           error: error.message,
           stack: error.stack,
         });

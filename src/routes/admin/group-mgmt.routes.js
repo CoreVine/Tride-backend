@@ -18,6 +18,13 @@ const getRideGroupsSchema = Yup.object().shape({
   seats: Yup.number().integer().optional()
 });
 
+const updateParentGroupStatusSchema = Yup.object().shape({
+  status: Yup.string().oneOf(['new', 'active', 'inactive', 'removed', 'expired', 'pending']).required()
+});
+const updateParentGroupSubscriptionStatusSchema = Yup.object().shape({
+  status: Yup.string().oneOf(['new', 'pending', 'paid', 'expired']).required()
+});
+
 const createGroupSchema = Yup.object().shape({
   school_id: Yup.string().required(),
   parent_id: Yup.string().required(),
@@ -159,9 +166,55 @@ groupRouter.post('/manage/ride/groups/:rideGroupId/chat',
     })
   }),
   rideGroupController.createRideGroupChat);
+
+groupRouter.get('/manage/ride/groups/:rideGroupId/parent-groups',
+  authMiddleware,
+  isAdmin,
+  validate({
+    params: Yup.object().shape({
+      rideGroupId: Yup.string().required()
+    })
+  }),
+  rideGroupController.getParentGroupsOfRideGroup);
+
+groupRouter.get('/manage/ride/groups/:rideGroupId/parent-groups/:parentId/subscription',
+  authMiddleware,
+  isAdmin,
+  validate({
+    params: Yup.object().shape({
+      rideGroupId: Yup.string().required(),
+      parentId: Yup.string().required(),
+    }),
+  }),
+  rideGroupController.getGroupSubscriptionOfParentFromAdmin);
+
+groupRouter.patch('/manage/ride/groups/:rideGroupId/parent-groups/:parentId',
+  authMiddleware,
+  validate({
+    params: Yup.object().shape({
+      rideGroupId: Yup.string().required(),
+      parentId: Yup.string().required(),
+    }),
+    body: updateParentGroupStatusSchema
+  }),
+
+rideGroupController.updateParentGroupStatusFromAdmin);
+  
+groupRouter.patch('/manage/ride/groups/:rideGroupId/parent-groups/:parentId/subscription',
+  authMiddleware,
+  validate({
+    params: Yup.object().shape({
+      rideGroupId: Yup.string().required(),
+      parentId: Yup.string().required(),
+    }),
+    body: updateParentGroupSubscriptionStatusSchema
+  }),
+
+rideGroupController.updateParentGroupSubscriptionStatus);
   
 groupRouter.patch('/manage/ride/groups/:rideGroupId/assign-driver',
 authMiddleware,
+isAdmin,
 validate({
   params: Yup.object().shape({
     rideGroupId: Yup.string().required()
@@ -170,7 +223,6 @@ validate({
     driverId: Yup.number().required()
   }) 
 }),
-isAdmin, 
 rideGroupController.assignDriverToRideGroup);
 
 groupRouter.post('/manage/ride/parent-groups/manage-children',
