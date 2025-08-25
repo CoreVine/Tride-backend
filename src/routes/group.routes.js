@@ -13,35 +13,39 @@ const groupRoutes = Router();
 const createGroupSchema = Yup.object().shape({
   school_id: Yup.string().required(),
   home: Yup.object().shape({
-    home_lat: Yup.string().required(),
-    home_lng: Yup.string().required(),
+    home_lat: Yup.number().required(),
+    home_lng: Yup.number().required(),
   }),
-  children: Yup.array().of(Yup.object().shape({
-    child_id: Yup.string().required(),
-    timing_from: Yup.string().required(),
-    timing_to: Yup.string().required()
-  }))
-  .test(
-    'unique-children',
-    'Duplicate children are not allowed',
-    (children) => {
-      if (!children) return true;
-      const childIds = children.map(c => c.child_id);
-      return childIds.length === new Set(childIds).size;
-    }
-  ),
-  days: Yup.array().of(Yup.string().required())
-    .min(1).max(6).required()
+  children: Yup.array()
+    .of(
+      Yup.object().shape({
+        child_id: Yup.string().required(),
+        timing_from: Yup.string().required(),
+        timing_to: Yup.string().required(),
+      })
+    )
     .test(
-      'unique-days',
-      'Duplicate days are not allowed',
-      (days) => {
-        if (!days) return true;
-        return days.length === new Set(days).size;
+      "unique-children",
+      "Duplicate children are not allowed",
+      (children) => {
+        if (!children) return true;
+        const childIds = children.map((c) => c.child_id);
+        return childIds.length === new Set(childIds).size;
       }
     ),
-  group_type: Yup.string().oneOf(['regular', 'premium']).default('regular')
+  days: Yup.array()
+    .of(Yup.string().required())
+    .min(1)
+    .max(6)
     .required()
+    .test("unique-days", "Duplicate days are not allowed", (days) => {
+      if (!days) return true;
+      return days.length === new Set(days).size;
+    }),
+  group_type: Yup.string()
+    .oneOf(["regular", "premium"])
+    .default("regular")
+    .required(),
 });
 
 const paramsOrderId = {
