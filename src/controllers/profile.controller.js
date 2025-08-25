@@ -71,8 +71,8 @@ const profileController = {
         gender: req.body.gender,
         city_id: req.body.city_id,
         google_place_id: req.body.google_place_id || null,
-        lat: req.body.lat || null,
-        lng: req.body.lng || null,
+        lat: Number(req.body.lat) || null,
+        lng: Number(req.body.lng) || null,
         formatted_address: req.body.formatted_address || null,
         profile_pic: profilePicUrl,
       });
