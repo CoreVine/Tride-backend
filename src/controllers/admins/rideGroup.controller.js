@@ -570,7 +570,7 @@ const rideGroupController = {
         const payload = {
           rideGroupPayload: {
             parent_creator_id: req.body.parent_id,
-            group_name: `${school.school_name} - #${countGroupsInSchool + 1 || 1}`,
+            group_name: `${school.school_name} - #${countGroupsInSchool + 1 || 1} - ${Math.floor(1000 + Math.random() * 9999999)}`,
             school_id: req.body.school_id,
             current_seats_taken: req.body.children.length || 0,
             invite_code: inviteCode || null,
