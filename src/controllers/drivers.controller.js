@@ -105,10 +105,12 @@ const driversController = {
 
   getDriverPayments: async (req, res, next) => {
     try {
-      const { driverId, page = 1 } = req.params
-      if (isNaN(+page)) throw new BadRequestError("Page must be a number")
+      const driverId = req.account.driver.id
+      const driver = await driverRepository.findById(driverId)
 
-      const payments = await driverPaymentsRepository.findAllByDriverId(driverId, Number(page))
+      if (!driver) throw new NotFoundError("Driver not found")
+
+      const payments = await driverPaymentsRepository.findAllByDriverId(driverId)
 
       return res.success("Driver payments retrieved successfully", payments)
     } catch (error) {
