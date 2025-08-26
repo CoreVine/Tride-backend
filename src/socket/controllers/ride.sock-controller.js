@@ -594,9 +594,9 @@ const driverEndActiveRide = async (socket) => {
             ride_instance_id: rideInstance.id
         });
 
-        if (rideHistoriesCount !== Object.keys(order).length)
+/*         if (rideHistoriesCount !== Object.keys(order).length)
             return socket.emit("ack", { type: "DRIVER_END_ERROR", message: "Confirm all checkpoints before finishing the ride!", data: null });
-
+ */
         await RideInstanceRepository.finishRide(rideInstance.id);
 
         await redisService.flushRideInstance(rideInstance.id, socket.rideRoomId);
