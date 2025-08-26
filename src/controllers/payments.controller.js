@@ -37,7 +37,7 @@ const paymentsController = {
             // Logic to fetch payment by ID
             const payment = await parentGroupSubscriptionRepository.findByIdDetailed(id);
             if (!payment) {
-                return res.notFound("Payment not found");
+                throw new NotFoundError("Payment not found");
             }
 
             res.success("Payment retrieved successfully", { payment });
@@ -53,7 +53,7 @@ const paymentsController = {
             const { count, rows: payments } = await parentGroupSubscriptionRepository.findAllInRange(from, to);
 
             if (count === 0) {
-                return res.success("No payments found for the specified range", { payments: [] });
+                throw new NotFoundError("No payments found in the specified date range");
             }
 
             // Export payments to Excel
@@ -109,14 +109,23 @@ const paymentsController = {
                 planDetails,
             });
 
+            if (data.default == false) {
+                if (!data.started_at || !data.valid_until) {
+                    throw new BadRequestError("started_at and valid_until are required when default is false");
+                }
+                if (new Date(data.valid_until) <= new Date(data.started_at)) {
+                    throw new BadRequestError("valid_until must be after started_at");
+                }
+            }
+
             const newSubscription = await parentGroupSubscriptionRepository.create({
                 parent_id: data.parent_id,
                 ride_group_id: data.ride_group_id,
                 plan_id: data.plan_id,
                 current_seats_taken: rideGroup.group_type === 'premium' ? MAX_SEATS_CAR : seatsTaken,
                 pickup_days_count: totalDays,
-                started_at: new Date(),
-                valid_until: new Date(new Date().setMonth(new Date().getMonth() + planDetails.months_count)),
+                started_at: data.default ? new Date() : new Date(data.started_at),
+                valid_until: data.default ? new Date(new Date().setMonth(new Date().getMonth() + planDetails.months_count)): new Date(data.valid_until),
                 remaining_time: 0,
                 total_amount: toPayPrice,
                 status: 'paid',

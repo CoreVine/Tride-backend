@@ -573,6 +573,51 @@ const driverCancelActiveRide = async (socket) => {
     }
 }
 
+const driverEndActiveRide = async (socket) => {
+    try {
+        if (socket.accountType !== "driver")
+            return socket.emit("ack", { type: "DRIVER_END_ERROR", message: "Unauthorized!", data: null });
+        if (!socket.rideRoomId || !socket.rideInstanceId)
+            return socket.emit("ack", { type: "DRIVER_END_ERROR", message: "You must join a ride first!", data: null });
+
+        const rideInstance = await RideInstanceRepository.findById(socket.rideInstanceId);
+        
+        if (!rideInstance)
+            return socket.emit("ack", { type: "DRIVER_END_ERROR", message: "No active ride found!", data: null });
+
+        const order = await redisService.getRideOrderForRideInstance(rideInstance.id);
+
+        if (!order || Object.keys(order).length === 0)
+            return socket.emit("ack", { type: "DRIVER_END_ERROR", message: "This ride instance has no checkpoints!", data: null });
+
+        const rideHistoriesCount = await RideHistoryRepository.count({
+            ride_instance_id: rideInstance.id
+        });
+
+        if (rideHistoriesCount !== Object.keys(order).length)
+            return socket.emit("ack", { type: "DRIVER_END_ERROR", message: "Confirm all checkpoints before finishing the ride!", data: null });
+
+        await RideInstanceRepository.finishRide(rideInstance.id);
+
+        await redisService.flushRideInstance(rideInstance.id, socket.rideRoomId);
+
+        socket.to(socket.rideRoomId).emit("location_update", {
+            type: "RIDE_COMPLETED",
+            message: "Driver has completed the ride",
+            data: {}
+        });
+
+        socket.leave(socket.rideRoomId);
+        socket.rideRoomId = null;
+        socket.rideInstanceId = null;
+
+        return socket.emit("ack", { type: "RIDE_END_SUCCESS", message: "Ride ended successfully", data: {} });
+    } catch (error) {
+        logger.warn(error);
+        return socket.emit("ack", { type: "DRIVER_END_ERROR", message: `ERROR: ${error.message || 'Unknown error'}`, data: null });
+    }
+}
+
 module.exports = {
     driverVerifyAndJoinRide,
     parentVerifyAndJoinRide,
@@ -580,5 +625,6 @@ module.exports = {
     confirmCheckPoint,
     adminVerifyAndJoinRide,
     driverCancelActiveRide,
-    adminVerifyAndViewAll
+    adminVerifyAndViewAll,
+    driverEndActiveRide
 };

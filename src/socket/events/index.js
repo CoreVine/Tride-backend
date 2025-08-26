@@ -23,6 +23,7 @@ function socketEventWrapper(socket, io) {
     socket.on("driver_location_update", async (location) => rideSocketController.relayLocationUpdates(socket, location));
     socket.on("driver_confirm_checkpoint", async (payload) => rideSocketController.confirmCheckPoint(socket, io, payload));
     socket.on("driver_cancel_ride", async (location) => rideSocketController.driverCancelActiveRide(socket));
+    socket.on("driver_end_ride", async (location) => rideSocketController.driverEndActiveRide(socket));
 }
 
 function setupConnection(io) {

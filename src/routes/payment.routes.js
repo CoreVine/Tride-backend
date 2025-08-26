@@ -19,13 +19,15 @@ const paymentSchema = {
 const createParentCashPaymentSchema = {
     ride_group_id: Yup.string().required(),
     parent_id: Yup.string().required(),
-    plan_id: Yup.string().required()
+    plan_id: Yup.string().required(),
+    started_at: Yup.date().optional(),
+    valid_until: Yup.date().optional(),
+    default: Yup.boolean().optional().default(false)
 };
 
 paymobPaymentRouter.post('/webhooks/paymob', paymentWebHookController.handlePaymobWebhook);
 paymobPaymentRouter.get('/payments', authMiddleware, isAdmin, paymentController.getAllPayments);
 paymobPaymentRouter.post('/payments/parents/create-cash', authMiddleware, isAdmin, validate(createParentCashPaymentSchema), paymentController.createParentCashPayment);
-paymobPaymentRouter.post('/payments/drivers/create-cash', authMiddleware, isAdmin, validate(createParentCashPaymentSchema), paymentController.createDriverCashPayment);
 paymobPaymentRouter.get('/payments/:id', authMiddleware, isAdmin, paymentController.getPaymentById);
 
 paymobPaymentRouter.get('/payments/export/all',
