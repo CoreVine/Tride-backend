@@ -515,11 +515,13 @@ const RideGroupController = {
         throw new BadRequestError("Distance is too large. You can't create a group with a distance that exceeds 1500km monthly");
       }
 
+      const randomInt = Math.floor(1000 + Math.random() * 99999999);
+
       // create a new ride group
       const payload = {
         rideGroupPayload: {
           parent_creator_id: parentProfile.id,
-          group_name: `${school.school_name} - #${countGroupsInSchool + 1 || 1}`,
+          group_name: `${school.school_name} - #${countGroupsInSchool + 1 || 1} - ${randomInt}`,
           school_id: req.body.school_id,
           current_seats_taken: req.body.children.length || 0,
           invite_code: inviteCode || null,
