@@ -1,62 +1,45 @@
-# docker-compose.yml
 version: "3.8"
 
 services:
   redis:
     image: redis:7
-    container_name: redis
+    container_name: tride_redis
     ports:
       - "6379:6379"
 
   mysql:
     image: mysql:8
-    container_name: mysql-db
+    container_name: tride_mysql
     ports:
       - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: mydb
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+    env_file:
+      - .env.mysql
+    volumes:
+      - mysql_data:/var/lib/mysql
 
-  mongo: # NEW SERVICE: MongoDB
+  mongo:
     image: mongo:latest
-    container_name: mongo-db
+    container_name: tride_mongo
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: root
-      MONGO_INITDB_DATABASE: simple_chat_db # Default database name
+    env_file:
+      - .env.mongo
     volumes:
-      - mongodb_data:/data/db # Persist MongoDB data
+      - mongodb_data:/data/db 
 
-  app:
+  backend:
     build:
       context: .
-    container_name: my-express-node-container
+    container_name: tride_backend
     ports:
-      - "3000:3000"
+      - "3010:3010"
     depends_on:
       - redis
       - mysql
-      - mongo # Add dependency on mongo
-    environment:
-      # MySQL
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: user
-      DB_PASSWORD: password
-      DB_NAME: mydb
-      # MongoDB
-      MONGO_URI: mongodb://root:root@mongo:27017/simple_chat_db?authSource=admin # Connection string for Docker Compose
-      # JWT Secret
-      JWT_SECRET: your_super_secure_jwt_secret # **IMPORTANT: Change this to a strong secret!**
-      # Redis (if used by your app)
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      # Set NODE_ENV for production-like behavior if needed
-      NODE_ENV: development 
+      - mongo
+    env_file:
+      - .env.backend
 
 volumes:
-  mongodb_data: # Define the volume for MongoDB persistence
+  mysql_data:
+  mongodb_data:

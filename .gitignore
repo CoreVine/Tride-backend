@@ -1,6 +1,10 @@
 node_modules
 .idea
 .env
+.env.production
+.env.mysql
+.env.backend
+.env.mongo
 .vscode
 logs
 uploads
@@ -8,3 +12,7 @@ todo*
 pnpm-lock.yaml
 src/config/keys/*
 test/*
+envfolders/
+/data
+/mysql_data
+/mongodb_data
