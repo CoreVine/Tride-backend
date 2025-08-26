@@ -1,5 +1,6 @@
 const driverRepository = require("../data-access/driver")
 const driverPapersRepository = require("../data-access/driverPapers")
+const driverPaymentsRepository = require("../data-access/driverPayment")
 
 const { NotFoundError, BadRequestError } = require("../utils/errors/types/Api.error")
 const { createPagination } = require("../utils/responseHandler")
@@ -107,9 +108,9 @@ const driversController = {
       const { driverId, page = 1 } = req.params
       if (isNaN(+page)) throw new BadRequestError("Page must be a number")
 
-      const payments = await driverRepository.getDriverPayments(driverId, Number(page))
+      const payments = await driverPaymentsRepository.findAllByDriverId(driverId, Number(page))
 
-      return res.success("Driver payments retrieved successfully", { payments })
+      return res.success("Driver payments retrieved successfully", payments)
     } catch (error) {
       return next(error)
     }

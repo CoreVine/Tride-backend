@@ -13,7 +13,11 @@ class DriverPayment extends Model {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
       },
-
+      status:  {
+        type: DataTypes.ENUM('pending', 'paid'),
+        allowNull: false,
+        defaultValue: 'pending'
+      },
       driver_id: {
         type: DataTypes.INTEGER.UNSIGNED,
         allowNull: false,
