@@ -14,50 +14,30 @@ const { CHECKPOINT_RADIUS } = require("../../utils/constants/ride");
 
 const driverVerifyAndJoinRide = async (socket, payload) => { 
     try {
-        logger.info("🔥 SOCKET: driverVerifyAndJoinRide called", { payload, socketId: socket.id });
-        
-        if (socket.rideRoomId && socket.rideInstanceId) {
-            logger.info("🔥 SOCKET: Driver already joined ride", { rideRoomId: socket.rideRoomId });
+        if (socket.rideRoomId && socket.rideInstanceId)
             return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "ALREADY JOINED RIDE", data: null });
-        }
 
-        logger.info("🔥 SOCKET: Parsing payload");
         const jsonPayload = typeof payload === 'string' ? JSON.parse(payload) : payload || {};
-        logger.info("🔥 SOCKET: Payload parsed", { jsonPayload });
         
-        if (!jsonPayload.ride_group_id) {
-            logger.info("🔥 SOCKET: Missing ride_group_id");
+        if (!jsonPayload.ride_group_id)
             return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "BAD REQUEST, MISSING ride_group_id!", data: null });
-        }
-        if (socket.accountType !== "driver") {
-            logger.info("🔥 SOCKET: Not driver account", { accountType: socket.accountType });
+        if (socket.accountType !== "driver")
             return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "Unauthorized!", data: null });
-        }
-        if (!jsonPayload.location?.lat || !jsonPayload.location?.lng) {
-            logger.info("🔥 SOCKET: Invalid location");
+        if (!jsonPayload.location?.lat || !jsonPayload.location?.lng)
             return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "Invalid location is set!", data: null });
-        }
 
-        logger.info("🔥 SOCKET: All validations passed, finding ride instance");
         const { ride_group_id, location } = jsonPayload;
     
         const rideInstance = await RideInstanceRepository.findActiveInstanceByRideGroupAndDriver(ride_group_id, socket.driver.id);
-        logger.info("🔥 SOCKET: Ride instance found", { rideInstance: rideInstance ? rideInstance.id : null });
 
-        if (!rideInstance) {
-            logger.info("🔥 SOCKET: No ride instance found");
+        if (!rideInstance)
             return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "NO ACTIVE INSTANCES, CREATE ONE FIRST!", data: null });
-        }
 
-        logger.info("🔥 SOCKET: Creating UID and getting Redis order");
         const uid = `driver:${rideInstance.driver_id}:${rideInstance.group_id}:${rideInstance.id}`;
         let order = await redisService.getRideOrderForRideInstance(rideInstance.id);
-        logger.info("🔥 SOCKET: Redis order retrieved", { hasOrder: Object.keys(order).length > 0 });
 
         if (!Object.keys(order).length) {
-            logger.info("🔥 SOCKET: No existing order, fetching locations");
             const locations = await RideGroupRepository.getAllLocationsById(rideInstance.group_id);
-            logger.info("🔥 SOCKET: Locations fetched", { hasLocations: !!locations });
     
             if (!locations || !locations.parentGroups || !locations.school)
                 return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "BAD REQUEST, THIS DRIVER HAS NO LOCATIONS!", data: null });
@@ -71,18 +51,21 @@ const driverVerifyAndJoinRide = async (socket, payload) => {
                 };
             });
             
-            logger.info("🔥 SOCKET: About to call getOptimizedRouteWithSteps - THIS MIGHT HANG");
             order = await getOptimizedRouteWithSteps({
                 ...location,
                 id: socket.driver.id
             }, parentsLocations, locations.school, rideInstance.type);
-            logger.info("🔥 SOCKET: Route optimization completed successfully");
 
             // driver location is a finished checkpoint already
             order[0].status = "done";
 
             // Check if this ride instance has existing history (Redis data loss scenario)
-            const existingHistory = await RideHistoryRepository.findAllByRideInstanceId(rideInstance.id);
+            let existingHistory = [];
+            try {
+                existingHistory = await RideHistoryRepository.findAllByRideInstanceId(rideInstance.id);
+            } catch (historyError) {
+                logger.warn("Could not retrieve existing history (likely missing type column), continuing without history reconstruction", { error: historyError.message });
+            }
             
             if (existingHistory && existingHistory.length > 0) {
                 // Reconstruct order status based on ride history
@@ -152,10 +135,9 @@ const driverVerifyAndJoinRide = async (socket, payload) => {
             }
         });
     
-        logger.info("🔥 SOCKET: About to send success response");
         return socket.emit("ack", { type: "DRIVER_JOIN_SUCCESS", message: "Driver successfully joined ride", data: { uid, order, direction: rideInstance.type } });
     } catch (error) {
-        logger.error("🔥 SOCKET: Error in driverVerifyAndJoinRide", error);
+        logger.error("Error in driverVerifyAndJoinRide", error);
         return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "ERROR!", data: null });
     }
 }
