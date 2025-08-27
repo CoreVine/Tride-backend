@@ -41,9 +41,9 @@ const rideController = {
                 throw new BadRequestError(`You have ${driverActiveRides.length} active ride(s) in other groups. Please complete them before starting a new ride.`);
             }
 
-            if (rideGroup.current_seats_taken !== MAX_SEATS_CAR) {
-                throw new BadRequestError(`Cannot start a ride on a group that is not ${MAX_SEATS_CAR} members!`);
-            }
+            // if (rideGroup.current_seats_taken !== MAX_SEATS_CAR) {
+            //     throw new BadRequestError(`Cannot start a ride on a group that is not ${MAX_SEATS_CAR} members!`);
+            // }
 
             // create a new ride instance
             const newRideInstance = await RideInstanceRepository.create({
