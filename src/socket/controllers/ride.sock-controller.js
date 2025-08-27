@@ -451,12 +451,24 @@ const confirmCheckPoint = async (socket, io, payload) => {
         let isRideComplete = false;
 
         if (current_index + 1 === Object.keys(order).length) {
-            const rideHistoriesCount = await RideHistoryRepository.count({
-                ride_instance_id: rideInstance.id
-            });
+            // Check if all previous checkpoints are marked as "done" in Redis (more reliable than DB count)
+            const allPreviousCheckpoints = Object.keys(order)
+                .map(index => parseInt(index))
+                .filter(index => index < current_index);
+            
+            const unconfirmedCheckpoints = allPreviousCheckpoints.filter(index => 
+                order[index].status !== "done"
+            );
 
-            if (rideHistoriesCount !== Object.keys(order).length - 1)
+            if (unconfirmedCheckpoints.length > 0) {
+                logger.warn(`🔍 CHECKPOINT CONFIRM: Unconfirmed checkpoints found`, {
+                    service: "api",
+                    unconfirmedCheckpoints,
+                    currentIndex: current_index,
+                    allCheckpoints: Object.keys(order).map(i => ({ index: i, status: order[i].status }))
+                });
                 return { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: CONFIRM ALL CHECKPOINTS BEFORE FINISHING THE RIDE!", data: null };
+            }
 
             status = `Finished: ${currentCheckpoint.type}`;
             isRideComplete = true;
