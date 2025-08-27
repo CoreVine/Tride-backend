@@ -41,17 +41,31 @@ class RideInstanceRepository extends BaseRepository {
           }
         );
         const newRideStart = rideInstance.type === "to_school" ? "deliver the children to school" : "pickup children from school";
-        await RideHistoryRepository.create(
-          {
-            lat: currentLocation.lat,
-            lng: currentLocation.lng,
-            issued_at: new Date().toISOString().slice(0, 10),
-            type: "garage",
-            status: `Started trip: ${newRideStart}`,
-            ride_instance_id: rideInstance.id
-          },
-          { transaction }
-        );
+        
+        // Create ride history record - handle missing 'type' column gracefully
+        const historyData = {
+          lat: currentLocation.lat,
+          lng: currentLocation.lng,
+          issued_at: new Date().toISOString().slice(0, 10),
+          status: `Started trip: ${newRideStart}`,
+          ride_instance_id: rideInstance.id
+        };
+        
+        try {
+          // Try with type column first (for when migration is applied)
+          await RideHistoryRepository.create(
+            { ...historyData, type: "garage" },
+            { transaction }
+          );
+        } catch (error) {
+          if (error.message.includes("Unknown column 'type'") || error.message.includes("Unknown column 'RideHistory.type'")) {
+            // Fallback: create without type column
+            logger.warn("Creating ride history without type column (missing in database schema)");
+            await RideHistoryRepository.create(historyData, { transaction });
+          } else {
+            throw error; // Re-throw if it's a different error
+          }
+        }
 
         await transaction.commit();
       } catch (error) {

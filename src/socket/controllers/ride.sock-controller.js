@@ -413,13 +413,28 @@ const confirmCheckPoint = async (socket, io, payload) => {
             lat: location.lat,
             lng: location.lng,
             issued_at: new Date().toISOString().slice(0, 10),
-            type: currentCheckpoint.type,
             status,
             ride_instance_id: rideInstance.id
         };
 
         const childrenToRecord = ["school", "child"].includes(currentCheckpoint.type) ? children_ids : [];
-        await RideHistoryRepository.createWithChildren(rideHistoryData, childrenToRecord);
+        
+        // Handle missing 'type' column gracefully
+        try {
+            // Try with type column first (for when migration is applied)
+            await RideHistoryRepository.createWithChildren({
+                ...rideHistoryData,
+                type: currentCheckpoint.type
+            }, childrenToRecord);
+        } catch (error) {
+            if (error.message.includes("Unknown column 'type'") || error.message.includes("Unknown column 'RideHistory.type'")) {
+                // Fallback: create without type column
+                logger.warn("Creating ride history without type column (missing in database schema)");
+                await RideHistoryRepository.createWithChildren(rideHistoryData, childrenToRecord);
+            } else {
+                throw error; // Re-throw if it's a different error
+            }
+        }
 
         const newCheckpoint = {
            ...order[current_index],
