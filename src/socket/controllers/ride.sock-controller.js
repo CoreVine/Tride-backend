@@ -14,34 +14,70 @@ const { CHECKPOINT_RADIUS } = require("../../utils/constants/ride");
 
 const driverVerifyAndJoinRide = async (socket, payload) => { 
     try {
-        if (socket.rideRoomId && socket.rideInstanceId)
-            return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "ALREADY JOINED RIDE", data: null });
+        logger.info(`🚀 HANDLER: driverVerifyAndJoinRide started`, { 
+            service: "api",
+            socketId: socket.id, 
+            userId: socket.userId,
+            driverId: socket.driver?.id,
+            payload: payload
+        });
 
+        if (socket.rideRoomId && socket.rideInstanceId) {
+            logger.warn(`🔒 HANDLER: Driver already joined ride`, { 
+                service: "api",
+                socketId: socket.id, 
+                rideRoomId: socket.rideRoomId,
+                rideInstanceId: socket.rideInstanceId
+            });
+            return { type: "DRIVER_JOIN_ERROR", message: "ALREADY JOINED RIDE", data: null };
+        }
+
+        logger.info(`🔍 HANDLER: Parsing payload`, { service: "api", payload: payload });
         const jsonPayload = typeof payload === 'string' ? JSON.parse(payload) : payload || {};
+        logger.info(`✅ HANDLER: Payload parsed successfully`, { service: "api", jsonPayload: jsonPayload });
         
-        if (!jsonPayload.ride_group_id)
-            return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "BAD REQUEST, MISSING ride_group_id!", data: null });
-        if (socket.accountType !== "driver")
-            return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "Unauthorized!", data: null });
-        if (!jsonPayload.location?.lat || !jsonPayload.location?.lng)
-            return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "Invalid location is set!", data: null });
+        if (!jsonPayload.ride_group_id) {
+            logger.warn(`❌ HANDLER: Missing ride_group_id`, { service: "api", jsonPayload: jsonPayload });
+            return { type: "DRIVER_JOIN_ERROR", message: "BAD REQUEST, MISSING ride_group_id!", data: null };
+        }
+        if (socket.accountType !== "driver") {
+            logger.warn(`❌ HANDLER: Unauthorized account type`, { service: "api", accountType: socket.accountType });
+            return { type: "DRIVER_JOIN_ERROR", message: "Unauthorized!", data: null };
+        }
+        if (!jsonPayload.location?.lat || !jsonPayload.location?.lng) {
+            logger.warn(`❌ HANDLER: Invalid location`, { service: "api", location: jsonPayload.location });
+            return { type: "DRIVER_JOIN_ERROR", message: "Invalid location is set!", data: null };
+        }
 
+        logger.info(`✅ HANDLER: All validations passed`, { service: "api" });
         const { ride_group_id, location } = jsonPayload;
     
+        logger.info(`🔍 HANDLER: Finding active ride instance`, { service: "api", ride_group_id, driverId: socket.driver.id });
         const rideInstance = await RideInstanceRepository.findActiveInstanceByRideGroupAndDriver(ride_group_id, socket.driver.id);
 
-        if (!rideInstance)
-            return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "NO ACTIVE INSTANCES, CREATE ONE FIRST!", data: null });
+        if (!rideInstance) {
+            logger.warn(`❌ HANDLER: No active ride instance found`, { service: "api", ride_group_id, driverId: socket.driver.id });
+            return { type: "DRIVER_JOIN_ERROR", message: "NO ACTIVE INSTANCES, CREATE ONE FIRST!", data: null };
+        }
+
+        logger.info(`✅ HANDLER: Ride instance found`, { service: "api", rideInstanceId: rideInstance.id });
 
         const uid = `driver:${rideInstance.driver_id}:${rideInstance.group_id}:${rideInstance.id}`;
+        logger.info(`🔍 HANDLER: Creating UID and getting Redis order`, { service: "api", uid });
         let order = await redisService.getRideOrderForRideInstance(rideInstance.id);
+        logger.info(`✅ HANDLER: Redis order retrieved`, { service: "api", hasOrder: Object.keys(order).length > 0 });
 
         if (!Object.keys(order).length) {
+            logger.info(`🔍 HANDLER: No existing order, fetching locations`, { service: "api" });
             const locations = await RideGroupRepository.getAllLocationsById(rideInstance.group_id);
+            logger.info(`✅ HANDLER: Locations fetched`, { service: "api", hasLocations: !!locations });
     
-            if (!locations || !locations.parentGroups || !locations.school)
-                return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "BAD REQUEST, THIS DRIVER HAS NO LOCATIONS!", data: null });
+            if (!locations || !locations.parentGroups || !locations.school) {
+                logger.warn(`❌ HANDLER: Invalid locations data`, { service: "api", locations });
+                return { type: "DRIVER_JOIN_ERROR", message: "BAD REQUEST, THIS DRIVER HAS NO LOCATIONS!", data: null };
+            }
     
+            logger.info(`🔍 HANDLER: Mapping parent locations`, { service: "api", parentCount: locations.parentGroups.length });
             const parentsLocations = locations.parentGroups.map(parent => {
                 return {
                     lat: parent.home_lat,
@@ -51,10 +87,12 @@ const driverVerifyAndJoinRide = async (socket, payload) => {
                 };
             });
             
+            logger.info(`🔍 HANDLER: About to call getOptimizedRouteWithSteps - THIS MIGHT HANG`, { service: "api" });
             order = await getOptimizedRouteWithSteps({
                 ...location,
                 id: socket.driver.id
             }, parentsLocations, locations.school, rideInstance.type);
+            logger.info(`✅ HANDLER: Route optimization completed successfully`, { service: "api" });
 
             // driver location is a finished checkpoint already
             order[0].status = "done";
@@ -105,9 +143,12 @@ const driverVerifyAndJoinRide = async (socket, payload) => {
         }
 
         if (rideInstance.status === "started") {
+            logger.info(`🔍 HANDLER: Starting new ride`, { service: "api", rideInstanceId: rideInstance.id });
             await RideInstanceRepository.startNewRide(rideInstance, location);
+            logger.info(`✅ HANDLER: New ride started successfully`, { service: "api" });
         }
 
+        logger.info(`🔍 HANDLER: Creating location map`, { service: "api" });
         const locationMap = {
             lat: parseFloat(jsonPayload.location.lat),
             lng: parseFloat(jsonPayload.location.lng),
@@ -115,9 +156,11 @@ const driverVerifyAndJoinRide = async (socket, payload) => {
         };
 
         if (Math.abs(locationMap.lat) > 90 || Math.abs(locationMap.lng) > 180) {
-            return socket.emit("ack", { type: "LOCATION_UPDATE_ERROR", message: "Invalid GPS coordinates detected!", data: null });
+            logger.warn(`❌ HANDLER: Invalid GPS coordinates`, { service: "api", locationMap });
+            return { type: "LOCATION_UPDATE_ERROR", message: "Invalid GPS coordinates detected!", data: null };
         }
 
+        logger.info(`🔍 HANDLER: Setting socket properties and Redis data`, { service: "api" });
         socket.rideRoomId = uid;
         socket.rideInstanceId = rideInstance.id;
 
@@ -125,6 +168,7 @@ const driverVerifyAndJoinRide = async (socket, payload) => {
 
         socket.driver.location = locationMap;
 
+        logger.info(`🔍 HANDLER: Joining socket room and emitting events`, { service: "api", uid });
         socket.join(uid);
         
         socket.to(uid).emit("location_update", {
@@ -135,10 +179,27 @@ const driverVerifyAndJoinRide = async (socket, payload) => {
             }
         });
     
-        return socket.emit("ack", { type: "DRIVER_JOIN_SUCCESS", message: "Driver successfully joined ride", data: { uid, order, direction: rideInstance.type } });
+        const successResponse = { type: "DRIVER_JOIN_SUCCESS", message: "Driver successfully joined ride", data: { uid, order, direction: rideInstance.type } };
+        logger.info(`🎉 HANDLER: driverVerifyAndJoinRide completed successfully, returning response`, { 
+            service: "api", 
+            response: successResponse 
+        });
+        return successResponse;
     } catch (error) {
-        logger.error("Error in driverVerifyAndJoinRide", error);
-        return socket.emit("ack", { type: "DRIVER_JOIN_ERROR", message: "ERROR!", data: null });
+        logger.error("❌ HANDLER: Error in driverVerifyAndJoinRide", { 
+            service: "api",
+            socketId: socket.id, 
+            userId: socket.userId,
+            driverId: socket.driver?.id,
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+            parent: error.parent,
+            original: error.original
+        });
+        const errorResponse = { type: "DRIVER_JOIN_ERROR", message: `ERROR: ${error.message}`, data: null };
+        logger.info(`📤 HANDLER: Returning error response`, { service: "api", errorResponse });
+        return errorResponse;
     }
 }
 
@@ -584,32 +645,55 @@ const driverCancelActiveRide = async (socket) => {
 
 const driverEndActiveRide = async (socket) => {
     try {
-        if (socket.accountType !== "driver")
-            return socket.emit("ack", { type: "DRIVER_END_ERROR", message: "Unauthorized!", data: null });
-        if (!socket.rideRoomId || !socket.rideInstanceId)
-            return socket.emit("ack", { type: "DRIVER_END_ERROR", message: "You must join a ride first!", data: null });
+        logger.info(`🚀 HANDLER: driverEndActiveRide started`, { 
+            service: "api",
+            socketId: socket.id, 
+            userId: socket.userId,
+            driverId: socket.driver?.id,
+            rideRoomId: socket.rideRoomId,
+            rideInstanceId: socket.rideInstanceId
+        });
 
+        if (socket.accountType !== "driver") {
+            logger.warn(`❌ HANDLER: Unauthorized account type for end ride`, { service: "api", accountType: socket.accountType });
+            return { type: "DRIVER_END_ERROR", message: "Unauthorized!", data: null };
+        }
+        if (!socket.rideRoomId || !socket.rideInstanceId) {
+            logger.warn(`❌ HANDLER: Missing ride data for end ride`, { service: "api", rideRoomId: socket.rideRoomId, rideInstanceId: socket.rideInstanceId });
+            return { type: "DRIVER_END_ERROR", message: "You must join a ride first!", data: null };
+        }
+
+        logger.info(`🔍 HANDLER: Finding ride instance for completion`, { service: "api", rideInstanceId: socket.rideInstanceId });
         const rideInstance = await RideInstanceRepository.findById(socket.rideInstanceId);
         
-        if (!rideInstance)
-            return socket.emit("ack", { type: "DRIVER_END_ERROR", message: "No active ride found!", data: null });
+        if (!rideInstance) {
+            logger.warn(`❌ HANDLER: No ride instance found for completion`, { service: "api", rideInstanceId: socket.rideInstanceId });
+            return { type: "DRIVER_END_ERROR", message: "No active ride found!", data: null };
+        }
 
+        logger.info(`🔍 HANDLER: Getting ride order for completion`, { service: "api", rideInstanceId: rideInstance.id });
         const order = await redisService.getRideOrderForRideInstance(rideInstance.id);
 
-        if (!order || Object.keys(order).length === 0)
-            return socket.emit("ack", { type: "DRIVER_END_ERROR", message: "This ride instance has no checkpoints!", data: null });
+        if (!order || Object.keys(order).length === 0) {
+            logger.warn(`❌ HANDLER: No checkpoints found for ride completion`, { service: "api", rideInstanceId: rideInstance.id });
+            return { type: "DRIVER_END_ERROR", message: "This ride instance has no checkpoints!", data: null };
+        }
 
+        logger.info(`🔍 HANDLER: Checking ride history count`, { service: "api", rideInstanceId: rideInstance.id });
         const rideHistoriesCount = await RideHistoryRepository.count({
             ride_instance_id: rideInstance.id
         });
+        logger.info(`✅ HANDLER: Ride history count retrieved`, { service: "api", count: rideHistoriesCount });
 
-/*         if (rideHistoriesCount !== Object.keys(order).length)
-            return socket.emit("ack", { type: "DRIVER_END_ERROR", message: "Confirm all checkpoints before finishing the ride!", data: null });
- */
+        logger.info(`🔍 HANDLER: Finishing ride in database`, { service: "api", rideInstanceId: rideInstance.id });
         await RideInstanceRepository.finishRide(rideInstance.id);
+        logger.info(`✅ HANDLER: Ride finished in database`, { service: "api" });
 
+        logger.info(`🔍 HANDLER: Flushing Redis data`, { service: "api", rideInstanceId: rideInstance.id });
         await redisService.flushRideInstance(rideInstance.id, socket.rideRoomId);
+        logger.info(`✅ HANDLER: Redis data flushed`, { service: "api" });
 
+        logger.info(`🔍 HANDLER: Emitting completion events`, { service: "api", rideRoomId: socket.rideRoomId });
         socket.to(socket.rideRoomId).emit("location_update", {
             type: "RIDE_COMPLETED",
             message: "Driver has completed the ride",
@@ -620,10 +704,25 @@ const driverEndActiveRide = async (socket) => {
         socket.rideRoomId = null;
         socket.rideInstanceId = null;
 
-        return socket.emit("ack", { type: "RIDE_END_SUCCESS", message: "Ride ended successfully", data: {} });
+        const successResponse = { type: "RIDE_END_SUCCESS", message: "Ride ended successfully", data: {} };
+        logger.info(`🎉 HANDLER: driverEndActiveRide completed successfully`, { 
+            service: "api", 
+            response: successResponse 
+        });
+        return successResponse;
     } catch (error) {
-        logger.warn(error);
-        return socket.emit("ack", { type: "DRIVER_END_ERROR", message: `ERROR: ${error.message || 'Unknown error'}`, data: null });
+        logger.error("❌ HANDLER: Error in driverEndActiveRide", { 
+            service: "api",
+            socketId: socket.id, 
+            userId: socket.userId,
+            driverId: socket.driver?.id,
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
+        const errorResponse = { type: "DRIVER_END_ERROR", message: `ERROR: ${error.message || 'Unknown error'}`, data: null };
+        logger.info(`📤 HANDLER: Returning error response for end ride`, { service: "api", errorResponse });
+        return errorResponse;
     }
 }
 
