@@ -51,21 +51,11 @@ class RideInstanceRepository extends BaseRepository {
           ride_instance_id: rideInstance.id
         };
         
-        try {
-          // Try with type column first (for when migration is applied)
-          await RideHistoryRepository.create(
-            { ...historyData, type: "garage" },
-            { transaction }
-          );
-        } catch (error) {
-          if (error.message.includes("Unknown column 'type'") || error.message.includes("Unknown column 'RideHistory.type'")) {
-            // Fallback: create without type column
-            logger.warn("Creating ride history without type column (missing in database schema)");
-            await RideHistoryRepository.create(historyData, { transaction });
-          } else {
-            throw error; // Re-throw if it's a different error
-          }
-        }
+        // Always include type field with default value to handle all schema variations
+        await RideHistoryRepository.create(
+          { ...historyData, type: "garage" },
+          { transaction }
+        );
 
         await transaction.commit();
       } catch (error) {
