@@ -32,4 +32,12 @@ rideRouter.delete(
     rideController.cancelRideInstance
 );
 
+// Force leave ride room (for debugging/cleanup)
+rideRouter.post(
+    "/ride/leave-room",
+    authMiddleware,
+    isDriverApproved,
+    rideController.forceLeaveRoom
+);
+
 module.exports = rideRouter;

@@ -4,6 +4,8 @@ const { BadRequestError, NotFoundError } = require("../utils/errors");
 const loggingService = require("../services/logging.service");
 const logger = loggingService.getLogger();
 const { MAX_SEATS_CAR } = require("../config/upload/constants");
+const redisService = require("../services/redis.service");
+const socketService = require("../services/socketio.service");
 
 const rideController = {
     cancelRideInstance: async (req, res, next) => {
@@ -37,6 +39,81 @@ const rideController = {
             
         } catch (error) {
             logger.error(`Error cancelling ride instance: ${error.message}`);
+            next(error);
+        }
+    },
+
+    forceLeaveRoom: async (req, res, next) => {
+        const driver_id = req.account.driver.id;
+        const user_id = req.account.id;
+
+        try {
+            logger.info(`🔧 FORCE LEAVE: Driver ${driver_id} requesting to leave all rooms`);
+
+            // Get all socket connections for this user
+            const socketConnections = await redisService.getUserSocketConnections(user_id);
+            logger.info(`🔧 FORCE LEAVE: Found ${socketConnections.length} socket connections`, { socketConnections });
+
+            let roomsLeft = 0;
+            let socketsFound = 0;
+
+            // For each socket connection, force leave rooms
+            for (const socketId of socketConnections) {
+                try {
+                    // Get socket from server
+                    const io = socketService.getIo();
+                    const socket = io.sockets.sockets.get(socketId);
+                    
+                    if (socket) {
+                        socketsFound++;
+                        logger.info(`🔧 FORCE LEAVE: Processing socket ${socketId}`, { 
+                            rideRoomId: socket.rideRoomId,
+                            rideInstanceId: socket.rideInstanceId,
+                            rooms: Array.from(socket.rooms)
+                        });
+
+                        // Leave ride room if exists
+                        if (socket.rideRoomId) {
+                            socket.leave(socket.rideRoomId);
+                            
+                            // Notify others in the room that driver left
+                            socket.to(socket.rideRoomId).emit("location_update", {
+                                type: "DRIVER_STATUS",
+                                message: "Driver has left (forced)",
+                                data: {}
+                            });
+
+                            logger.info(`🔧 FORCE LEAVE: Socket ${socketId} left room ${socket.rideRoomId}`);
+                            roomsLeft++;
+                        }
+
+                        // Clear socket state
+                        socket.rideRoomId = null;
+                        socket.rideInstanceId = null;
+                        
+                        logger.info(`🔧 FORCE LEAVE: Socket ${socketId} state cleared`);
+                    } else {
+                        logger.warn(`🔧 FORCE LEAVE: Socket ${socketId} not found in server`);
+                    }
+                } catch (socketError) {
+                    logger.error(`🔧 FORCE LEAVE: Error processing socket ${socketId}`, { error: socketError.message });
+                }
+            }
+
+            logger.info(`🔧 FORCE LEAVE: Completed for driver ${driver_id}`, { 
+                socketsFound, 
+                roomsLeft, 
+                totalConnections: socketConnections.length 
+            });
+
+            return res.success("Successfully forced leave from all rooms", {
+                driverId: driver_id,
+                socketsFound: socketsFound,
+                roomsLeft: roomsLeft,
+                totalConnections: socketConnections.length
+            });
+        } catch (error) {
+            logger.error(`🔧 FORCE LEAVE: Error for driver ${driver_id}`, { error: error.message });
             next(error);
         }
     },
