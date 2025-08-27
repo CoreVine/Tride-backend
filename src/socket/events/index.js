@@ -17,7 +17,15 @@ function socketEventWrapper(socket, io) {
 
     // ride sockets
     socket.on("parent_watch_ride", async (payload) => rideSocketController.parentVerifyAndJoinRide(socket, payload));
-    socket.on("driver_join_ride", async (payload) => rideSocketController.driverVerifyAndJoinRide(socket, payload));
+    socket.on("driver_join_ride", async (payload) => {
+        logger.info("🔥 SOCKET EVENT: driver_join_ride received", { 
+            socketId: socket.id, 
+            userId: socket.userId, 
+            accountType: socket.accountType,
+            driverId: socket.driver?.id
+        });
+        return rideSocketController.driverVerifyAndJoinRide(socket, payload);
+    });
     socket.on("admin_watch_ride", async (payload) => rideSocketController.adminVerifyAndJoinRide(socket, payload));
     socket.on("admin_watch_rides", async (payload) => rideSocketController.adminVerifyAndViewAll(socket));
     socket.on("driver_location_update", async (location) => rideSocketController.relayLocationUpdates(socket, location));
@@ -70,6 +78,7 @@ function setupConnection(io) {
       socket.driver = {
         id: account.driver.id
       };
+      logger.info("🔥 SOCKET AUTH: Driver authenticated", { driverId: account.driver.id, socketId: socket.id });
     } else {
       socket.parent = {
         id: account.parent.id
