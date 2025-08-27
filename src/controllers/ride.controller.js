@@ -51,7 +51,18 @@ const rideController = {
             logger.info(`🔧 FORCE LEAVE: Driver ${driver_id} requesting to leave all rooms`);
 
             // Get all socket connections for this user
-            const socketConnections = await redisService.getUserSocketConnections(user_id);
+            const connections = await redisService.getUserConnections(user_id);
+            if (!connections) {
+                logger.info(`🔧 FORCE LEAVE: No socket connections found for user ${user_id}`);
+                return res.success("No socket connections found to clean up", {
+                    driverId: driver_id,
+                    socketsFound: 0,
+                    roomsLeft: 0,
+                    totalConnections: 0
+                });
+            }
+
+            const socketConnections = Object.keys(connections);
             logger.info(`🔧 FORCE LEAVE: Found ${socketConnections.length} socket connections`, { socketConnections });
 
             let roomsLeft = 0;
