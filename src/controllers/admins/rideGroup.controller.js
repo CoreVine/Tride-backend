@@ -27,15 +27,14 @@ const rideGroupController = {
     getRideGroups: async (req, res, next) => {
         try {
           const { page = 1, limit = 10, name, seats, type, school_id, ride_group_id } = req.query;
-            const { count, rows: rideGroups } = await RideGroupRepository.findAllDetailedPaginated(
+            const data = await RideGroupRepository.findAllDetailedPaginated(
             parseInt(page, 10) || 1,
             parseInt(limit, 10) || 10,
             { name, seats: parseInt(seats, 10) || 0, type, school_id, ride_group_id }
             );
     
-          const pagination = createPagination(page, limit, count);
     
-          return res.success("Ride groups fetched successfully", { pagination, rideGroups });
+          return res.success("Ride groups fetched successfully", data);
         } catch (error) {
           logger.error("Error fetching ride groups", {
             error: error.message,

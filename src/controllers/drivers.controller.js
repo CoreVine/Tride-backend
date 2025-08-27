@@ -87,6 +87,68 @@ const driversController = {
     }
   },
 
+  getAllPaymentsForDriver: async (req, res, next) => {
+    try {
+      const { driverId } = req.params
+      const { page = 1, limit = 10 } = req.query
+
+      const driver = await driverRepository.findById(driverId)
+      if (!driver) throw new NotFoundError("Driver not found")
+
+      const data = await driverPaymentsRepository.findAllPaginated(page, limit, {
+        where: { driver_id: driverId },
+        include: [
+          { association: "driver"}
+        ]
+      })
+
+      return res.success("Payments retrieved successfully", data)
+    } catch (error) {
+      return next(error)
+    }
+  },
+
+  createPaymentForDriver: async (req, res, next) => {
+    try {
+      const { salary, status, issued_for } = req.body
+      const { driverId } = req.params
+      const driver = await driverRepository.findById(driverId)
+      if (!driver) throw new NotFoundError("Driver not found")
+
+      const payment = await driverPaymentsRepository.create({
+        driver_id: driverId,
+        salary: salary,
+        status: status,
+        issued_for: new Date(issued_for)
+      })
+
+      return res.success("Payment created successfully", { payment })
+    } catch (error) {
+      return next(error)
+    }
+  },
+
+  updatePaymentForDriver: async (req, res, next) => {
+    try {
+      const { driverId, paymentId } = req.params
+      const { salary, status, issued_for } = req.body
+
+      const driver = await driverRepository.findById(driverId)
+      if (!driver) throw new NotFoundError("Driver not found")
+
+      const payment = await driverPaymentsRepository.findById(paymentId)
+      if (!payment || payment.driver_id !== driver.id) {
+        throw new NotFoundError("Payment not found for this driver")
+      }
+
+      const updatedPayment = await driverPaymentsRepository.update(paymentId, { salary, status, issued_for })
+
+      return res.success("Payment updated successfully")
+    } catch (error) {
+      return next(error)
+    }
+  },
+
   updateDriverPapersStatus: async (req, res, next) => {
     try {
       const { driverId } = req.params

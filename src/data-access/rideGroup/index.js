@@ -81,6 +81,7 @@ class RideGroupRepository extends BaseRepository {
       throw new DatabaseError(error);
     }
   }
+  
   async findAllIfParent(parentId, options = {}) {
     try {
       const queryOptions = {
@@ -497,11 +498,12 @@ class RideGroupRepository extends BaseRepository {
             association: "dayDates",
           },
         ],
+        order: [['created_at', 'DESC']],
         offset: (page - 1) * limit,
         limit,
       });
 
-      return { count, rows };
+      return { count, rows, hasNextPage: count > page * limit, hasPrevPage: page > 1 };
     } catch (error) {
       throw new DatabaseError(error);
     }
@@ -612,6 +614,10 @@ class RideGroupRepository extends BaseRepository {
               {
                 association: 'childDetails',
                 include: ['child']
+              },
+              {
+                association: "parent",
+                attributes: ["account_id"],
               }
             ]
           },
