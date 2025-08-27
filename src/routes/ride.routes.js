@@ -12,12 +12,24 @@ const createRideInstanceSchema = Yup.object().shape({
   ride_group_id: Yup.number().integer().positive().required()
 });
 
+const cancelRideInstanceSchema = Yup.object().shape({
+  ride_instance_id: Yup.number().integer().positive().required()
+});
+
 rideRouter.post(
     "/ride/create",
     authMiddleware,
     isDriverApproved,
     validate(createRideInstanceSchema),
     rideController.createRideInstance
+);
+
+rideRouter.delete(
+    "/ride/:ride_instance_id/cancel",
+    authMiddleware,
+    isDriverApproved,
+    validate({ params: cancelRideInstanceSchema }),
+    rideController.cancelRideInstance
 );
 
 module.exports = rideRouter;

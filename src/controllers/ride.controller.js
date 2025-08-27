@@ -6,6 +6,41 @@ const logger = loggingService.getLogger();
 const { MAX_SEATS_CAR } = require("../config/upload/constants");
 
 const rideController = {
+    cancelRideInstance: async (req, res, next) => {
+        const { ride_instance_id } = req.params;
+        const driver_id = req.account.driver.id;
+
+        try {
+            // Check if the ride instance exists and belongs to this driver
+            const rideInstance = await RideInstanceRepository.findByPk(ride_instance_id);
+            
+            if (!rideInstance) {
+                throw new NotFoundError("Ride instance not found");
+            }
+            
+            if (rideInstance.driver_id !== driver_id) {
+                throw new BadRequestError("You can only cancel your own ride instances");
+            }
+            
+            if (rideInstance.status === "ended") {
+                throw new BadRequestError("Ride instance is already ended");
+            }
+            
+            await RideInstanceRepository.cancelRideInstance(ride_instance_id);
+            
+            logger.info(`Driver ${driver_id} cancelled ride instance ${ride_instance_id}`);
+            
+            return res.success("Ride instance cancelled successfully", {
+                rideInstanceId: ride_instance_id,
+                status: "ended"
+            });
+            
+        } catch (error) {
+            logger.error(`Error cancelling ride instance: ${error.message}`);
+            next(error);
+        }
+    },
+
     createRideInstance: async (req, res, next) => {
         const { ride_group_id, type } = req.body;
         const driver_id = req.account.driver.id;
