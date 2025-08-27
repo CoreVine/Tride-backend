@@ -355,38 +355,45 @@ const relayLocationUpdates = async (socket, payload) => {
 
 const confirmCheckPoint = async (socket, io, payload) => {
     try {
+        logger.info(`🔍 CHECKPOINT CONFIRM: Starting checkpoint confirmation`, { 
+            service: "api",
+            socketId: socket.id, 
+            driverId: socket.driver?.id,
+            payload: payload
+        });
+
         const jsonPayload = typeof payload === 'string' ? JSON.parse(payload) : payload || {};
         
         if (!jsonPayload.ride_group_id)
-            return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "BAD REQUEST, MISSING ride_group_id!", data: null });
+            return { type: "CHECKPOINT_CONFIRM_ERROR", message: "BAD REQUEST, MISSING ride_group_id!", data: null };
         if (typeof jsonPayload.checkpoint_index !== "number")
-            return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "BAD REQUEST, MISSING checkpoint_index!", data: null });
+            return { type: "CHECKPOINT_CONFIRM_ERROR", message: "BAD REQUEST, MISSING checkpoint_index!", data: null };
         if (socket.accountType !== "driver")
-            return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "Unauthorized!", data: null });
+            return { type: "CHECKPOINT_CONFIRM_ERROR", message: "Unauthorized!", data: null };
         if (!jsonPayload.location?.lat || !jsonPayload.location?.lng)
-            return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "Invalid location is set!", data: null });
+            return { type: "CHECKPOINT_CONFIRM_ERROR", message: "Invalid location is set!", data: null };
         if (!socket.rideRoomId || !socket.rideInstanceId)
-            return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: DRIVER NOT JOINED TO RIDE ROOM!", data: null });
+            return { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: DRIVER NOT JOINED TO RIDE ROOM!", data: null };
 
         const { ride_group_id, location, children_ids = [] } = jsonPayload;
         const rideInstance = await RideInstanceRepository.findActiveInstanceByRideGroupAndDriver(ride_group_id, socket.driver.id);
     
         if (!rideInstance)
-            return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "NO ACTIVE INSTANCES, CREATE ONE FIRST!", data: null });
+            return { type: "CHECKPOINT_CONFIRM_ERROR", message: "NO ACTIVE INSTANCES, CREATE ONE FIRST!", data: null };
 
         const order = await redisService.getRideOrderForRideInstance(rideInstance.id);
 
         if (!order || Object.keys(order).length === 0)
-            return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: THIS RIDE INSTANCE HAS NO CHECKPOINTS!", data: null });
+            return { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: THIS RIDE INSTANCE HAS NO CHECKPOINTS!", data: null };
 
         const current_index = jsonPayload.checkpoint_index;
         const currentCheckpoint = order[current_index];
 
         if (!currentCheckpoint)
-            return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: THIS RIDE INSTANCE DOES NOT HAVE THIS CHECKPOINT!", data: null });
+            return { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: THIS RIDE INSTANCE DOES NOT HAVE THIS CHECKPOINT!", data: null };
 
         if (currentCheckpoint.status === "done")
-            return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: CHECKPOINT ALREADY CONFIRMED!", data: null });
+            return { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: CHECKPOINT ALREADY CONFIRMED!", data: null };
 
         const distance = getDistanceBetweenLocations(
             { location_lat: location.lat, location_lng: location.lng },
@@ -394,23 +401,23 @@ const confirmCheckPoint = async (socket, io, payload) => {
         );
         
         if (distance > CHECKPOINT_RADIUS) {
-            return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: `ERROR: YOU ARE TOO FAR FROM CHECKPOINT! Distance: ${Math.round(distance)}m`, data: null });
+            return { type: "CHECKPOINT_CONFIRM_ERROR", message: `ERROR: YOU ARE TOO FAR FROM CHECKPOINT! Distance: ${Math.round(distance)}m`, data: null };
         }
 
         if (["school", "child"].includes(currentCheckpoint.type)) {
             if (!children_ids || children_ids.length === 0) {
-                return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: MUST SPECIFY CHILDREN BEING PICKED UP/DELIVERED!", data: null });
+                return { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: MUST SPECIFY CHILDREN BEING PICKED UP/DELIVERED!", data: null };
             }
 
             const checkpointChildren = currentCheckpoint.children || [];
             const invalidChildren = children_ids.filter(childId => !checkpointChildren.includes(childId));
 
             if (invalidChildren.length > 0) {
-                return socket.emit("ack", { 
+                return { 
                     type: "CHECKPOINT_CONFIRM_ERROR", 
                     message: `ERROR: Children with IDs [${invalidChildren.join(', ')}] do not belong to this house!`, 
                     data: null 
-                });
+                };
             }
         }
 
@@ -421,22 +428,22 @@ const confirmCheckPoint = async (socket, io, payload) => {
                 const parentGroup = locations.parentGroups.find(pg => pg.parent_id === currentCheckpoint.id);
 
                 if (!parentGroup || !parentGroup.childDetails) {
-                    return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: Cannot verify children for this house!", data: null });
+                    return { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: Cannot verify children for this house!", data: null };
                 }
 
                 const validChildrenIds = parentGroup.childDetails.map(childDetail => childDetail.child_id);
                 const unverifiedChildren = children_ids.filter(childId => !validChildrenIds.includes(childId));
 
                 if (unverifiedChildren.length > 0) {
-                    return socket.emit("ack", { 
+                    return { 
                         type: "CHECKPOINT_CONFIRM_ERROR", 
                         message: `ERROR: Children with IDs [${unverifiedChildren.join(', ')}] are not registered in this parent group!`, 
                         data: null 
-                    });
+                    };
                 }
             } catch (error) {
                 logger.error("Error verifying children in parent group:", error);
-                return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: Failed to verify children data!", data: null });
+                return { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: Failed to verify children data!", data: null };
             }
         }
 
@@ -494,11 +501,7 @@ const confirmCheckPoint = async (socket, io, payload) => {
 
         await redisService.updateRideInstanceCheckpoint(rideInstance.id, current_index, newCheckpoint);
 
-        socket.emit("ack", { 
-            type: isRideComplete ? "RIDE_COMPLETED" : "CHECKPOINT_CONFIRMED", 
-            message: isRideComplete ? "RIDE_COMPLETED" : "CHECKPOINT_CONFIRMED",
-            data: { confirmed_children: currentCheckpoint.type === "child" ? children_ids : undefined }
-        });
+        // Emit location update to other clients in the room
         socket.to(socket.rideRoomId).emit("location_update", {
             type: isRideComplete ? "RIDE_COMPLETED" : "CHECKPOINT_CONFIRMED",
             message: isRideComplete ? "Ride has been completed successfully" : "Checkpoint has been confirmed",
@@ -531,9 +534,34 @@ const confirmCheckPoint = async (socket, io, payload) => {
                 io.in(socket.rideRoomId).disconnectSockets(true);
             }, 10000);
         }
+
+        logger.info(`✅ CHECKPOINT CONFIRM: Checkpoint ${current_index} confirmed successfully`, {
+            service: "api",
+            driverId: socket.driver?.id,
+            ride_instance_id: rideInstance.id,
+            isRideComplete
+        });
+
+        // Return success response for callback
+        return { 
+            type: isRideComplete ? "RIDE_COMPLETED" : "CHECKPOINT_CONFIRMED", 
+            message: isRideComplete ? "RIDE_COMPLETED" : "CHECKPOINT_CONFIRMED",
+            data: { 
+                confirmed_children: currentCheckpoint.type === "child" ? children_ids : undefined,
+                checkpointIndex: current_index,
+                checkpoint: newCheckpoint,
+                isRideComplete
+            }
+        };
     } catch (error) {
-        logger.warn(error);
-        return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: `ERROR: ${error.message || 'Unknown error'}`, data: null });
+        logger.error(`❌ CHECKPOINT CONFIRM: Error confirming checkpoint`, {
+            service: "api",
+            socketId: socket.id,
+            driverId: socket.driver?.id,
+            error: error.message,
+            stack: error.stack
+        });
+        return { type: "CHECKPOINT_CONFIRM_ERROR", message: `ERROR: ${error.message || 'Unknown error'}`, data: null };
     }
 }
 
