@@ -401,7 +401,20 @@ const confirmCheckPoint = async (socket, io, payload) => {
         );
         
         if (distance > CHECKPOINT_RADIUS) {
-            return { type: "CHECKPOINT_CONFIRM_ERROR", message: `ERROR: YOU ARE TOO FAR FROM CHECKPOINT! Distance: ${Math.round(distance)}m`, data: null };
+            logger.warn(`🔍 CHECKPOINT CONFIRM: Driver too far from checkpoint`, {
+                service: "api",
+                driverId: socket.driver?.id,
+                checkpointType: currentCheckpoint.type,
+                distance: Math.round(distance),
+                requiredRadius: CHECKPOINT_RADIUS,
+                driverLocation: { lat: location.lat, lng: location.lng },
+                checkpointLocation: { lat: currentCheckpoint.lat, lng: currentCheckpoint.lng }
+            });
+            return { 
+                type: "CHECKPOINT_CONFIRM_ERROR", 
+                message: `ERROR: YOU ARE TOO FAR FROM CHECKPOINT! Distance: ${Math.round(distance)}m (Required: within ${CHECKPOINT_RADIUS}m)`, 
+                data: { distance: Math.round(distance), requiredRadius: CHECKPOINT_RADIUS }
+            };
         }
 
         if (["school", "child"].includes(currentCheckpoint.type)) {
