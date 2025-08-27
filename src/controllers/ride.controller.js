@@ -12,7 +12,7 @@ const rideController = {
 
         try {
             // Check if the ride instance exists and belongs to this driver
-            const rideInstance = await RideInstanceRepository.findByPk(ride_instance_id);
+            const rideInstance = await RideInstanceRepository.findById(ride_instance_id);
             
             if (!rideInstance) {
                 throw new NotFoundError("Ride instance not found");
