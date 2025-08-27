@@ -456,22 +456,19 @@ const confirmCheckPoint = async (socket, io, payload) => {
             });
 
             if (rideHistoriesCount !== Object.keys(order).length - 1)
-                return socket.emit("ack", { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: CONFIRM ALL CHECKPOINTS BEFORE FINISHING THE RIDE!", data: null });
+                return { type: "CHECKPOINT_CONFIRM_ERROR", message: "ERROR: CONFIRM ALL CHECKPOINTS BEFORE FINISHING THE RIDE!", data: null };
 
-            status = `Finished trip. End destination: ${currentCheckpoint.type}`;
+            status = `Finished: ${currentCheckpoint.type}`;
             isRideComplete = true;
         } else {
             if (currentCheckpoint.type === "child") {
-                // For child names, we would need to fetch from database or store names in checkpoint
-                const childrenText = children_ids.join(', ');
-
-                const direction = rideInstance.type === "to_school" 
-                    ? `picked up children with IDs: ${childrenText} from home` 
-                    : `delivered children with IDs: ${childrenText} to home`;
-
-                status = `Continued trip: ${direction}`;
+                // Keep status short to fit in 70 char limit - detailed info is in deliveries table
+                const childCount = children_ids.length;
+                const direction = rideInstance.type === "to_school" ? "pickup" : "delivery";
+                
+                status = `${direction}: ${childCount} child${childCount > 1 ? 'ren' : ''}`;
             } else {
-                status = `Continued trip: reached ${currentCheckpoint.type}`;
+                status = `reached: ${currentCheckpoint.type}`;
             }
             isRideComplete = false;
         }

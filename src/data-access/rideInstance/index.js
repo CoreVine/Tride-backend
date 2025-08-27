@@ -40,14 +40,14 @@ class RideInstanceRepository extends BaseRepository {
           transaction 
           }
         );
-        const newRideStart = rideInstance.type === "to_school" ? "deliver the children to school" : "pickup children from school";
+        const newRideStart = rideInstance.type === "to_school" ? "to school" : "from school";
         
         // Create ride history record - handle missing 'type' column gracefully
         const historyData = {
           lat: currentLocation.lat,
           lng: currentLocation.lng,
           issued_at: new Date().toISOString().slice(0, 10),
-          status: `Started trip: ${newRideStart}`,
+          status: `Started: ${newRideStart}`,
           ride_instance_id: rideInstance.id
         };
         
