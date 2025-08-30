@@ -1,4 +1,4 @@
-const CHECKPOINT_RADIUS = 500; // Increased to 150m for more practical use
+const CHECKPOINT_RADIUS =50; // Increased to 150m for more practical use
 
 
 module.exports = {
