@@ -1,22 +1,6 @@
 version: "3.8"
 
 services:
-  redis:
-    image: redis:7
-    container_name: tride_redis
-    ports:
-      - "6379:6379"
-
-  mysql:
-    image: mysql:8
-    container_name: tride_mysql
-    ports:
-      - "3306:3306"
-    env_file:
-      - .env.mysql
-    volumes:
-      - mysql_data:/var/lib/mysql
-
   mongo:
     image: mongo:latest
     container_name: tride_mongo
@@ -25,21 +9,9 @@ services:
     env_file:
       - .env.mongo
     volumes:
-      - mongodb_data:/data/db 
-
-  backend:
-    build:
-      context: .
-    container_name: tride_backend
-    ports:
-      - "3010:3010"
-    depends_on:
-      - redis
-      - mysql
-      - mongo
-    env_file:
-      - .env.backend
+      - mongodb_data:/data/db
 
 volumes:
-  mysql_data:
   mongodb_data:
+
+
