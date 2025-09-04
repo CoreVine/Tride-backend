@@ -1,0 +1,813 @@
+{
+	"info": {
+		"_postman_id": "ride-rest-socket-test",
+		"name": "Tride REST Socket Testing",
+		"description": "Collection to test the new REST implementation that mirrors socket functionality for rides",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login Driver",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"if (jsonResponse && jsonResponse.data && jsonResponse.data.token) {",
+									"    pm.globals.set('token_driver', jsonResponse.data.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"driver@example.com\",\n    \"password\": \"password\",\n    \"account_type\":\"driver\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Login Parent 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"if (jsonResponse && jsonResponse.data && jsonResponse.data.token) {",
+									"    pm.globals.set('token_parent_1', jsonResponse.data.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"parent1@example.com\",\n    \"password\": \"password\",\n    \"account_type\":\"parent\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"if (jsonResponse && jsonResponse.data && jsonResponse.data.token) {",
+									"    pm.globals.set('token_admin', jsonResponse.data.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@tride.com\",\n    \"password\": \"admin123\",\n    \"account_type\":\"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Driver Flow",
+			"item": [
+				{
+					"name": "1. Create Ride Instance",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"if (jsonResponse && jsonResponse.data && jsonResponse.data.rideInstance) {",
+									"    pm.globals.set('ride_instance_id', jsonResponse.data.rideInstance.id);",
+									"    pm.globals.set('ride_group_id', jsonResponse.data.rideInstance.group_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ride_group_id\": 1,\n    \"type\": \"to_school\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/create",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "create"]
+						},
+						"description": "Create a new ride instance for the driver"
+					}
+				},
+				{
+					"name": "2. Join Ride (Driver)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"if (jsonResponse && jsonResponse.data && jsonResponse.data.uid) {",
+									"    pm.globals.set('ride_uid', jsonResponse.data.uid);",
+									"    pm.globals.set('checkpoint_order', JSON.stringify(jsonResponse.data.order));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ride_group_id\": {{ride_group_id}},\n    \"location\": {\n        \"lat\": 30.0444,\n        \"lng\": 31.2357\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/join",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "join"]
+						},
+						"description": "Driver joins the ride and starts live tracking"
+					}
+				},
+				{
+					"name": "3. Test Driver Reconnection (Same Ride)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ride_group_id\": {{ride_group_id}},\n    \"location\": {\n        \"lat\": 30.0445,\n        \"lng\": 31.2358\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/join",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "join"]
+						},
+						"description": "Test driver reconnection to same ride (should succeed)"
+					}
+				},
+				{
+					"name": "4. Update Location",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"location\": {\n        \"lat\": 30.0450,\n        \"lng\": 31.2360\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/location",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "location"]
+						},
+						"description": "Update driver location during ride"
+					}
+				},
+				{
+					"name": "5. Update Location (Near Checkpoint)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"location\": {\n        \"lat\": 30.9763,\n        \"lng\": 30.0051\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/location",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "location"]
+						},
+						"description": "Update location near a checkpoint (should trigger checkpoint reached event)"
+					}
+				},
+				{
+					"name": "6. Confirm Checkpoint",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ride_group_id\": {{ride_group_id}},\n    \"checkpoint_index\": 1,\n    \"location\": {\n        \"lat\": 30.9763,\n        \"lng\": 30.0051\n    },\n    \"children_ids\": [1, 2]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/checkpoint/confirm",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "checkpoint", "confirm"]
+						},
+						"description": "Confirm reaching a checkpoint with children pickup/delivery"
+					}
+				},
+				{
+					"name": "7. Complete Ride",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/ride/complete",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "complete"]
+						},
+						"description": "Complete the ride (end ride)"
+					}
+				},
+				{
+					"name": "8. Cancel Ride",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/ride/cancel",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "cancel"]
+						},
+						"description": "Cancel the current ride"
+					}
+				},
+				{
+					"name": "9. Force Leave Room (Debug)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/ride/leave-room",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "leave-room"]
+						},
+						"description": "Force leave all rooms (debugging/cleanup)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Parent Flow",
+			"item": [
+				{
+					"name": "1. Watch Ride",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"if (jsonResponse && jsonResponse.data && jsonResponse.data.uid) {",
+									"    pm.globals.set('parent_ride_uid', jsonResponse.data.uid);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_parent_1}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ride_group_id\": {{ride_group_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/parent/watch",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "parent", "watch"]
+						},
+						"description": "Parent joins to watch the ride"
+					}
+				},
+				{
+					"name": "2. Test Parent Reconnection",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_parent_1}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ride_group_id\": {{ride_group_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/parent/watch",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "parent", "watch"]
+						},
+						"description": "Test parent reconnection to same ride"
+					}
+				},
+				{
+					"name": "3. Get Location Updates (REST Mirror of Socket)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_parent_1}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/ride/parent/{{ride_group_id}}/location-updates",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "parent", "{{ride_group_id}}", "location-updates"]
+						},
+						"description": "Get real-time location updates - mirrors socket location_update event data structure"
+					}
+				},
+				{
+					"name": "4. Continuous Location Polling (5 requests)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"",
+									"// Log the current update (same format as socket event)",
+									"console.log('Update Type:', jsonResponse.data?.type);",
+									"console.log('Message:', jsonResponse.data?.message);",
+									"console.log('Driver Location:', jsonResponse.data?.data?.locationMap);",
+									"console.log('Checkpoint Reached:', jsonResponse.data?.data?.checkpointReached);",
+									"console.log('Progress:', jsonResponse.data?.meta?.progress);",
+									"",
+									"// Store current poll count",
+									"let pollCount = pm.globals.get('location_poll_count') || 0;",
+									"pollCount++;",
+									"pm.globals.set('location_poll_count', pollCount);",
+									"",
+									"// Continue polling up to 5 times with 2 second delays",
+									"if (pollCount < 5) {",
+									"    setTimeout(() => {}, 2000); // 2 second delay",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_parent_1}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/ride/parent/{{ride_group_id}}/location-updates",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "parent", "{{ride_group_id}}", "location-updates"]
+						},
+						"description": "Test continuous location polling - mirrors real-time socket behavior"
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin Flow",
+			"item": [
+				{
+					"name": "1. Watch Specific Ride",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_admin}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ride_group_id\": {{ride_group_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/admin/watch",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "admin", "watch"]
+						},
+						"description": "Admin watches a specific ride"
+					}
+				},
+				{
+					"name": "2. Watch All Active Rides",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_admin}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/ride/admin/watch-all",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "admin", "watch-all"]
+						},
+						"description": "Admin gets overview of all active rides"
+					}
+				}
+			]
+		},
+		{
+			"name": "Error Testing",
+			"item": [
+				{
+					"name": "Driver Join Without Ride Instance",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ride_group_id\": 999,\n    \"location\": {\n        \"lat\": 30.0444,\n        \"lng\": 31.2357\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/join",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "join"]
+						},
+						"description": "Should fail - no ride instance for this group"
+					}
+				},
+				{
+					"name": "Parent Watch Non-existent Ride",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_parent_1}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ride_group_id\": 999\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/parent/watch",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "parent", "watch"]
+						},
+						"description": "Should fail - no active ride for this group"
+					}
+				},
+				{
+					"name": "Update Location Without Joining",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"location\": {\n        \"lat\": 30.0444,\n        \"lng\": 31.2357\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/location",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "location"]
+						},
+						"description": "Should fail - driver must join ride first"
+					}
+				},
+				{
+					"name": "Confirm Checkpoint Too Far",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ride_group_id\": {{ride_group_id}},\n    \"checkpoint_index\": 1,\n    \"location\": {\n        \"lat\": 25.0000,\n        \"lng\": 25.0000\n    },\n    \"children_ids\": [1]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/checkpoint/confirm",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "checkpoint", "confirm"]
+						},
+						"description": "Should fail - too far from checkpoint"
+					}
+				},
+				{
+					"name": "Driver Switch Rides Without Finishing",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ride_group_id\": 2,\n    \"location\": {\n        \"lat\": 30.0444,\n        \"lng\": 31.2357\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ride/join",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "join"]
+						},
+						"description": "Should fail - driver must finish current ride first"
+					}
+				}
+			]
+		},
+		{
+			"name": "Socket State Testing",
+			"item": [
+				{
+					"name": "Check Current Ride State (Driver)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/me",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "me"]
+						},
+						"description": "Check driver's current authentication state"
+					}
+				},
+				{
+					"name": "Test Stale Socket Cleanup",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_driver}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/ride/leave-room",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "leave-room"]
+						},
+						"description": "Force cleanup of stale socket connections"
+					}
+				}
+			]
+		},
+		{
+			"name": "Polling Tests",
+			"item": [
+				{
+					"name": "Compare Socket vs REST Location Data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"",
+									"// Store REST data for comparison with socket events",
+									"pm.globals.set('rest_location_update', JSON.stringify(jsonResponse.data));",
+									"",
+									"console.log('REST Location Update Structure:');",
+									"console.log('Type:', jsonResponse.data?.type);",
+									"console.log('Message:', jsonResponse.data?.message);",
+									"console.log('Driver Location:', jsonResponse.data?.data?.locationMap);",
+									"console.log('Checkpoint Reached:', jsonResponse.data?.data?.checkpointReached);",
+									"console.log('Checkpoint Order:', Object.keys(jsonResponse.data?.data?.checkpointOrder || {}).length, 'checkpoints');",
+									"console.log('Progress:', jsonResponse.data?.meta?.progress);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_parent_1}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/ride/parent/{{ride_group_id}}/location-updates",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "parent", "{{ride_group_id}}", "location-updates"]
+						},
+						"description": "Get location updates via REST to compare with socket data format"
+					}
+				},
+				{
+					"name": "Location Updates Without Watching First",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_parent_1}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/ride/parent/{{ride_group_id}}/location-updates",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "parent", "{{ride_group_id}}", "location-updates"]
+						},
+						"description": "Test getting location updates without watching first (should still work if ride is active)"
+					}
+				},
+				{
+					"name": "Location Updates Non-existent Ride",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_parent_1}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/ride/parent/999/location-updates",
+							"host": ["{{base_url}}"],
+							"path": ["ride", "parent", "999", "location-updates"]
+						},
+						"description": "Test location updates for non-existent ride (should fail)"
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000/api",
+			"type": "default"
+		}
+	]
+}

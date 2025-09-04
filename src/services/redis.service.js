@@ -578,6 +578,55 @@ const redisService = {
   },
 
   /**
+   * Store user ride state for REST API tracking
+   * @param {string} userId - User ID
+   * @param {string} accountType - Account type (driver, parent, admin)
+   * @param {string} rideRoomId - Ride room ID
+   * @param {string} rideInstanceId - Ride instance ID
+   */
+  setUserRideState: async (userId, accountType, rideRoomId, rideInstanceId) => {
+    const key = `user_ride_state:${userId}:${accountType}`;
+    const rideState = {
+      rideRoomId,
+      rideInstanceId,
+      timestamp: Date.now()
+    };
+    
+    await redisClient.setex(key, 3600, JSON.stringify(rideState)); // Expire in 1 hour
+    logger.debug(`Set ride state for user ${userId} (${accountType}): ${rideRoomId}`);
+  },
+
+  /**
+   * Get user ride state for REST API tracking
+   * @param {string} userId - User ID
+   * @param {string} accountType - Account type (driver, parent, admin)
+   * @returns {Object|null} Ride state or null if not found
+   */
+  getUserRideState: async (userId, accountType) => {
+    const key = `user_ride_state:${userId}:${accountType}`;
+    const rideState = await redisClient.get(key);
+    
+    if (rideState) {
+      const parsed = JSON.parse(rideState);
+      logger.debug(`Retrieved ride state for user ${userId} (${accountType}): ${parsed.rideRoomId}`);
+      return parsed;
+    }
+    
+    return null;
+  },
+
+  /**
+   * Clear user ride state for REST API tracking
+   * @param {string} userId - User ID
+   * @param {string} accountType - Account type (driver, parent, admin)
+   */
+  clearUserRideState: async (userId, accountType) => {
+    const key = `user_ride_state:${userId}:${accountType}`;
+    const result = await redisClient.del(key);
+    logger.debug(`Cleared ride state for user ${userId} (${accountType}): ${result > 0 ? 'success' : 'not found'}`);
+  },
+
+  /**
    * Checks if Redis client is connected
    * @returns {boolean} Whether Redis is connected
    */

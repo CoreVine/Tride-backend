@@ -24,7 +24,8 @@ class RideHistory extends Model {
       },
       type: {
         type: DataTypes.ENUM(["school", "child", "garage"]),
-        allowNull: false
+        allowNull: true,  // Allow null to handle schema inconsistencies
+        defaultValue: "garage"  // Default value for when not specified
       },
       status: {
         type: DataTypes.STRING(70),
