@@ -460,7 +460,7 @@ class RideGroupRepository extends BaseRepository {
         include: [
           {
             association: "creator",
-            attributes: ["id"],
+            attributes: ["id", "name"],
           },
           {
             association: "parent_group_subscription",
