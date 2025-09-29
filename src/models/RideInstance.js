@@ -70,6 +70,11 @@ class RideInstance extends Model {
       foreignKey: 'ride_instance_id',
       as: 'history'
     });
+
+    this.hasMany(models.RideInstanceLocation, {
+      foreignKey: 'ride_instance_id',
+      as: 'locations'
+    });
   }
 }
 

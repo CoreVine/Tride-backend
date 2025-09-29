@@ -140,6 +140,9 @@ groupRouter.get('/manage/ride/groups/:rideGroupId/instances',
   }),
   rideGroupController.getRideGroupInstances);
 
+groupRouter.get('/manage/ride/groups-active-instances', authMiddleware, rideGroupController.getRideGroupsWithActiveInstances);
+
+
 groupRouter.get('/manage/ride/groups/:rideGroupId/instances/:instanceId',
   authMiddleware,
   validate({

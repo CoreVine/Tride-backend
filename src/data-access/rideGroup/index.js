@@ -509,6 +509,97 @@ class RideGroupRepository extends BaseRepository {
     }
   }
 
+  async findAllDetailedWithActiveInstancesPaginated(page, limit, filters = {}) {
+    try {
+      const filter = {};
+
+      if (filters.name) {
+        filter.group_name = {
+          [Op.like]: `%${filters.name}%`
+        };
+      }
+
+      if (filters.seats) {        
+        filter.current_seats_taken = {
+          [Op.gte]: filters.seats
+        };
+      }
+
+      if (filters.type) {
+        filter.group_type = filters.type;
+      }
+
+      if (filters.school_id) {
+        filter.school_id = filters.school_id;
+      }
+
+      if (filters.ride_group_id) {
+        filter.id = filters.ride_group_id;
+      }
+
+      const { count, rows } = await this.model.findAndCountAll({
+        where: filter,
+        include: [
+          {
+            association: "creator",
+            attributes: ["name", "id"],
+          },
+          {
+            association: "parent_group_subscription",
+          },
+          {
+            association: "driver",
+            attributes: { exclude: ["created_at", "updated_at"] },
+          },
+          {
+            association: "school",
+          },
+          {
+            association: "rideInstances",
+            where: {
+              status: {
+                [Op.in]: ["started", "active"]
+              }
+            },
+          },
+          {
+            association: "parentGroups",
+            where: {
+              status: {
+                [Op.ne]: "removed"
+              }
+            },
+            include: [
+              {
+                association: "parent",
+                attributes: { exclude: ["created_at", "updated_at"] },
+              },
+          
+              {
+                association: "childDetails",
+                include: [
+                  {
+                    association: "child",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            association: "dayDates",
+          },
+        ],
+        order: [['created_at', 'DESC']],
+        offset: (page - 1) * limit,
+        limit,
+      });
+
+      return { count, rows, hasNextPage: count > page * limit, hasPrevPage: page > 1 };
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
   async findAllDetailedPaginatedByParentId(parentId, page, limit, filters = {}) {
     try {
       const filter = {};

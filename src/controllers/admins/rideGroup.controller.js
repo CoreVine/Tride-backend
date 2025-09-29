@@ -16,6 +16,7 @@ const loggingService = require("../../services/logging.service");
 const SchoolRepository = require("../../data-access/school");
 const openRouteUtil = require("../../utils/openRoutesService");
 const subscriptionDomain = require("../../domain/subscription/subscription");
+const redisService = require("../../services/redis.service");
 
 const ChatRoom = require("../../mongo-model/ChatRoom");
 
@@ -43,6 +44,7 @@ const rideGroupController = {
           return next(error);
         }
     },
+
 
     getRideGroupDetails: async (req, res, next) => {
         try {
@@ -87,6 +89,31 @@ const rideGroupController = {
         
       } catch (error) {
         logger.error("Error fetching ride group instances", {
+          error: error.message,
+          stack: error.stack,
+        });
+        return next(error);
+      }
+    },
+
+    getRideGroupsWithActiveInstances: async (req, res, next) => {
+      try {
+        const { page = 1, limit = 10, name, seats, type, school_id, ride_group_id } = req.query;
+          const data = await RideGroupRepository.findAllDetailedWithActiveInstancesPaginated(
+            parseInt(page, 10) || 1,
+            parseInt(limit, 10) || 10,
+            { 
+              name, 
+              seats: parseInt(seats, 10) || 0, 
+              type, school_id, 
+              ride_group_id 
+            }
+          );
+  
+  
+        return res.success("Ride groups fetched successfully", data);
+      } catch (error) {
+        logger.error("Error fetching ride groups", {
           error: error.message,
           stack: error.stack,
         });

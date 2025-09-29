@@ -46,7 +46,25 @@ const driversController = {
 
   getAllDrivers: async (req, res, next) => {
     try {
-      const { page = 1, limit = 10, search } = req.query
+      const { page = 1, limit = 10, search, approved = null } = req.query
+
+      let where = {}
+
+      if (approved !== null) {
+        if (approved === 'true') {
+          where['$papers.approved$'] = true
+        }
+        else if (approved === 'false') {
+          where['$papers.approved$'] = false
+        }
+        else {
+          throw new BadRequestError("Invalid value for approved. Must be 'true' or 'false'.")
+        }
+      }
+
+      if (search) {
+        where['name'] = { [Op.like]: `%${search}%` }
+      }
 
       const { count, rows: drivers } = await driverRepository.findAllPaginated(page, limit, {
         include: [
@@ -59,8 +77,9 @@ const driversController = {
             attributes: ["id", "approved", "approval_date"]
           }
         ],
-        where: search ? { name: { [Op.like]: `%${search}%` } } : {}
+        where: where
       })
+      
       const pagination = createPagination(page, limit, count)
 
       res.success("Drivers retrieved successfully", {

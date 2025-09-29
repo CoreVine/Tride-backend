@@ -97,11 +97,6 @@ class RideInstanceRepository extends BaseRepository {
     }
   }
 
-    /**
-   * Find all active ride instances for a specific driver across all groups
-   * @param {number} driverId - The driver ID
-   * @returns {Promise<Array>} Array of active ride instances
-   */
   async findActiveInstancesByDriver (driverId) {
     try {
         return await this.model.findAll({
@@ -177,7 +172,39 @@ class RideInstanceRepository extends BaseRepository {
                 required: true,
               }
             ]
+          },
+          { association: "driver" }, 
+          { association: 'history' },
+          { association: 'locations' }
+        ]
+      });
+    } catch (error) {
+      throw new DatabaseError(error);
+    }
+  }
+
+  async findActiveInstances() {
+    try {      
+      return await this.model.findAll({
+        where: {
+          status: {
+            [Op.in]: ["started", "active"]
           }
+        },
+        include: [
+          {
+            association: "group",
+            required: true,
+            include: [
+              {
+                association: "parentGroups",
+                required: true,
+              }
+            ]
+          },
+          { association: "driver" }, 
+          { association: 'history' },
+          { association: 'locations' }
         ]
       });
     } catch (error) {
